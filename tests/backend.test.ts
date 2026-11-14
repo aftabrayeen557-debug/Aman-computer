@@ -489,6 +489,19 @@ test('SQL schema enforces RLS, admin role security, and public enquiry spam/rate
     'Migration must not perform unguarded ::BOOLEAN casts on JWT claims'
   );
   assert.ok(sql.includes("jsonb_typeof(jwt_claims -> 'disabled') = 'boolean'"), 'is_admin() must safely check boolean type');
+  assert.ok(
+    sql.includes("AND jsonb_typeof(jwt_claims -> 'email_verified') = 'boolean'"),
+    'is_admin() must strictly require email_verified JWT claim to have JSON boolean type'
+  );
+  assert.ok(
+    sql.includes("AND (jwt_claims ->> 'email_verified')::boolean IS TRUE"),
+    'is_admin() must strictly require (jwt_claims ->> email_verified)::boolean IS TRUE'
+  );
+  assert.equal(
+    /jsonb_typeof\(jwt_claims\s*->\s*'email_verified'\)[^;]*'null'/i.test(sql),
+    false,
+    'is_admin() must not permit null or missing email_verified claims'
+  );
   assert.equal(
     /jwt_claims\s*->>\s*'admin'/.test(sql),
     false,
@@ -976,6 +989,85 @@ test('Frontend source code exposes zero private keys, service_role tokens, or ha
         `Forbidden secret or demo credential (${secretRegex}) found in ${path.relative(ROOT_DIR, file)}`
       );
     }
+  }
+});
+
+test('is_admin() SQL and token diagnostics enforce strict boolean true email_verified claim', () => {
+  const now = 1_800_000_000;
+  const sql = fs.readFileSync(path.join(ROOT_DIR, 'supabase/migrations/20261112000000_aman_computer_schema.sql'), 'utf8');
+  const isAdminMatch = sql.match(/CREATE OR REPLACE FUNCTION public\.is_admin\(\)[\s\S]*?\$\$;/);
+  assert.ok(isAdminMatch, 'Migration must define public.is_admin()');
+  const isAdminSql = isAdminMatch[0];
+
+  assert.ok(
+    isAdminSql.includes("AND jsonb_typeof(jwt_claims -> 'email_verified') = 'boolean'\n      AND (jwt_claims ->> 'email_verified')::boolean IS TRUE"),
+    'public.is_admin() must require strict boolean TRUE email_verified claim'
+  );
+  assert.equal(
+    isAdminSql.includes("COALESCE(jsonb_typeof(jwt_claims -> 'email_verified'), 'null')"),
+    false,
+    'public.is_admin() must not coalesce missing email_verified claims to permitted null'
+  );
+
+  // Mirror the SQL predicate:
+  //   jsonb_typeof(jwt_claims -> 'email_verified') = 'boolean'
+  //   AND (jwt_claims ->> 'email_verified')::boolean IS TRUE
+  const passesSqlEmailVerified = (claims: Record<string, unknown>): boolean => {
+    if (!Object.prototype.hasOwnProperty.call(claims, 'email_verified')) {
+      return false;
+    }
+    const raw = claims.email_verified;
+    if (typeof raw !== 'boolean') {
+      return false;
+    }
+    return raw === true;
+  };
+
+  // True boolean claim -> allowed
+  assert.equal(passesSqlEmailVerified({ email_verified: true }), true);
+  assert.equal(
+    evaluateTokenClaimDiagnostics(
+      { sub: AUTHORIZED_ADMIN_UID, role: 'authenticated', email_verified: true, exp: now + 3600 },
+      now
+    ).emailVerified,
+    true
+  );
+
+  // False boolean claim -> denied
+  assert.equal(passesSqlEmailVerified({ email_verified: false }), false);
+  assert.equal(
+    evaluateTokenClaimDiagnostics(
+      { sub: AUTHORIZED_ADMIN_UID, role: 'authenticated', email_verified: false, exp: now + 3600 },
+      now
+    ).emailVerified,
+    false
+  );
+
+  // Missing claim -> denied
+  assert.equal(passesSqlEmailVerified({}), false);
+  assert.equal(
+    evaluateTokenClaimDiagnostics(
+      { sub: AUTHORIZED_ADMIN_UID, role: 'authenticated', exp: now + 3600 },
+      now
+    ).emailVerified,
+    false
+  );
+
+  // Malformed / non-boolean claims -> denied
+  for (const malformed of [null, 'true', 'false', 'TRUE', 1, 0, {}, ['true']]) {
+    assert.equal(
+      passesSqlEmailVerified({ email_verified: malformed }),
+      false,
+      `Malformed email_verified=${JSON.stringify(malformed)} must be rejected`
+    );
+    assert.equal(
+      evaluateTokenClaimDiagnostics(
+        { sub: AUTHORIZED_ADMIN_UID, role: 'authenticated', email_verified: malformed, exp: now + 3600 },
+        now
+      ).emailVerified,
+      false,
+      `Diagnostics must reject malformed email_verified=${JSON.stringify(malformed)}`
+    );
   }
 });
 
