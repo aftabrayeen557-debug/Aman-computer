@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import * as esbuild from 'esbuild';
 
 import { isFirebaseConfigured } from '../src/lib/firebase.ts';
 import { isSupabaseConfigured, testSupabaseConnection, getRefreshedSupabaseAccessToken } from '../src/lib/supabase.ts';
@@ -569,7 +570,17 @@ test('Edge Function verify-admin and config.toml enforce single-admin allowlist 
   assert.ok(fnCode.includes("const AUTHORIZED_ADMIN_UID = 'Yr0Wr7PuuAdOIMaqohmqaINNbNC2'"));
   assert.ok(fnCode.includes("const AUTHORIZED_ADMIN_EMAIL = 'shariqueaman77@gmail.com'"));
   assert.ok(fnCode.includes('userUid !== AUTHORIZED_ADMIN_UID || userEmail !== AUTHORIZED_ADMIN_EMAIL'));
-  assert.ok(fnCode.includes('status: 403'), 'verify-admin must return 403 for unauthorized accounts');
+  assert.ok(fnCode.includes('403'), 'verify-admin must return 403 for unauthorized accounts');
+  assert.ok(fnCode.includes('fbUser.emailVerified !== true'), 'verify-admin must enforce strict boolean emailVerified === true');
+  assert.ok(
+    fnCode.indexOf('fbUser.emailVerified !== true') < fnCode.indexOf('userUid !== AUTHORIZED_ADMIN_UID'),
+    'emailVerified check must execute before UID/email allowlist and DB lookup'
+  );
+  assert.equal(/Access-Control-Allow-Origin['"]?\s*:\s*['"]\*/.test(fnCode), false, 'Wildcard CORS origin must be removed');
+  assert.equal(/\bALLOWED_ORIGINS\b/.test(fnCode), false, 'Unverified ALLOWED_ORIGINS env list must be removed');
+  assert.equal(fnCode.includes('asia-southeast1.run.app'), false, 'Cloud Run URLs must not be hardcoded in verify-admin');
+  assert.ok(fnCode.includes('parsed.username || parsed.password'), 'APP_URL validation must reject embedded credentials');
+  assert.equal(fnCode.includes('err?.message'), false, 'Client HTTP 500 response must never expose raw exception messages');
   assert.equal(fnCode.includes('byEmailRes'), false, 'verify-admin must not permit email-only fallback');
   assert.equal(fnCode.includes('.update({ firebase_uid'), false, 'verify-admin must not rebind UIDs dynamically');
   assert.ok(fnCode.includes('!firebaseApiKey || !supabaseUrl || !supabaseServiceRoleKey'), 'verify-admin must fail closed without secrets');
@@ -1192,6 +1203,488 @@ test('Hardening migration 20261114102000 sets empty search_path on SECURITY DEFI
   );
   const singleAdminFn = extractFn(baseSql, 'public.enforce_single_admin_user');
   assert.equal(/SECURITY\s+DEFINER/i.test(singleAdminFn), false, 'enforce_single_admin_user() must stay SECURITY INVOKER');
+});
+
+test('Edge Function verify-admin enforces emailVerified, strict CORS origins, disabled/allowlist checks, and fail-closed error handling', async () => {
+  const fnEntry = path.join(ROOT_DIR, 'supabase/functions/verify-admin/index.ts');
+  const bundled = await esbuild.build({
+    entryPoints: [fnEntry],
+    bundle: true,
+    write: false,
+    format: 'esm',
+    platform: 'neutral',
+    plugins: [
+      {
+        name: 'deno-url-stubs',
+        setup(build) {
+          build.onResolve({ filter: /^https:\/\// }, (args) => ({
+            path: args.path,
+            namespace: 'deno-stub',
+          }));
+          build.onLoad({ filter: /.*/, namespace: 'deno-stub' }, (args) => {
+            if (args.path.includes('std@')) {
+              return { contents: 'export const serve = () => {};', loader: 'js' };
+            }
+            return { contents: 'export const createClient = () => { throw new Error("stub"); };', loader: 'js' };
+          });
+        },
+      },
+    ],
+  });
+
+  const code = bundled.outputFiles[0]?.text || '';
+  assert.ok(code.length > 0, 'Expected compiled verify-admin bundle');
+  const modUrl = `data:text/javascript;base64,${Buffer.from(code, 'utf8').toString('base64')}`;
+  const mod = (await import(modUrl)) as {
+    createVerifyAdminHandler: (deps: {
+      getEnv: (key: string) => string | undefined;
+      fetchFn: typeof fetch;
+      createSupabaseClient: (...args: unknown[]) => unknown;
+      logError: (...args: unknown[]) => void;
+    }) => (req: Request) => Promise<Response>;
+  };
+
+  const validAppOrigin = 'https://aman-computer-hosted.example';
+  const baseEnv: Record<string, string | undefined> = {
+    FIREBASE_WEB_API_KEY: 'test-firebase-api-key',
+    SUPABASE_URL: 'https://test-project.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
+    APP_URL: validAppOrigin,
+  };
+
+  const makeMockSupabase = (record: Record<string, unknown> | null, onQuery?: () => void) => {
+    return () => ({
+      from: (table: string) => {
+        assert.equal(table, 'admin_users');
+        if (onQuery) onQuery();
+        const chain = {
+          select: () => chain,
+          eq: () => chain,
+          maybeSingle: async () => ({ data: record, error: null }),
+        };
+        return chain;
+      },
+    });
+  };
+
+  const localDevOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:4173',
+    'http://127.0.0.1:4173',
+  ];
+
+  // 1. Valid verified admin with valid APP_URL and local dev/preview origins + OPTIONS preflight -> 200 / 204
+  for (const origin of [validAppOrigin, ...localDevOrigins]) {
+    let dbCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () =>
+        new Response(
+          JSON.stringify({
+            users: [
+              {
+                localId: AUTHORIZED_ADMIN_UID,
+                email: AUTHORIZED_ADMIN_EMAIL,
+                emailVerified: true,
+                disabled: false,
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(
+        {
+          id: 'row-1',
+          firebase_uid: AUTHORIZED_ADMIN_UID,
+          email: AUTHORIZED_ADMIN_EMAIL,
+          name: 'Sharique Aman',
+          role: 'Proprietor / Super Admin',
+          is_active: true,
+        },
+        () => {
+          dbCalled = true;
+        }
+      ),
+      logError: () => {},
+    });
+
+    const preflightRes = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'OPTIONS',
+        headers: { Origin: origin },
+      })
+    );
+    assert.equal(preflightRes.status, 204);
+    assert.equal(preflightRes.headers.get('Access-Control-Allow-Origin'), origin);
+    assert.equal(preflightRes.headers.get('Access-Control-Allow-Methods'), 'POST, OPTIONS');
+    assert.equal(preflightRes.headers.get('Vary'), 'Origin');
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: origin, Authorization: 'Bearer valid-firebase-token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(dbCalled, true);
+    assert.equal(body.authenticated, true);
+    assert.equal(body.isAuthorizedAdmin, true);
+    assert.equal(body.uid, AUTHORIZED_ADMIN_UID);
+    assert.equal(body.email, AUTHORIZED_ADMIN_EMAIL);
+    assert.equal(body.name, 'Sharique Aman');
+    assert.equal(body.role, 'Proprietor / Super Admin');
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), origin);
+    assert.equal(res.headers.get('Vary'), 'Origin');
+  }
+
+  // 2. Unverified admin (false and non-boolean values) -> 403 rejected before UID/email/DB lookup
+  for (const badVerified of [false, 'true', 'false', 1, 0, null, {}]) {
+    let dbCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () =>
+        new Response(
+          JSON.stringify({
+            users: [
+              {
+                localId: AUTHORIZED_ADMIN_UID,
+                email: AUTHORIZED_ADMIN_EMAIL,
+                emailVerified: badVerified,
+                disabled: false,
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null, () => {
+        dbCalled = true;
+      }),
+      logError: () => {},
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 403);
+    assert.equal(body.isAuthorizedAdmin, false);
+    assert.equal(dbCalled, false, `DB lookup must not run for emailVerified=${JSON.stringify(badVerified)}`);
+  }
+
+  // 3. Missing emailVerified -> 403 rejected before DB lookup
+  {
+    let dbCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () =>
+        new Response(
+          JSON.stringify({
+            users: [
+              {
+                localId: AUTHORIZED_ADMIN_UID,
+                email: AUTHORIZED_ADMIN_EMAIL,
+                disabled: false,
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null, () => {
+        dbCalled = true;
+      }),
+      logError: () => {},
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 403);
+    assert.equal(body.isAuthorizedAdmin, false);
+    assert.equal(dbCalled, false);
+  }
+
+  // 4. Disabled account (even with emailVerified: true) -> 403 rejected before DB lookup
+  {
+    let dbCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () =>
+        new Response(
+          JSON.stringify({
+            users: [
+              {
+                localId: AUTHORIZED_ADMIN_UID,
+                email: AUTHORIZED_ADMIN_EMAIL,
+                emailVerified: true,
+                disabled: true,
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        )) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null, () => {
+        dbCalled = true;
+      }),
+      logError: () => {},
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 403);
+    assert.equal(body.authenticated, false);
+    assert.equal(body.isAuthorizedAdmin, false);
+    assert.equal(dbCalled, false);
+  }
+
+  // 5. Wrong UID or wrong email (even with emailVerified: true) -> 403 rejected before DB lookup
+  for (const wrongUser of [
+    { localId: 'WrongUid123', email: AUTHORIZED_ADMIN_EMAIL, emailVerified: true, disabled: false },
+    { localId: AUTHORIZED_ADMIN_UID, email: 'attacker@example.com', emailVerified: true, disabled: false },
+  ]) {
+    let dbCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () =>
+        new Response(JSON.stringify({ users: [wrongUser] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null, () => {
+        dbCalled = true;
+      }),
+      logError: () => {},
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 403);
+    assert.equal(body.isAuthorizedAdmin, false);
+    assert.equal(dbCalled, false);
+  }
+
+  // 6. Missing secrets -> fail closed with generic 500 (never exposes env var names) + logs server-side
+  for (const missingKey of ['FIREBASE_WEB_API_KEY', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) {
+    const logged: unknown[][] = [];
+    const incompleteEnv = { ...baseEnv, [missingKey]: undefined };
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => incompleteEnv[k],
+      fetchFn: (() => {
+        throw new Error('fetch should not run when secrets are missing');
+      }) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null),
+      logError: (...args) => logged.push(args),
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 500);
+    assert.equal(body.isAuthorizedAdmin, false);
+    assert.equal(body.error, 'Internal server error');
+    assert.equal(JSON.stringify(body).includes(missingKey), false);
+    assert.ok(logged.length > 0, 'Configuration failure must be logged server-side');
+  }
+
+  // 7. Invalid APP_URL formats -> rejected / ignored, warning logged, origin not allowed
+  for (const badAppUrl of [
+    '*',
+    'null',
+    'https://user:pass@evil.example',
+    'https://user@evil.example',
+    'https://evil.example/subpath',
+    'https://evil.example/',
+    'https://evil.example?foo=bar',
+    'https://evil.example#hash',
+    'ftp://evil.example',
+    'https://*.evil.example',
+    'not-a-valid-url',
+  ]) {
+    const logged: unknown[][] = [];
+    let fetchCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => ({ ...baseEnv, APP_URL: badAppUrl })[k],
+      fetchFn: (async () => {
+        fetchCalled = true;
+        return new Response('{}', { status: 200 });
+      }) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null),
+      logError: (...args) => logged.push(args),
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: badAppUrl, Authorization: 'Bearer token' },
+      })
+    );
+    assert.equal(res.status, 403, `Invalid APP_URL ${badAppUrl} must not be trusted as an allowed origin`);
+    assert.equal(res.headers.get('Access-Control-Allow-Origin'), null);
+    assert.equal(res.headers.get('Vary'), 'Origin');
+    assert.equal(fetchCalled, false);
+    assert.ok(logged.length > 0, `Invalid APP_URL ${badAppUrl} must log server-side warning`);
+  }
+
+  // 8. Unauthorized origins (including previously suggested Cloud Run URLs when APP_URL is unset) -> 403, no CORS header
+  for (const badOrigin of [
+    'https://ais-dev-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app',
+    'https://evil.example',
+    'https://amancomputer.fake',
+    'null',
+  ]) {
+    let fetchCalled = false;
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => ({ ...baseEnv, APP_URL: undefined })[k],
+      fetchFn: (async () => {
+        fetchCalled = true;
+        return new Response('{}', { status: 200 });
+      }) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null),
+      logError: () => {},
+    });
+
+    for (const method of ['OPTIONS', 'POST'] as const) {
+      const res = await handler(
+        new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+          method,
+          headers: { Origin: badOrigin, Authorization: 'Bearer token' },
+        })
+      );
+      assert.equal(res.status, 403);
+      assert.equal(res.headers.get('Access-Control-Allow-Origin'), null);
+      assert.equal(res.headers.get('Vary'), 'Origin');
+      assert.equal(fetchCalled, false, `Unauthorized origin ${badOrigin} must be blocked before external lookup`);
+    }
+  }
+
+  // 9. Missing Origin server-to-server requests: OPTIONS rejected; POST still requires full Firebase + DB auth
+  {
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async (_url, init) => {
+        const parsed = JSON.parse(String(init?.body || '{}'));
+        if (parsed.idToken === 'valid-admin-token') {
+          return new Response(
+            JSON.stringify({
+              users: [
+                {
+                  localId: AUTHORIZED_ADMIN_UID,
+                  email: AUTHORIZED_ADMIN_EMAIL,
+                  emailVerified: true,
+                  disabled: false,
+                },
+              ],
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            users: [
+              {
+                localId: AUTHORIZED_ADMIN_UID,
+                email: AUTHORIZED_ADMIN_EMAIL,
+                emailVerified: false,
+                disabled: false,
+              },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }) as typeof fetch,
+      createSupabaseClient: makeMockSupabase({
+        id: 'row-1',
+        firebase_uid: AUTHORIZED_ADMIN_UID,
+        email: AUTHORIZED_ADMIN_EMAIL,
+        name: 'Sharique Aman',
+        role: 'Proprietor / Super Admin',
+        is_active: true,
+      }),
+      logError: () => {},
+    });
+
+    const optNoOrigin = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', { method: 'OPTIONS' })
+    );
+    assert.equal(optNoOrigin.status, 403);
+    assert.equal(optNoOrigin.headers.get('Access-Control-Allow-Origin'), null);
+
+    const noTokenRes = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', { method: 'POST' })
+    );
+    assert.equal(noTokenRes.status, 401);
+    assert.equal(noTokenRes.headers.get('Access-Control-Allow-Origin'), null);
+    assert.equal(noTokenRes.headers.get('Vary'), 'Origin');
+
+    const unverifiedNoOriginRes = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer unverified-token' },
+      })
+    );
+    assert.equal(unverifiedNoOriginRes.status, 403);
+    assert.equal(unverifiedNoOriginRes.headers.get('Access-Control-Allow-Origin'), null);
+
+    const validNoOriginRes = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid-admin-token' },
+      })
+    );
+    const validBody = await validNoOriginRes.json();
+    assert.equal(validNoOriginRes.status, 200);
+    assert.equal(validBody.authenticated, true);
+    assert.equal(validBody.isAuthorizedAdmin, true);
+    assert.equal(validNoOriginRes.headers.get('Access-Control-Allow-Origin'), null);
+    assert.equal(validNoOriginRes.headers.get('Vary'), 'Origin');
+  }
+
+  // 10. Unexpected exception -> generic HTTP 500 without leaking internal error message
+  {
+    const logged: unknown[][] = [];
+    const handler = mod.createVerifyAdminHandler({
+      getEnv: (k) => baseEnv[k],
+      fetchFn: (async () => {
+        throw new Error('SENSITIVE_INTERNAL_NETWORK_DETAIL');
+      }) as typeof fetch,
+      createSupabaseClient: makeMockSupabase(null),
+      logError: (...args) => logged.push(args),
+    });
+
+    const res = await handler(
+      new Request('https://test-project.supabase.co/functions/v1/verify-admin', {
+        method: 'POST',
+        headers: { Origin: validAppOrigin, Authorization: 'Bearer token' },
+      })
+    );
+    const body = await res.json();
+    assert.equal(res.status, 500);
+    assert.equal(body.error, 'Internal server error');
+    assert.equal(JSON.stringify(body).includes('SENSITIVE_INTERNAL_NETWORK_DETAIL'), false);
+    assert.ok(logged.length > 0, 'Unexpected exception must be logged server-side');
+  }
 });
 
 test('Live Supabase connectivity check (conditional on environment credentials)', async (t) => {
