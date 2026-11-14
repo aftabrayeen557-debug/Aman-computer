@@ -89,7 +89,7 @@ BEGIN
       AND au.firebase_uid = uid_val
       AND LOWER(au.email) = authorized_email
       AND LOWER(au.email) = email_val
-      AND jsonb_typeof(jwt_claims -> 'email_verified') IN ('boolean', 'null')
+      AND COALESCE(jsonb_typeof(jwt_claims -> 'email_verified'), 'null') IN ('boolean', 'null')
   );
 END;
 $$;
