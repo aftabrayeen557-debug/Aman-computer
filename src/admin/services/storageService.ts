@@ -1,0 +1,194 @@
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+
+export type StorageBucketName =
+  | 'gallery-images'
+  | 'update-posters'
+  | 'media-library'
+  | 'customer-documents';
+
+export interface UploadResult {
+  success: boolean;
+  url?: string;
+  path?: string;
+  error?: string;
+  fileSize?: string;
+}
+
+export const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+
+export const ALLOWED_DOCUMENT_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+export const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
+
+/**
+ * Validates a file against strict MIME type and byte size constraints.
+ * Rejects executable, HTML, SVG, or oversized files.
+ */
+export const validateUploadFile = (
+  file: Pick<File, 'type' | 'size' | 'name'>,
+  expectedCategory: 'image' | 'document' | 'any' = 'any'
+): { valid: boolean; error?: string } => {
+  const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+  const isDoc = ALLOWED_DOCUMENT_TYPES.includes(file.type);
+
+  if (expectedCategory === 'image' && !isImage) {
+    return {
+      valid: false,
+      error: 'Invalid image format. Allowed formats: JPG, PNG, WEBP.',
+    };
+  }
+
+  if (expectedCategory === 'document' && !isDoc) {
+    return {
+      valid: false,
+      error: 'Invalid document format. Allowed formats: PDF, DOC, DOCX.',
+    };
+  }
+
+  if (expectedCategory === 'any' && !isImage && !isDoc) {
+    return {
+      valid: false,
+      error: 'Unsupported file type. Allowed: JPG, PNG, WEBP, PDF, DOC, DOCX.',
+    };
+  }
+
+  if (file.size <= 0) {
+    return { valid: false, error: 'Selected file is empty.' };
+  }
+
+  const maxSize = isDoc ? MAX_DOC_SIZE : MAX_IMAGE_SIZE;
+  if (file.size > maxSize) {
+    const maxMb = isDoc ? '10 MB' : '5 MB';
+    return {
+      valid: false,
+      error: `File size exceeds maximum limit (${maxMb}).`,
+    };
+  }
+
+  return { valid: true };
+};
+
+/**
+ * Format bytes to human-readable string (e.g. 2.4 MB)
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+/**
+ * Uploads a validated file directly to a Supabase Storage bucket.
+ * Requires valid Supabase configuration and authenticated admin session (via Third-Party Auth).
+ * Never stores large Base64 payloads in localStorage.
+ */
+export const uploadFileToStorage = async (
+  bucket: StorageBucketName,
+  file: File,
+  folderPath: string = '',
+  expectedCategory: 'image' | 'document' | 'any' = 'any'
+): Promise<UploadResult> => {
+  const validation = validateUploadFile(file, expectedCategory);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  if (!isSupabaseConfigured() || !supabase) {
+    return {
+      success: false,
+      error:
+        'Supabase Storage is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env or supply a hosted HTTPS URL.',
+    };
+  }
+
+  const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const timestamp = Date.now();
+  const filePath = folderPath
+    ? `${folderPath}/${timestamp}_${cleanFileName}`
+    : `${timestamp}_${cleanFileName}`;
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (error) {
+      return {
+        success: false,
+        error: `Storage upload rejected: ${error.message}`,
+      };
+    }
+
+    if (bucket === 'customer-documents') {
+      const { data: signedData, error: signErr } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(data.path, 60 * 60 * 24 * 7); // 7-day signed URL for private bucket
+
+      if (signErr || !signedData) {
+        return {
+          success: true,
+          path: data.path,
+          url: data.path,
+          fileSize: formatFileSize(file.size),
+        };
+      }
+
+      return {
+        success: true,
+        path: data.path,
+        url: signedData.signedUrl,
+        fileSize: formatFileSize(file.size),
+      };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return {
+      success: true,
+      path: data.path,
+      url: publicUrlData.publicUrl,
+      fileSize: formatFileSize(file.size),
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err?.message || 'Network failure while uploading file to Supabase Storage.',
+    };
+  }
+};
+
+/**
+ * Deletes an object from a Supabase Storage bucket
+ */
+export const deleteFileFromStorage = async (
+  bucket: StorageBucketName,
+  path: string
+): Promise<{ success: boolean; error?: string }> => {
+  if (!isSupabaseConfigured() || !supabase) {
+    return { success: false, error: 'Supabase Storage is not configured.' };
+  }
+  try {
+    const { error } = await supabase.storage.from(bucket).remove([path]);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Storage deletion error' };
+  }
+};

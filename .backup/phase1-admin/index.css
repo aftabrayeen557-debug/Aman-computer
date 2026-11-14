@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: "Onest", sans-serif;
+  --font-sans: "Onest", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+:root {
+  --background: #E8E4E0;
+  --foreground: #1A1818;
+  --ink: #1A1818;
+  --muted: #857878;
+  --subtle: #B5A8A8;
+  --line: #D5CDCA;
+  --surface: #DED8D4;
+  --surface-2: #D3CBC8;
+  --accent: #6B5C5C;
+  --hero-from: #EEEAE6;
+  --hero-mid: #E8E4E0;
+  --hero-to: #D8CDCA;
+  --chip-bg: rgba(242, 238, 235, 0.6);
+  --chip-line: rgba(196, 176, 176, 0.45);
+  --btn-bg: #1A1818;
+  --btn-fg: #E8E4E0;
+  font-family: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+}
+
+html.dark, html[data-mode="dark"] {
+  --background: #1A1818;
+  --foreground: #E8E4E0;
+  --ink: #E8E4E0;
+  --muted: #A39696;
+  --subtle: rgba(196, 176, 176, 0.25);
+  --line: rgba(196, 176, 176, 0.16);
+  --surface: #252121;
+  --surface-2: #302A2A;
+  --accent: #B5A8A8;
+  --hero-from: #221F1F;
+  --hero-mid: #1A1818;
+  --hero-to: #141212;
+  --chip-bg: rgba(196, 176, 176, 0.08);
+  --chip-line: rgba(196, 176, 176, 0.16);
+  --btn-bg: #E8E4E0;
+  --btn-fg: #1A1818;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 9999px;
+}
+
+/* 3D Door Perspective */
+.door-scene {
+  perspective: 1200px;
+}
+
+.door-panel {
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.65s ease;
+}
+
+.door-open .door-panel,
+.door-scene:hover .door-panel {
+  transform: rotateY(-62deg);
+  box-shadow: 12px 0 24px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Holographic Card 3D */
+.holo-card-wrap {
+  perspective: 1000px;
+}
+
+.holo-card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.holo-card-flipped {
+  transform: rotateY(180deg);
+}
+
+.holo-card-front, .holo-card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.holo-card-back {
+  transform: rotateY(180deg);
+}

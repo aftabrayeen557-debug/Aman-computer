@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aman Computer — Cyber Cafe & Digital Center | Operator Admin Terminal</title>
+    <meta name="description" content="Premium Operator Admin Dashboard for Aman Computer Cyber Cafe & Digital Center. Manage services, exam form registrations, customer enquiries, and website content." />
+    
+    <!-- Onest Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Dark Mode Initial State Prevent Flash -->
+    <script>
+      try {
+        const isDark = localStorage.getItem('aman_admin_dark') === 'true';
+        if (isDark) {
+          document.documentElement.setAttribute('data-mode', 'dark');
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-[#E8E4E0] dark:bg-[#1A1818] text-[#2E2828] dark:text-[#E8E4E0] antialiased selection:bg-amber-500/20 selection:text-amber-900 dark:selection:text-amber-200">
+    <div id="admin-root"></div>
+    <script type="module" src="/src/admin/main.tsx"></script>
+  </body>
+</html>

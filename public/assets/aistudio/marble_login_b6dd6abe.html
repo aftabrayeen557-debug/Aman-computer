@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!--
+  Marble Sign In, based on Marble Code by @codinvisual - t.me/CodinVisual
+  Email and password fields. Every character you type drops one glass marble into the field's tray,
+  Backspace lifts the last marble out, paste and autofill drop marbles one by one. A wrong login spills
+  the password marbles into a heap at the bottom, the email stays. A right login lights both trays and
+  opens the lock. Every character gets its own box. Email marbles show their letter, password marbles stay blank, so a password is never shown.
+  Demo login: anna@example.com / marble123
+  Change at the top of the <script>: DEMO_EMAIL, DEMO_PASSWORD (remove both when you add your server),
+  GRAVITY, BOUNCE, MARBLE_SIZE (px), MATERIAL 'clear' or 'vein', SOUND true or false.
+  Server: search for "a real server request goes here". Field limits are the maxlength attributes
+  (email 30, password 15), boxes wrap onto new rows.
+  Without WebGL 2 the fields show normal text. Every class starts with "mc-".
+  Use it free on your own site, personal or commercial. Don't repost or resell this file itself.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marble Sign In</title>
+<style>
+  /* page shell, only needed while this file is the whole page */
+  body { margin: 0; background: #0A0E16; }
+</style>
+<style>
+  /* Marble Code by @codinvisual · t.me/CodinVisual · free for your own site, don't resell this file */
+  .mc {
+    --bg: #0A0E16;
+    --ink: #EAF0F7;
+    --mute: #8D98AA;
+    --ice: #A9D6FF;
+    --err: #FF9B93;
+    --ease: cubic-bezier(.23, 1, .32, 1);
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: radial-gradient(70% 55% at 50% 42%, #18233A 0%, #0E1424 55%, var(--bg) 100%);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+  .mc-glass { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
+  .mc-box { position: relative; z-index: 1; box-sizing: border-box; width: min(520px, 100%); padding: 24px; display: grid; justify-items: center; text-align: center; }
+  .mc-lock { width: 34px; height: 34px; margin-bottom: 18px; color: var(--mute); transition: color .3s ease; }
+  .mc-shackle { transition: transform .5s var(--ease); transform-origin: 23px 15px; }
+  .mc-open .mc-lock { color: var(--ice); }
+  .mc-open .mc-shackle { transform: translateY(-3px) rotate(24deg); }
+  .mc-box h1 { margin: 0; font: 700 34px/1.1 system-ui, sans-serif; letter-spacing: -.025em; }
+  .mc-sub { margin: 10px 0 0; max-width: 34ch; color: var(--mute); text-wrap: balance; }
+  .mc-sub b { color: var(--ink); font-weight: 600; }
+  .mc-form { width: min(380px, 100%); display: grid; gap: 18px; margin-top: 28px; text-align: left; }
+  .mc-field { display: grid; gap: 8px; }
+  .mc-lab { color: var(--mute); font-size: 14px; }
+  .mc-trough { display: block; position: relative; }
+  .mc-trough:focus-within { outline: 2px solid rgba(169, 214, 255, .6); outline-offset: 6px; border-radius: 14px; }
+  .mc-cells { display: flex; flex-wrap: wrap; gap: 8px 4px; min-height: var(--ch, 39px); }
+  .mc-cell {
+    --hit: 0;
+    position: relative; flex: none; width: var(--cw, 36px); height: var(--ch, 39px);
+    border-radius: calc(var(--cw, 36px) * .5) calc(var(--cw, 36px) * .5) 10px 10px;
+    background: linear-gradient(#04060B, #070A12 70%, #0B1020);
+    box-shadow: inset 0 8px 14px rgba(0, 0, 0, .75), inset 0 -1px 0 rgba(169, 214, 255, .16), 0 1px 0 rgba(255, 255, 255, .05);
+    transform: translateY(calc(var(--hit) * 1.5px));
+    animation: mc-in .25s ease-out;
+  }
+  @keyframes mc-in { from { opacity: 0; } }
+  .mc-cell::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 -10px 18px -6px var(--ice), inset 0 0 0 1px rgba(169, 214, 255, .5);
+    opacity: calc(var(--hit) * .9);
+  }
+  .mc-cell::after {
+    content: ""; position: absolute; left: 22%; right: 22%; bottom: 6px; height: 2px; border-radius: 2px;
+    background: var(--ice); opacity: 0; transition: opacity .2s ease;
+  }
+  .mc-trough:focus-within .mc-cell.mc-next::after { opacity: .8; }
+  .mc-cell.mc-lit { background: linear-gradient(#0D1A2E, #132840 70%, #1E3A5C); }
+  .mc-cell.mc-lit::before { opacity: .55; animation: mc-breathe 3.6s ease-in-out infinite; }
+  @keyframes mc-breathe { 50% { opacity: .3; } }
+  .mc-in {
+    position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0;
+    font-size: 16px; color: transparent; background: none; caret-color: transparent; cursor: text;
+  }
+  .mc-plain .mc-trough { height: 52px; }
+  .mc-plain .mc-cells { display: none; }
+  .mc-plain .mc-in { opacity: 1; padding: 0 16px; box-sizing: border-box; color: var(--ink); caret-color: var(--ice); }
+  .mc-btn {
+    min-height: 48px; border: 0; border-radius: 999px; background: var(--ice); color: #0A0E16;
+    font: 600 16px system-ui, sans-serif; cursor: pointer; transition: transform .16s ease-out, opacity .2s ease;
+  }
+  .mc-btn:active { transform: scale(.97); }
+  .mc-btn:disabled { opacity: .5; cursor: default; }
+  .mc-btn:focus-visible { outline: 2px solid var(--ice); outline-offset: 3px; }
+  .mc-msg { min-height: 24px; margin: 18px 0 0; color: var(--mute); font-size: 15px; }
+  .mc-bad .mc-msg { color: var(--err); }
+  .mc-open .mc-msg { color: var(--ice); }
+  @media (max-width: 480px) {
+    .mc-box h1 { font-size: 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mc-cell.mc-lit::before { animation: none; }
+  }
+</style>
+</head>
+<body>
+<!-- code start -->
+<div class="mc">
+  <div class="mc-box">
+    <svg class="mc-lock" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+      <path class="mc-shackle" d="M11 15V11a6 6 0 0 1 12 0v4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <rect x="7" y="15" width="20" height="15" rx="4" fill="currentColor"/>
+    </svg>
+    <h1 class="mc-title">Sign in</h1>
+    <p class="mc-sub">Every character you type drops a marble.</p>
+    <form class="mc-form" novalidate>
+      <label class="mc-field"><span class="mc-lab">Email</span>
+        <span class="mc-trough"><span class="mc-cells"></span><input class="mc-in" type="text" inputmode="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="30"></span></label>
+      <label class="mc-field"><span class="mc-lab">Password</span>
+        <span class="mc-trough"><span class="mc-cells"></span><input class="mc-in" type="password" autocomplete="current-password" maxlength="15"></span></label>
+      <button class="mc-btn" type="submit">Sign in</button>
+    </form>
+    <p class="mc-msg" role="status" aria-live="polite"></p>
+  </div>
+  <canvas class="mc-glass" aria-hidden="true"></canvas>
+</div>
+<!-- code end -->
+<script>
+/* Marble Code by @codinvisual · t.me/CodinVisual · free for your own site, don't resell this file */
+(() => {
+const DEMO_EMAIL = 'anna@example.com';
+const DEMO_PASSWORD = 'marble123';
+const GRAVITY = 2600;
+const BOUNCE = .45;
+const MARBLE_SIZE = 26;
+const MATERIAL = 'clear';
+const SOUND = true;
+
+const root = document.querySelector('.mc');
+const cv = root.querySelector('.mc-glass');
+const troughs = [...root.querySelectorAll('.mc-trough')];
+const inputs = [...root.querySelectorAll('.mc-in')];
+const form = root.querySelector('.mc-form');
+const btn = root.querySelector('.mc-btn');
+const title = root.querySelector('.mc-title');
+const msg = root.querySelector('.mc-msg');
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const gl = cv.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false });
+if (!gl) { cv.remove(); root.classList.add('mc-plain'); }
+
+let w = 0, h = 0, dpr = 1, R = 26, floorY = 0, DIP = 0;
+const slots = [];
+const balls = [];
+const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@._-+';
+const fields = troughs.map((box, i) => ({ wrap: box.querySelector('.mc-cells'), max: inputs[i].maxLength, cells: [], n: 0, chars: '' }));
+
+function measure() {
+  const r = root.getBoundingClientRect();
+  const ow = w, oh = h;
+  w = r.width; h = r.height;
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  R = MARBLE_SIZE / 2;
+  root.style.setProperty('--cw', MARBLE_SIZE + 10 + 'px');
+  root.style.setProperty('--ch', MARBLE_SIZE * 1.5 + 'px');
+  floorY = h - 18;
+  DIP = 90 / Math.pow(w / 2, 2);
+  // every box remembers where it is, marbles move with their box when the layout shifts
+  for (const f of fields) for (const c of f.cells) {
+    const b = c.el.getBoundingClientRect(), o = c.slot;
+    c.slot = { l: b.left - r.left, r: b.right - r.left, t: b.top - r.top, b: b.bottom - r.top - 5, x: b.left - r.left + b.width / 2 };
+    c.dx = c.slot.x - o.x; c.dy = c.slot.t - o.t;
+  }
+  for (const b of balls) {
+    if (b.cell) { b.x += b.cell.dx; b.y += b.cell.dy; }
+    else if (ow) { b.x *= w / ow; b.y += h - oh; }
+  }
+  if (gl) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); gl.viewport(0, 0, cv.width, cv.height); }
+}
+
+// one box per character, the marble falls in from the very top of the screen: the field always has one empty box at the end, the next marble falls into it
+function fit(i) {
+  const f = fields[i], len = inputs[i].value.length, want = Math.min(len + 1, f.max);
+  while (f.cells.length < want) {
+    const el = document.createElement('span'); el.className = 'mc-cell'; f.wrap.appendChild(el);
+    f.cells.push({ el, hit: 0, dx: 0, dy: 0, slot: { l: 0, r: 0, t: 0, b: 0, x: 0 } });
+  }
+  while (f.cells.length > want) { const c = f.cells.pop(); c.dx = c.dy = 0; c.el.remove(); }
+  f.cells.forEach((c, k) => c.el.classList.toggle('mc-next', k === len));
+  measure();
+}
+
+function drop(i, ch, wait = 0) {
+  const f = fields[i], c = f.cells[f.n++], s = c.slot;
+  if (i === 0) f.chars += ch;
+  const b = { x: s.x + (Math.random() - .5), y: -R * 2 - Math.random() * 40, vx: 0, vy: 0, a: (Math.random() - .5) * .5, w: 0,
+    d: i === 0 ? CHARS.indexOf(ch) : -1, cell: c, wait, glow: 0, fade: 1, rest: 0, sleep: false, ground: false };
+  if (still) { b.x = s.x; b.y = s.b - R; b.sleep = true; b.wait = 0; }
+  balls.push(b);
+  wake();
+}
+
+// fast hits bounce, slow ones just lie down
+function bounce(v) {
+  const k = (v - 70) / 520;
+  return BOUNCE * Math.min(1, Math.max(0, k));
+}
+
+function hit(b, v, x) {
+  if (v < 40) return;
+  b.glow = Math.min(1, b.glow + v / 900);
+  if (b.cell) b.cell.hit = Math.max(b.cell.hit, Math.min(1, v / 650));
+  tap(v, x);
+}
+
+function step(dt) {
+  const n = 6, k = dt / n;
+  let moving = false;
+  for (let s = 0; s < n; s++) {
+    for (const b of balls) {
+      if (b.sleep) continue;
+      if (b.out) { b.y += b.vy * k; b.vy *= 1 - 6 * k; continue; }
+      if (b.wait > 0) { b.wait -= k; continue; }
+      b.vy += GRAVITY * k;
+      b.x += b.vx * k; b.y += b.vy * k; b.a += b.w * k;
+    }
+    for (let pass = 0; pass < 2; pass++) {
+      for (const b of balls) if (!b.sleep && !b.out && b.wait <= 0) walls(b);
+      for (let i = 0; i < balls.length; i++)
+        for (let j = i + 1; j < balls.length; j++) pair(balls[i], balls[j]);
+    }
+  }
+  let roll = 0;
+  for (let i = balls.length - 1; i >= 0; i--) {
+    const b = balls[i];
+    if (b.gone || b.out) { b.fade -= dt * (b.out ? 5 : 2.5); moving = true; if (b.fade <= 0) { balls.splice(i, 1); continue; } }
+    b.glow *= Math.exp(-5 * dt);
+    if (b.glow > .01) moving = true;
+    if (b.sleep || b.wait > 0) { if (b.wait > 0) moving = true; continue; }
+    moving = true;
+    const v = Math.hypot(b.vx, b.vy);
+    if (b.ground && !b.cell) roll += Math.abs(b.vx);
+    b.rest = v < 12 && b.ground ? b.rest + dt : 0;
+    if (b.rest > .25) b.sleep = true;
+    if (b.sleep) b.vx = b.vy = b.w = 0;
+    b.ground = false;
+  }
+  rolling(roll);
+  for (const f of fields) for (const c of f.cells) {
+    if (c.hit < .003) { if (c.hit) { c.hit = 0; c.el.style.removeProperty('--hit'); } continue; }
+    c.el.style.setProperty('--hit', c.hit.toFixed(3));
+    c.hit *= Math.exp(-6 * dt);
+    moving = true;
+  }
+  return moving;
+}
+
+function walls(b) {
+  const s = b.cell ? b.cell.slot : null;
+  if (s && b.y > s.t - R) {
+    if (b.x < s.l + R + 4) { b.x = s.l + R + 4; b.vx = Math.abs(b.vx) * .3; }
+    if (b.x > s.r - R - 4) { b.x = s.r - R - 4; b.vx = -Math.abs(b.vx) * .3; }
+    if (b.y > s.b - R) {
+      b.y = s.b - R;
+      if (b.vy > 0) { hit(b, b.vy, b.x); b.vy = -b.vy * bounce(b.vy); }
+      b.vx *= .9; b.ground = true;
+    }
+  }
+  // the floor dips a little in the middle like a tray, so spilled marbles gather into one heap
+  const u = b.x - w / 2, f = floorY - DIP * u * u - R;
+  if (b.y > f) {
+    const nx = 2 * DIP * u, len = Math.hypot(nx, 1);
+    const vn = (b.vx * nx + b.vy) / len;
+    b.y = f;
+    if (vn > 0) {
+      const back = vn * (1 + bounce(vn));
+      b.vx -= back * nx / len; b.vy -= back / len;
+      hit(b, vn, b.x);
+    }
+    // rolling: the spin follows the ground speed, and the roll slowly dies out
+    b.vx *= .985; b.w = b.vx / R;
+    b.ground = true;
+  }
+  if (b.x < R) { b.x = R; b.vx = Math.abs(b.vx) * .4; }
+  if (b.x > w - R) { b.x = w - R; b.vx = -Math.abs(b.vx) * .4; }
+}
+
+function pair(a, b) {
+  if (a.wait > 0 || b.wait > 0 || a.out || b.out || a.cell !== b.cell) return;
+  if (a.sleep && b.sleep) return;
+  const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy, m = 2 * R;
+  if (d2 >= m * m || d2 === 0) return;
+  const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, over = m - d;
+  const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+  // a sleeping marble holds the heap still, only a real knock wakes it
+  if (a.sleep && vn < -260) a.sleep = false;
+  if (b.sleep && vn < -260) b.sleep = false;
+  const ia = a.sleep ? 0 : 1, ib = b.sleep ? 0 : 1, sum = ia + ib;
+  a.x -= nx * over * ia / sum; a.y -= ny * over * ia / sum;
+  b.x += nx * over * ib / sum; b.y += ny * over * ib / sum;
+  if (vn < 0) {
+    const j = -(1 + bounce(-vn)) * vn / sum;
+    a.vx -= j * nx * ia; a.vy -= j * ny * ia;
+    b.vx += j * nx * ib; b.vy += j * ny * ib;
+    // friction between the two glass surfaces
+    const tx = -ny, ty = nx, vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+    a.vx += tx * vt * .1 * ia; a.vy += ty * vt * .1 * ia;
+    b.vx -= tx * vt * .1 * ib; b.vy -= ty * vt * .1 * ib;
+    if (-vn > 60) hit(a.sleep ? b : a, -vn * .6, (a.x + b.x) / 2);
+  }
+  if (ny > .5) a.ground = true;
+  if (ny < -.5) b.ground = true;
+}
+
+// wrong login: the password marbles pop out of their boxes and roll down into a heap
+function spill(i) {
+  for (const b of balls) {
+    if (b.cell === null || !fields[i].cells.includes(b.cell) || b.out) continue;
+    if (still || !gl) { b.out = true; continue; }
+    b.cell = null; b.sleep = false;
+    b.vx = (Math.random() - .5) * 160; b.vy = -200 - Math.random() * 160; b.w = b.vx / R;
+  }
+  fields[i].n = 0; fields[i].chars = '';
+  const heap = balls.filter(b => !b.cell && !b.gone && !b.out);
+  heap.slice(0, Math.max(0, heap.length - 20)).forEach(b => { b.gone = true; });
+  wake();
+}
+
+// right login: every marble hops, the filled boxes light up, the lock opens
+function lock() {
+  balls.filter(b => b.cell && !b.out).forEach((b, i) => {
+    setTimeout(() => {
+      b.sleep = false; b.vy = still ? 0 : -330; b.glow = 1;
+      if (i % 4 === 0) chime((i >> 2) % 8);
+      wake();
+    }, Math.min(i * 18, 700));
+  });
+  fields.forEach(f => f.cells.slice(0, f.n).forEach(c => c.el.classList.add('mc-lit')));
+  setTimeout(() => {
+    root.classList.add('mc-open');
+    title.textContent = 'You’re in';
+    msg.textContent = 'Signed in.';
+  }, 560);
+}
+
+let ac = null, voices = 0, lastTap = 0, hiss = null;
+function tap(v, x) {
+  if (!ac || ac.state !== 'running' || voices >= 8) return;
+  const t = ac.currentTime;
+  if (t - lastTap < .025) return;
+  lastTap = t;
+  const pan = Math.max(-1, Math.min(1, x / w * 2 - 1)) * .6;
+  // two partials of a glass knock, pitch and loudness from how hard it hit
+  tone(1900 + Math.random() * 500 + v * .4, Math.min(.35, v / 2400), .16, pan);
+}
+function chime(i) {
+  if (!ac || ac.state !== 'running' || voices >= 8) return;
+  tone(880 * Math.pow(1.122, i), .12, .4, i / 5 - .5);
+}
+function tone(f, amp, len, pan) {
+  voices++;
+  const t = ac.currentTime, g = ac.createGain(), p = ac.createStereoPanner();
+  p.pan.value = pan;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(amp, t + .003);
+  g.gain.exponentialRampToValueAtTime(.0001, t + len);
+  for (const [mul, lvl] of [[1, 1], [2.76, .4]]) {
+    const o = ac.createOscillator(), og = ac.createGain();
+    o.frequency.value = f * mul; og.gain.value = lvl;
+    o.connect(og).connect(g); o.start(t); o.stop(t + len + .01);
+  }
+  g.connect(p).connect(ac.destination);
+  setTimeout(() => voices--, len * 1000 + 20);
+}
+// one quiet hiss for everything that rolls on the floor
+function rolling(speed) {
+  if (!hiss) return;
+  hiss.gain.setTargetAtTime(Math.min(.05, speed / 9000), ac.currentTime, .05);
+}
+function sound() {
+  if (!SOUND || !window.AudioContext) return;
+  if (!ac) {
+    ac = new AudioContext();
+    const noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), ch = noise.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(), lp = ac.createBiquadFilter();
+    src.buffer = noise; src.loop = true; lp.type = 'lowpass'; lp.frequency.value = 700;
+    hiss = ac.createGain(); hiss.gain.value = 0;
+    src.connect(lp).connect(hiss).connect(ac.destination); src.start();
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+root.addEventListener('pointerdown', sound);
+root.addEventListener('keydown', sound);
+
+const VERT = `#version 300 es
+in vec4 a0;
+in vec4 a1;
+uniform vec2 uView;
+uniform int uPass;
+out vec2 vP;
+out vec4 vI;
+const vec2 Q[6] = vec2[6](vec2(-1, -1), vec2(1, -1), vec2(-1, 1), vec2(-1, 1), vec2(1, -1), vec2(1, 1));
+void main() {
+  vec2 c = Q[gl_VertexID];
+  vec2 pos;
+  if (uPass == 0) {
+    // the shadow and the bright spot under the marble, on whatever it stands on
+    pos = vec2(a0.x, a1.z) + c * vec2(a0.z * 1.35, a0.z * .32);
+    vP = c;
+  } else {
+    float pad = 1. + 2. / a0.z;
+    pos = a0.xy + c * a0.z * pad;
+    vP = vec2(c.x, -c.y) * pad;
+  }
+  vI = vec4(a0.w, a1.x, a1.y, a1.w);
+  gl_Position = vec4(pos / uView * vec2(2, -2) + vec2(-1, 1), 0, 1);
+}`;
+const FRAG = `#version 300 es
+precision highp float;
+uniform sampler2D uDigits;
+uniform vec2 uLight;
+uniform highp int uPass;
+uniform float uVein;
+in vec2 vP;
+in vec4 vI;
+out vec4 o;
+const vec3 ICE = vec3(.66, .84, 1.);
+// a soft rectangle of light, placed by its angle around the marble
+float box(vec3 d, vec2 c, vec2 size, float soft) {
+  vec2 a = vec2(atan(d.x, d.z), asin(clamp(d.y, -1., 1.)));
+  vec2 q = abs(a - c) - size;
+  float dist = length(max(q, 0.)) + min(max(q.x, q.y), 0.);
+  return 1. - smoothstep(-soft, soft, dist);
+}
+vec3 env(vec3 d) {
+  vec3 c = mix(vec3(.01, .012, .022), vec3(.05, .07, .115), smoothstep(-.4, .8, d.y));
+  vec2 follow = uLight * vec2(.35, .2);
+  c += box(d, vec2(-.75, .55) + follow, vec2(.3, .15), .07) * vec3(14.);
+  c += box(d, vec2(1.15, .05), vec2(.035, .42), .03) * vec3(5., 5.5, 6.);
+  c += box(d, vec2(3.1416, .3), vec2(.9, .28), .3) * ICE * .55;
+  c += box(d, vec2(-3.1416, .3), vec2(.9, .28), .3) * ICE * .55;
+  return c;
+}
+float digitAt(vec2 h, float a, float id) {
+  if (id < 0.) return 0.;
+  float c = cos(a), s = sin(a);
+  vec2 u = mat2(c, -s, s, c) * h * 1.1 + .5;
+  if (any(lessThan(u, vec2(0))) || any(greaterThan(u, vec2(1)))) return 0.;
+  float k = floor(id + .5);
+  return texture(uDigits, vec2((mod(k, 16.) + u.x) / 16., (floor(k / 16.) + 1. - u.y) / 5.)).a;
+}
+float haloAt(vec2 h, float id) {
+  if (id < 0.) return 0.;
+  vec2 u = clamp(h * .8 + .5, 0., 1.);
+  float k = floor(id + .5);
+  return texture(uDigits, vec2((mod(k, 16.) + u.x) / 16., (floor(k / 16.) + 1. - u.y) / 5.), 3.5).a;
+}
+// a twisted glass ribbon inside, like a cat's eye marble
+vec3 vein(vec3 p, vec3 d, float len, float seed) {
+  vec3 acc = vec3(0);
+  for (int i = 0; i < 8; i++) {
+    vec3 x = p + d * len * (float(i) + .5) / 8.;
+    float th = x.y * 2.6 + seed;
+    float dist = abs(dot(x.xz, vec2(cos(th), sin(th))));
+    float k = smoothstep(.07, .0, dist) * (1. - smoothstep(.55, .85, length(x)));
+    acc += k * mix(vec3(.35, .75, 1.), vec3(.55, .45, 1.), .5 + .5 * sin(th)) * .22;
+  }
+  return acc;
+}
+void main() {
+  if (uPass == 0) {
+    float r = length(vP);
+    float shade = (1. - smoothstep(.0, 1., r)) * vI.z;
+    float spot = (1. - smoothstep(.0, .4, length(vP * vec2(1.7, 1.)))) * vI.z;
+    o = vec4(ICE * spot * (.7 + vI.w), shade * .85);
+    return;
+  }
+  float r2 = dot(vP, vP);
+  float aa = fwidth(r2) * 1.5;
+  float cover = 1. - smoothstep(1. - aa, 1., r2);
+  if (cover <= 0.) discard;
+  vec3 n = vec3(vP, sqrt(max(0., 1. - r2)));
+  vec3 v = vec3(0, 0, 1);
+  float fres = .04 + .96 * pow(1. - n.z, 5.);
+  vec3 refl = env(reflect(-v, n));
+  vec3 col;
+  // three slightly different indices, so the edge splits the light a little
+  for (int ch = 0; ch < 3; ch++) {
+    float ior = 1.5 + (float(ch) - 1.) * .022;
+    vec3 d = refract(-v, n, 1. / ior);
+    float len = -2. * dot(n, d);
+    vec3 q = n + d * len;
+    vec3 e = refract(d, -q, ior);
+    if (dot(e, e) < .01) e = reflect(d, -q);
+    vec3 core = n + d * (-n.z / d.z);
+    vec3 through = env(e) * exp(-len * vec3(.22, .12, .06));
+    through += ICE * haloAt(core.xy, vI.y) * .55;
+    float dig = digitAt(core.xy, vI.x, vI.y);
+    vec3 c = mix(through, vec3(.95, .97, 1.) * (2.6 + vI.w * 1.5), dig * .96);
+    if (uVein > .5) c += vein(n, d, len, vI.x * 1.7 + vI.y);
+    col[ch] = c[ch];
+  }
+  col = mix(col, refl, fres) + ICE * vI.w * (.15 + .5 * pow(1. - n.z, 2.));
+  // bright studio light rolls off softly instead of clipping
+  col = 1. - exp(-col * 1.15);
+  o = vec4(col, 1.) * cover * vI.z;
+}`;
+
+let prog, buf, data, U = {};
+function setup() {
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  for (const u of ['uView', 'uPass', 'uLight', 'uVein', 'uDigits']) U[u] = gl.getUniformLocation(prog, u);
+  data = new Float32Array(128 * 8);
+  buf = gl.createBuffer();
+  gl.bindVertexArray(gl.createVertexArray());
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.DYNAMIC_DRAW);
+  for (const [name, at] of [['a0', 0], ['a1', 16]]) {
+    const l = gl.getAttribLocation(prog, name);
+    gl.enableVertexAttribArray(l);
+    gl.vertexAttribPointer(l, 4, gl.FLOAT, false, 32, at);
+    gl.vertexAttribDivisor(l, 1);
+  }
+  // the ten digits drawn once on a small canvas, the shader reads them through the glass
+  const t = document.createElement('canvas'); t.width = 2048; t.height = 640;
+  const x = t.getContext('2d');
+  x.fillStyle = '#fff'; x.font = '800 92px system-ui, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  for (let i = 0; i < CHARS.length; i++) x.fillText(CHARS[i], (i % 16) * 128 + 64, (i >> 4) * 128 + 70);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+  gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, t);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+}
+
+const light = { x: 0, y: 0, tx: 0, ty: 0 };
+const fades = new Float32Array(128);
+function draw() {
+  let n = 0;
+  for (const b of balls) {
+    if (b.wait > 0 || b.fade <= 0 || n === 128) continue;
+    const s = b.cell && b.y > b.cell.slot.t - R ? b.cell.slot.b : floorY - DIP * (b.x - w / 2) ** 2;
+    const air = Math.max(0, s - (b.y + R));
+    const o = n * 8;
+    data[o] = b.x; data[o + 1] = b.y; data[o + 2] = R; data[o + 3] = b.a;
+    data[o + 4] = b.d; data[o + 5] = b.fade * Math.max(0, 1 - air / 260); data[o + 6] = s - 2; data[o + 7] = b.glow;
+    fades[n++] = b.fade;
+  }
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.uniform2f(U.uView, w, h);
+  gl.uniform2f(U.uLight, light.x, light.y);
+  gl.uniform1f(U.uVein, MATERIAL === 'vein' ? 1 : 0);
+  gl.uniform1i(U.uDigits, 0);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, data, 0, n * 8);
+  gl.uniform1i(U.uPass, 0);
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, n);
+  for (let i = 0; i < n; i++) data[i * 8 + 5] = fades[i];
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, data, 0, n * 8);
+  gl.uniform1i(U.uPass, 1);
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, n);
+}
+
+let raf = 0, last = 0, quiet = 0;
+function tick(now) {
+  const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60;
+  last = now;
+  light.x += (light.tx - light.x) * Math.min(1, dt * 6);
+  light.y += (light.ty - light.y) * Math.min(1, dt * 6);
+  const turn = Math.abs(light.tx - light.x) + Math.abs(light.ty - light.y) > .002;
+  const moving = step(dt) || turn;
+  draw();
+  quiet = moving ? 0 : quiet + dt;
+  if (quiet < .4) raf = requestAnimationFrame(tick);
+  else { raf = 0; last = 0; }
+}
+function wake() { if (gl && !raf) raf = requestAnimationFrame(tick); }
+
+// the light on the glass leans toward the pointer
+root.addEventListener('pointermove', e => {
+  const r = root.getBoundingClientRect();
+  light.tx = Math.max(-1, Math.min(1, (e.clientX - r.left - w / 2) / (w / 2)));
+  light.ty = Math.max(-1, Math.min(1, -(e.clientY - r.top - h * .45) / (h / 2)));
+  wake();
+});
+
+let busy = false;
+function clearBad() {
+  if (root.classList.contains('mc-bad')) { root.classList.remove('mc-bad'); msg.textContent = ''; }
+}
+// marbles follow the field: the email is compared letter by letter, the password only by length (it is never copied)
+function sync(i) {
+  clearBad();
+  if (!gl) return;
+  const f = fields[i], v = inputs[i].value.slice(0, f.max);
+  let j = 0;
+  if (i === 0) { while (j < f.n && j < v.length && f.chars[j] === v[j]) j++; } else j = Math.min(f.n, v.length);
+  while (f.n > j) lift(i);
+  fit(i);
+  let k = 0;
+  while (f.n < v.length) drop(i, v[f.n], k++ * .03);
+}
+function lift(i) {
+  const f = fields[i], c = f.cells[--f.n];
+  f.chars = f.chars.slice(0, f.n);
+  for (const o of balls) if (o.cell === c) { o.sleep = false; if (!o.out) { o.out = true; o.vy = -700; } }
+  wake();
+}
+inputs.forEach((el, i) => {
+  el.addEventListener('input', () => { if (!busy) sync(i); });
+  el.addEventListener('change', () => { if (!busy) sync(i); });
+});
+form.addEventListener('submit', e => { e.preventDefault(); submit(); });
+
+async function submit() {
+  if (busy) return;
+  const email = inputs[0].value.trim(), pass = inputs[1].value;
+  if (!/^\S+@\S+\.\S+$/.test(email) || !pass) {
+    root.classList.add('mc-bad'); msg.textContent = 'Enter a valid email and your password.'; return;
+  }
+  busy = true; btn.disabled = true; inputs.forEach(el => { el.readOnly = true; });
+  msg.textContent = 'Checking…';
+  let ok = false, err = '';
+  try {
+    await new Promise(r => setTimeout(r, 650));
+    // a real server request goes here, for example:
+    // const res = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
+    // if (res.status === 429) throw new Error('Too many tries. Wait a minute.');
+    // if (res.status >= 500) throw new Error('Server problem. Try again.');
+    // ok = res.ok;
+    ok = email.toLowerCase() === DEMO_EMAIL && pass === DEMO_PASSWORD;
+  } catch (e) { err = e.message || 'No connection. Try again.'; }
+  finally { if (!ok) { busy = false; btn.disabled = false; inputs.forEach(el => { el.readOnly = false; }); } }
+  if (ok) { lock(); return; }
+  root.classList.add('mc-bad');
+  if (err) { msg.textContent = err; return; }
+  msg.textContent = 'Email or password is wrong. Try again.';
+  inputs[1].value = ''; spill(1); fit(1); inputs[1].focus();
+}
+
+if (gl) { fit(0); fit(1); }
+const ro = new ResizeObserver(() => { measure(); if (prog) draw(); });
+ro.observe(root); ro.observe(root.querySelector('.mc-box'));
+measure();
+if (gl) { setup(); draw(); }
+})();
+</script>
+</body>
+</html>

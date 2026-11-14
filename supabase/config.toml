@@ -1,0 +1,14 @@
+# Supabase Project Configuration for Aman Computer
+# Enables official Firebase Third-Party Auth integration for PostgREST RLS
+
+[api]
+enabled = true
+schemas = ["public", "storage"]
+
+[auth.third_party.firebase]
+enabled = true
+# Configure your Firebase Project ID via Supabase Dashboard -> Authentication -> Third-Party Auth
+# or set project_id = "your-firebase-project-id" below before deploying with Supabase CLI.
+
+[functions.verify-admin]
+verify_jwt = false
