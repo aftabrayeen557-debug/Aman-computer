@@ -1071,6 +1071,129 @@ test('is_admin() SQL and token diagnostics enforce strict boolean true email_ver
   }
 });
 
+test('Hardening migration 20261114102000 sets empty search_path on SECURITY DEFINER functions while preserving logic and grants', () => {
+  const migrationsDir = path.join(ROOT_DIR, 'supabase/migrations');
+  const migrationFiles = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
+  assert.ok(
+    migrationFiles.includes('20261112000000_aman_computer_schema.sql'),
+    'Base migration must remain present'
+  );
+  assert.ok(
+    migrationFiles.includes('20261114102000_harden_security_definer_search_path.sql'),
+    'New hardening migration must exist with a later timestamp'
+  );
+  assert.ok(
+    migrationFiles.indexOf('20261114102000_harden_security_definer_search_path.sql') >
+      migrationFiles.indexOf('20261112000000_aman_computer_schema.sql'),
+    'Hardening migration timestamp must sort strictly after the applied base migration'
+  );
+
+  const baseSql = fs.readFileSync(path.join(migrationsDir, '20261112000000_aman_computer_schema.sql'), 'utf8');
+  const hardenSql = fs.readFileSync(
+    path.join(migrationsDir, '20261114102000_harden_security_definer_search_path.sql'),
+    'utf8'
+  );
+
+  assert.match(hardenSql, /^\s*BEGIN;/m, 'Hardening migration must start with BEGIN;');
+  assert.match(hardenSql, /^\s*COMMIT;\s*$/m, 'Hardening migration must end with COMMIT;');
+
+  const extractFn = (source: string, fnName: string): string => {
+    const regex = new RegExp(
+      `CREATE OR REPLACE FUNCTION ${fnName.replace('.', '\\.')}\\(\\)([\\s\\S]*?)\\$\\$;`
+    );
+    const match = source.match(regex);
+    assert.ok(match, `Expected function ${fnName}() definition`);
+    return match[0];
+  };
+
+  // 1. Both SECURITY DEFINER functions set empty search_path = ''
+  const baseIsAdmin = extractFn(baseSql, 'public.is_admin');
+  const hardenIsAdmin = extractFn(hardenSql, 'public.is_admin');
+  assert.match(hardenIsAdmin, /RETURNS BOOLEAN[\s\S]*LANGUAGE plpgsql[\s\S]*STABLE[\s\S]*SECURITY DEFINER[\s\S]*SET search_path = ''/);
+  assert.equal(
+    hardenIsAdmin.replace("SET search_path = ''", 'SET search_path = public'),
+    baseIsAdmin,
+    'public.is_admin() signature and body must remain identical apart from SET search_path = \'\''
+  );
+
+  const baseRateLimit = extractFn(baseSql, 'public.enforce_public_enquiry_rate_limit');
+  const hardenRateLimit = extractFn(hardenSql, 'public.enforce_public_enquiry_rate_limit');
+  assert.match(
+    hardenRateLimit,
+    /RETURNS TRIGGER[\s\S]*LANGUAGE plpgsql[\s\S]*SECURITY DEFINER[\s\S]*SET search_path = ''/
+  );
+  assert.equal(
+    hardenRateLimit.replace("SET search_path = ''", 'SET search_path = public'),
+    baseRateLimit,
+    'public.enforce_public_enquiry_rate_limit() signature and body must remain identical apart from SET search_path = \'\''
+  );
+
+  // 2. Every table, schema, and non-pg_catalog function reference is explicitly schema-qualified
+  assert.ok(hardenIsAdmin.includes('auth.jwt()'));
+  assert.ok(hardenIsAdmin.includes('auth.role()'));
+  assert.ok(hardenIsAdmin.includes('FROM public.admin_users au'));
+  assert.equal(/(^|[^.])\badmin_users\b/.test(hardenIsAdmin), false, 'admin_users must be schema-qualified');
+  assert.equal(/(^|[^.])\bjwt\(\)/.test(hardenIsAdmin), false, 'auth.jwt() must be schema-qualified');
+  assert.equal(/(^|[^.])\brole\(\)/.test(hardenIsAdmin), false, 'auth.role() must be schema-qualified');
+
+  assert.ok(hardenRateLimit.includes('IF public.is_admin() THEN'));
+  assert.ok(hardenRateLimit.includes('FROM public.customer_enquiries ce'));
+  assert.equal(/(^|[^.])\bis_admin\(\)/.test(hardenRateLimit), false, 'public.is_admin() must be schema-qualified');
+  assert.equal(
+    /(^|[^.])\bcustomer_enquiries\b/.test(hardenRateLimit),
+    false,
+    'public.customer_enquiries must be schema-qualified'
+  );
+
+  // 3. Preserve admin authorization requirements in hardened is_admin()
+  assert.ok(hardenIsAdmin.includes("authorized_uid CONSTANT TEXT := 'Yr0Wr7PuuAdOIMaqohmqaINNbNC2';"));
+  assert.ok(hardenIsAdmin.includes("authorized_email CONSTANT TEXT := 'shariqueaman77@gmail.com';"));
+  assert.ok(hardenIsAdmin.includes('WHERE au.is_active = TRUE'));
+  assert.ok(hardenIsAdmin.includes("AND jsonb_typeof(jwt_claims -> 'email_verified') = 'boolean'"));
+  assert.ok(hardenIsAdmin.includes("AND (jwt_claims ->> 'email_verified')::boolean IS TRUE"));
+
+  // 4. Preserve rate limits & error codes/messages in hardened enforce_public_enquiry_rate_limit()
+  assert.ok(hardenRateLimit.includes("INTERVAL '10 minutes'"));
+  assert.ok(hardenRateLimit.includes('IF recent_phone_count >= 3 THEN'));
+  assert.ok(hardenRateLimit.includes("INTERVAL '24 hours'"));
+  assert.ok(hardenRateLimit.includes('IF daily_phone_count >= 8 THEN'));
+  assert.ok(hardenRateLimit.includes("INTERVAL '1 minute'"));
+  assert.ok(hardenRateLimit.includes('IF global_burst_count >= 30 THEN'));
+  assert.ok(hardenRateLimit.includes("ERRCODE = '22023'"));
+  assert.ok(hardenRateLimit.includes("ERRCODE = 'P0001'"));
+
+  // 5. Preserve existing ownership & EXECUTE grants (do not drop/re-grant/broaden permissions)
+  const hardenSqlStatements = hardenSql.replace(/--.*$/gm, '');
+  for (const forbidden of [
+    /\bDROP\s+FUNCTION\b/i,
+    /\bOWNER\s+TO\b/i,
+    /\bGRANT\b/i,
+    /\bREVOKE\b/i,
+    /enforce_single_admin_user/i,
+    /\bCREATE\s+TABLE\b/i,
+    /\bALTER\s+TABLE\b/i,
+    /\bCREATE\s+TRIGGER\b/i,
+    /\bCREATE\s+POLICY\b/i,
+    /storage\.buckets/i,
+    /storage\.objects/i,
+  ]) {
+    assert.equal(
+      forbidden.test(hardenSqlStatements),
+      false,
+      `Hardening migration must not contain out-of-scope statement matching ${forbidden}`
+    );
+  }
+
+  // Base migration retains restrictive grants and keeps enforce_single_admin_user() SECURITY INVOKER
+  assert.ok(baseSql.includes('REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;'));
+  assert.ok(baseSql.includes('GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;'));
+  assert.ok(
+    baseSql.includes('REVOKE ALL ON FUNCTION public.enforce_public_enquiry_rate_limit() FROM PUBLIC, anon, authenticated;')
+  );
+  const singleAdminFn = extractFn(baseSql, 'public.enforce_single_admin_user');
+  assert.equal(/SECURITY\s+DEFINER/i.test(singleAdminFn), false, 'enforce_single_admin_user() must stay SECURITY INVOKER');
+});
+
 test('Live Supabase connectivity check (conditional on environment credentials)', async (t) => {
   if (!isSupabaseConfigured()) {
     t.skip('VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY not configured in current environment');
