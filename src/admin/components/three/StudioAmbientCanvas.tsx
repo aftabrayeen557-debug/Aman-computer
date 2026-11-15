@@ -64,7 +64,7 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 40);
     camera.position.set(0, 0.35, 6.2);
 
-    // Environment reflections for machined champagne gold
+    // Environment reflections for brushed muted gold metal
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
     const roomEnv = new RoomEnvironment();
     const envTarget = pmremGenerator.fromScene(roomEnv, 0.04);
@@ -73,11 +73,11 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
     roomEnv.dispose();
 
     // Studio key / rim lighting
-    const keyLight = new THREE.DirectionalLight('#F3EFE7', 1.5);
+    const keyLight = new THREE.DirectionalLight('#E8E5DF', 1.45);
     keyLight.position.set(4, 5, 6);
     scene.add(keyLight);
 
-    const rimLight = new THREE.DirectionalLight('#C6A56B', 2.2);
+    const rimLight = new THREE.DirectionalLight('#C9A96E', 2.2);
     rimLight.position.set(-5, -2, -4);
     scene.add(rimLight);
 
@@ -85,26 +85,28 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
     const sculpture = new THREE.Group();
     scene.add(sculpture);
 
-    const goldMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#C6A56B'),
-      metalness: 0.9,
+    const accentMaterial = new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color('#C9A96E'),
+      emissive: new THREE.Color('#5C4524'),
+      emissiveIntensity: 0.28,
+      metalness: 0.88,
       roughness: 0.22,
-      clearcoat: 0.4,
+      clearcoat: 0.45,
       clearcoatRoughness: 0.25,
     });
 
     const obsidianMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#191C22'),
-      metalness: 0.4,
-      roughness: 0.42,
-      clearcoat: 0.18,
+      color: new THREE.Color('#141419'),
+      metalness: 0.45,
+      roughness: 0.4,
+      clearcoat: 0.2,
     });
 
     const wireMaterial = new THREE.MeshBasicMaterial({
-      color: new THREE.Color('#C6A56B'),
+      color: new THREE.Color('#DFC492'),
       wireframe: true,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.24,
     });
 
     // Inner obsidian core monolith
@@ -117,26 +119,26 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
     const cageMesh = new THREE.Mesh(cageGeo, wireMaterial);
     sculpture.add(cageMesh);
 
-    // Machined champagne gold orbital rings
+    // Machined gold orbital rings
     const outerRingGeo = new THREE.TorusGeometry(1.75, 0.032, 20, 96);
-    const outerRing = new THREE.Mesh(outerRingGeo, goldMaterial);
+    const outerRing = new THREE.Mesh(outerRingGeo, accentMaterial);
     outerRing.rotation.x = Math.PI * 0.34;
     outerRing.rotation.y = Math.PI * 0.18;
     sculpture.add(outerRing);
 
     const innerRingGeo = new THREE.TorusGeometry(1.42, 0.022, 16, 84);
-    const innerRing = new THREE.Mesh(innerRingGeo, goldMaterial);
+    const innerRing = new THREE.Mesh(innerRingGeo, accentMaterial);
     innerRing.rotation.x = -Math.PI * 0.28;
     innerRing.rotation.z = Math.PI * 0.25;
     sculpture.add(innerRing);
 
-    // Subtle precision accent spheres mounted on outer ring
+    // Precision accent spheres mounted on outer ring
     const nodeGeo = new THREE.SphereGeometry(0.065, 16, 16);
-    const nodeA = new THREE.Mesh(nodeGeo, goldMaterial);
+    const nodeA = new THREE.Mesh(nodeGeo, accentMaterial);
     nodeA.position.set(1.75, 0, 0);
     outerRing.add(nodeA);
 
-    const nodeB = new THREE.Mesh(nodeGeo, goldMaterial);
+    const nodeB = new THREE.Mesh(nodeGeo, accentMaterial);
     nodeB.position.set(-1.75, 0, 0);
     outerRing.add(nodeB);
 
@@ -153,10 +155,10 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
     const particlesGeo = new THREE.BufferGeometry();
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const particlesMat = new THREE.PointsMaterial({
-      color: '#F3EFE7',
+      color: '#DFC492',
       size: 0.035,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.48,
     });
     const particles = new THREE.Points(particlesGeo, particlesMat);
     sculpture.add(particles);
@@ -216,7 +218,7 @@ const StudioAmbientCanvas: React.FC<StudioAmbientCanvasProps> = ({
       innerRingGeo.dispose();
       nodeGeo.dispose();
       particlesGeo.dispose();
-      goldMaterial.dispose();
+      accentMaterial.dispose();
       obsidianMaterial.dispose();
       wireMaterial.dispose();
       particlesMat.dispose();

@@ -81,8 +81,8 @@ export const BackupRestoreView: React.FC = () => {
   const handleMigrateToSupabase = async () => {
     if (!isSupabaseActive) {
       showToast(
-        'Supabase Not Configured',
-        'Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env before running migration.',
+        'Online Sync Unavailable',
+        'Online storage is not active right now. Please try again later.',
         'error'
       );
       return;
@@ -92,12 +92,12 @@ export const BackupRestoreView: React.FC = () => {
       const summary = await migrateLocalDataToSupabase();
       setMigrationSummary(summary);
       if (summary.errors.length === 0) {
-        showToast('Cloud Migration Complete', 'All existing localStorage data synced safely to Supabase PostgreSQL.');
+        showToast('Online Sync Complete', 'All local business records have been synced safely.');
         await hydrateFromSupabase();
       } else {
         showToast(
-          'Migration Completed With Warnings',
-          `${summary.errors.length} record(s) failed to migrate. Review errors below.`,
+          'Sync Completed With Warnings',
+          `${summary.errors.length} record(s) could not be synced. Review details below.`,
           'warning'
         );
       }
@@ -126,7 +126,7 @@ export const BackupRestoreView: React.FC = () => {
             <span>Data Vault, Cloud Sync & System Backup</span>
           </h1>
           <p className="text-xs text-[#857878] dark:text-[#B5A8A8] mt-0.5">
-            Migrate local data to Supabase PostgreSQL, export full JSON backups, and verify cloud persistence.
+            Sync local business data online, download full backups, and verify data health.
           </p>
         </div>
       </div>
@@ -139,10 +139,10 @@ export const BackupRestoreView: React.FC = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-              Hybrid Terminal Vault & Cloud Backend
+              Workspace Storage &amp; Online Sync Status
             </div>
             <div className="text-xs text-[#857878] dark:text-[#B5A8A8] font-mono mt-0.5">
-              Browser Cache: ~{storageKb} KB • Firebase Auth: {isFirebaseActive ? 'Configured' : 'Missing .env'} • Supabase DB: {isSupabaseActive ? dbSyncStatus.toUpperCase() : 'Missing .env'}
+              Local Storage: ~{storageKb} KB • Account Security: {isFirebaseActive ? 'Protected' : 'Standby'} • Online Sync: {isSupabaseActive ? dbSyncStatus.toUpperCase() : 'Offline Mode'}
             </div>
           </div>
         </div>
@@ -160,8 +160,8 @@ export const BackupRestoreView: React.FC = () => {
               {isSupabaseActive
                 ? dbSyncStatus === 'error'
                   ? 'Sync Attention Needed'
-                  : 'Supabase Connected'
-                : 'Local Cache Mode'}
+                  : 'Services Operational'
+                : 'Offline Mode'}
             </span>
           </span>
         </div>
@@ -173,10 +173,10 @@ export const BackupRestoreView: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0]">
               <CloudUpload className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Sync Local Data to Supabase PostgreSQL (Non-Destructive)</span>
+              <span>Sync Local Data Online (Safe Update)</span>
             </div>
             <p className="text-xs text-[#857878] dark:text-[#B5A8A8] max-w-2xl leading-relaxed">
-              Safely migrates all existing Services, Latest Updates (Door 0), Document Requirements (Door 1), Gallery items (Door 4), Our Journey milestones, Customers, Enquiries, Receipts, FAQs, Testimonials, and Business Profile to Supabase using deduplicating upserts. Existing local records are preserved.
+              Safely syncs your Services, Latest Updates, Document Checklists, Gallery Photos, Journey Milestones, Customers, Enquiries, Receipts, FAQs, Testimonials, and Business Profile online without removing existing local data.
             </p>
           </div>
 
@@ -187,7 +187,7 @@ export const BackupRestoreView: React.FC = () => {
               className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[rgba(196,176,176,0.35)] bg-white/60 dark:bg-black/25 text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Pre-Migration Backup</span>
+              <span>Download Safety Backup</span>
             </button>
             <button
               type="button"
@@ -196,7 +196,7 @@ export const BackupRestoreView: React.FC = () => {
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {migrating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
-              <span>{migrating ? 'Migrating...' : 'Migrate Local Data to Cloud'}</span>
+              <span>{migrating ? 'Syncing...' : 'Sync Local Data Online'}</span>
             </button>
           </div>
         </div>
@@ -293,7 +293,7 @@ export const BackupRestoreView: React.FC = () => {
             <span>Reset Local Cache to Defaults</span>
           </div>
           <p className="text-xs text-[#857878] dark:text-[#B5A8A8] max-w-xl">
-            Resets browser localStorage cache to default records without deleting remote Supabase database rows.
+            Restores local browser records to default values without deleting saved online data.
           </p>
         </div>
 

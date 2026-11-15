@@ -1,26 +1,34 @@
 export type AdminTab =
   | 'overview'
   | 'owner-profile'
-  | 'hero-section'
+  | 'hero-headline'
+  | 'hero-showcase'
+  | 'hero-portrait'
   | 'brand-settings'
-  | 'services'
-  | 'four-doors'
-  | 'journey'
-  | 'website-content'
-  | 'gallery'
+  | 'government-schemes'
   | 'latest-updates'
+  | 'doc-requirements'
+  | 'services'
+  | 'gallery'
+  | 'journey'
+  | 'content-about'
+  | 'content-contact'
+  | 'faqs'
+  | 'content-footer'
   | 'business-profile'
   | 'enquiries'
   | 'customers'
-  | 'reports'
   | 'media'
   | 'website-settings'
   | 'seo-manager'
-  | 'settings'
   | 'activity-logs'
+  // Legacy route aliases kept for URL backward compatibility & resolution
+  | 'hero-section'
+  | 'four-doors'
+  | 'website-content'
+  | 'reports'
+  | 'settings'
   | 'backup-restore'
-  | 'doc-requirements'
-  | 'faqs'
   | 'testimonials'
   | 'receipts'
   | 'notifications'
@@ -181,8 +189,121 @@ export interface JourneyItem {
   subtitle?: string;
   description?: string;
   bullets?: string[];
+  imageUrl?: string;
   published: boolean;
   displayOrder?: number;
+}
+
+export interface GovernmentSchemeItem {
+  id: string;
+  title: string;
+  category: string;
+  department: string;
+  shortDescription: string;
+  eligibility: string;
+  benefits: string;
+  requiredDocuments: string[];
+  applicationMode: string;
+  lastDate: string;
+  officialLink: string;
+  posterImage: string;
+  status: UpdateStatus;
+  featured: boolean;
+  published: boolean;
+  displayOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface HeroShowcaseItem {
+  id: string;
+  label: string;
+  visible: boolean;
+  displayOrder: number;
+}
+
+export interface OwnerPortraitConfig {
+  imageUrl: string;
+  visible: boolean;
+  caption: string;
+  subcaption: string;
+  altText: string;
+}
+
+export interface BrandSettings {
+  shopName: string;
+  tagline: string;
+  headerBadgeText: string;
+  logoUrl: string;
+  faviconUrl: string;
+  accentColor: string;
+  footerBrandWordmark: string;
+}
+
+export interface DoorMetaConfig {
+  doorIndex: 0 | 1 | 2 | 3;
+  title: string;
+  subtitle: string;
+  highlights: string[];
+}
+
+export interface DoorsConfig {
+  sectionHeading: string;
+  door0: DoorMetaConfig;
+  door1: DoorMetaConfig;
+  door2: DoorMetaConfig;
+  door3: DoorMetaConfig;
+}
+
+export interface WebsiteSettings {
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  announcementEnabled: boolean;
+  announcementText: string;
+  whatsappButtonEnabled: boolean;
+  sectionVisibility: {
+    hero: boolean;
+    doors: boolean;
+    schemes: boolean;
+    journey: boolean;
+    footer: boolean;
+  };
+}
+
+export interface SeoSettings {
+  pageTitle: string;
+  metaDescription: string;
+  keywords: string;
+  ogImageUrl: string;
+  canonicalUrl: string;
+}
+
+export interface OwnerCustomLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface OwnerSocialLinks {
+  website: string;
+  linkedin: string;
+  instagram: string;
+  facebook: string;
+  other: OwnerCustomLink[];
+}
+
+export interface OwnerProfile {
+  fullName: string;
+  designation: string;
+  businessIdentity: string;
+  bio: string;
+  email: string;
+  phone: string;
+  profileImage: string;
+  locationLabel?: string;
+  experienceLabel?: string;
+  socialLinks: OwnerSocialLinks;
+  updatedAt?: string;
 }
 
 export interface WebsiteSectionContent {
@@ -197,6 +318,13 @@ export interface WebsiteSectionContent {
     announcement: string;
     timingNotice: string;
   };
+  heroShowcase?: HeroShowcaseItem[];
+  ownerPortrait?: OwnerPortraitConfig;
+  brandSettings?: BrandSettings;
+  doorsConfig?: DoorsConfig;
+  websiteSettings?: WebsiteSettings;
+  seoSettings?: SeoSettings;
+  governmentSchemesFallback?: GovernmentSchemeItem[];
   about: {
     heading: string;
     subheading: string;
@@ -227,6 +355,7 @@ export interface WebsiteSectionContent {
     copyrightText: string;
     disclaimer: string;
   };
+  ownerProfile?: OwnerProfile;
 }
 
 export interface FaqItem {

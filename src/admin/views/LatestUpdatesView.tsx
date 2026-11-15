@@ -6,17 +6,19 @@ import {
   Plus,
   Search,
   ExternalLink,
-  Calendar,
-  CheckCircle2,
   Trash2,
   Edit3,
-  X,
   Eye,
   EyeOff,
-  Upload,
-  Loader2,
 } from 'lucide-react';
-import { uploadFileToStorage } from '../services/storageService';
+import {
+  CmsMediaField,
+  CmsModal,
+  CmsPageHeader,
+  CmsSurfaceCard,
+  CmsToggle,
+} from '../components/CmsPrimitives';
+import { deleteStorageFileByUrl } from '../services/storageService';
 
 const CATEGORIES: UpdateCategory[] = [
   'Jobs',
@@ -44,9 +46,7 @@ export const LatestUpdatesView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<LatestUpdateItem | null>(null);
-  const [uploadingPoster, setUploadingPoster] = useState(false);
 
-  // Form Fields
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<UpdateCategory>('Jobs');
   const [shortDescription, setShortDescription] = useState('');
@@ -65,7 +65,8 @@ export const LatestUpdatesView: React.FC = () => {
     const matchesSearch =
       u.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.shortDescription.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || u.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === 'all' || u.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -77,10 +78,10 @@ export const LatestUpdatesView: React.FC = () => {
     setStartDate(new Date().toISOString().slice(0, 10));
     setLastDate('');
     setExamDate('');
-    setQualification('10th / 12th / Graduate');
-    setAgeLimit('18 - 27 Years');
-    setApplicationFee('Gen/OBC: ₹100, SC/ST: ₹0');
-    setOfficialLink('https://ssc.gov.in');
+    setQualification('');
+    setAgeLimit('');
+    setApplicationFee('');
+    setOfficialLink('');
     setPosterImage('');
     setStatus('New');
     setPublished(true);
@@ -105,24 +106,6 @@ export const LatestUpdatesView: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handlePosterUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingPoster(true);
-    try {
-      const res = await uploadFileToStorage('update-posters', file, 'updates', 'image');
-      if (!res.success || !res.url) {
-        showToast('Poster Upload Failed', res.error || 'Could not upload poster image.', 'error');
-        return;
-      }
-      setPosterImage(res.url);
-      showToast('Poster Uploaded', 'Update poster uploaded to Supabase Storage.');
-    } finally {
-      setUploadingPoster(false);
-      e.target.value = '';
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !shortDescription.trim()) return;
@@ -141,7 +124,7 @@ export const LatestUpdatesView: React.FC = () => {
         ageLimit: ageLimit || undefined,
       },
       applicationFee: applicationFee || undefined,
-      officialLink: officialLink || undefined,
+      officialLink: officialLink.trim() || undefined,
       posterImage: posterImage.trim() || undefined,
       status,
       published,
@@ -157,413 +140,386 @@ export const LatestUpdatesView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold tracking-widest uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
-              Door 0 Public Sync
-            </span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0] flex items-center gap-2 mt-1">
-            <Sparkles className="w-6 h-6 text-amber-500" />
-            <span>Latest Updates & Sarkari Alerts Manager</span>
-          </h1>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8] mt-0.5">
-            Post recruitments, admit cards, results, and welfare schemes. Synced live to the public Door 0 page.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <a
-            href="/web-developer/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] bg-white/50 dark:bg-black/20 text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Preview Door 0</span>
-          </a>
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Update</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filter and Search */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#857878] dark:text-[#B5A8A8]" />
-          <input
-            type="text"
-            placeholder="Search updates by title or description..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] text-xs text-[#1A1818] dark:text-[#E8E4E0] placeholder-[#857878] dark:placeholder-[#B5A8A8] outline-hidden focus:border-[#1A1818] dark:focus:border-[#E8E4E0]"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors ${
-              selectedCategory === 'all'
-                ? 'bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]'
-                : 'bg-black/5 dark:bg-white/5 text-[#857878] dark:text-[#B5A8A8] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]'
-            }`}
-          >
-            All Categories ({latestUpdates.length})
-          </button>
-          {CATEGORIES.map((cat) => (
+    <div className="space-y-6">
+      <CmsPageHeader
+        eyebrow="Doors Management · Door 1 Public Portal"
+        title="Latest Updates & Exam Alerts"
+        description="Publish verified recruitment notices, admit card releases, results, and scholarships synced directly to the Latest Updates door."
+        actions={
+          <>
+            <a
+              href="/web-developer/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#101014] border border-white/[0.08] text-xs font-medium text-[#E8E5DF] hover:border-[#C9A96E]/45 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-[#C9A96E]" />
+              <span>Preview Door</span>
+            </a>
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors ${
-                selectedCategory === cat
-                  ? 'bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]'
-                  : 'bg-black/5 dark:bg-white/5 text-[#857878] dark:text-[#B5A8A8] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]'
-              }`}
+              type="button"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold transition-colors cursor-pointer"
             >
-              {cat}
+              <Plus className="w-4 h-4" />
+              <span>Create Update</span>
             </button>
-          ))}
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {/* Updates Cards Grid */}
-      {filteredUpdates.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-[rgba(242,238,235,0.5)] dark:bg-[rgba(196,176,176,0.03)] border border-[rgba(196,176,176,0.2)]">
-          <Sparkles className="w-8 h-8 text-[#857878] mx-auto mb-2 opacity-50" />
-          <div className="text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-            No Updates in Catalog
+      <CmsSurfaceCard>
+        <div className="flex flex-col sm:flex-row gap-3 mb-5">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#85838A]" />
+            <input
+              type="text"
+              placeholder="Search updates by title or summary..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
           </div>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8] mt-1 max-w-sm mx-auto">
-            Click 'Create Update' to publish Sarkari recruitment notifications, admit card links, or scholarship dates.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUpdates.map((item) => (
-            <div
-              key={item.id}
-              className={`p-5 rounded-3xl border transition-all flex flex-col justify-between ${
-                item.published
-                  ? 'bg-[rgba(242,238,235,0.65)] dark:bg-[rgba(196,176,176,0.05)] border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]'
-                  : 'bg-black/5 dark:bg-white/5 border-dashed border-gray-400 opacity-60'
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                selectedCategory === 'all'
+                  ? 'bg-[#211B16] text-[#DFC492] border border-[#C9A96E]/35'
+                  : 'bg-[#101014] text-[#85838A] border border-white/[0.06] hover:text-[#E8E5DF]'
               }`}
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-[#1A1818] dark:text-[#E8E4E0]">
-                    {item.category}
-                  </span>
-                  <span
-                    className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                      item.status === 'New'
-                        ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400'
-                        : item.status === 'Closing Soon'
-                        ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400'
-                        : item.status === 'Active'
-                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-gray-500/15 text-gray-700 dark:text-gray-400'
+              All ({latestUpdates.length})
+            </button>
+            {CATEGORIES.map((cat) => (
+              <button
+                type="button"
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-[#211B16] text-[#DFC492] border border-[#C9A96E]/35'
+                    : 'bg-[#101014] text-[#85838A] border border-white/[0.06] hover:text-[#E8E5DF]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredUpdates.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/[0.1] bg-[#0A0A0E] p-12 text-center space-y-2.5">
+            <Sparkles className="w-8 h-8 text-[#C9A96E]/60 mx-auto" />
+            <div className="font-editorial text-xl text-[#E8E5DF]">
+              No Updates Available
+            </div>
+            <p className="text-xs text-[#85838A] max-w-sm mx-auto">
+              Publish an exam form notice, admit card alert, or recruitment schedule to feature it on the Latest Updates door.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredUpdates.map((item) => (
+              <div
+                key={item.id}
+                className={`p-5 rounded-xl border transition-all flex flex-col justify-between ${
+                  item.published
+                    ? 'bg-[#101014] border-white/[0.08] hover:border-[#C9A96E]/30'
+                    : 'bg-[#0A0A0E] border-dashed border-white/[0.1] opacity-65'
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#16161B] border border-white/[0.07] text-[#C9A96E]">
+                      {item.category}
+                    </span>
+                    <span
+                      className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
+                        item.status === 'New'
+                          ? 'bg-sky-500/15 text-sky-300 border border-sky-500/25'
+                          : item.status === 'Closing Soon'
+                          ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25'
+                          : item.status === 'Active'
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                          : 'bg-white/[0.06] text-[#85838A]'
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-editorial text-lg text-[#E8E5DF] line-clamp-2 leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="text-xs text-[#85838A] line-clamp-3 mt-1.5 leading-relaxed">
+                      {item.shortDescription}
+                    </p>
+                  </div>
+
+                  {(item.importantDates?.lastDate ||
+                    item.eligibility?.qualification ||
+                    item.applicationFee) && (
+                    <div className="p-2.5 rounded-lg bg-[#0A0A0E] border border-white/[0.06] text-[11px] font-mono space-y-1 text-[#85838A]">
+                      {item.importantDates?.lastDate && (
+                        <div className="flex justify-between">
+                          <span>Last Date:</span>
+                          <span className="text-rose-400">
+                            {item.importantDates.lastDate}
+                          </span>
+                        </div>
+                      )}
+                      {item.eligibility?.qualification && (
+                        <div className="flex justify-between gap-2">
+                          <span>Eligibility:</span>
+                          <span className="truncate text-[#E8E5DF]">
+                            {item.eligibility.qualification}
+                          </span>
+                        </div>
+                      )}
+                      {item.applicationFee && (
+                        <div className="flex justify-between gap-2">
+                          <span>Fee:</span>
+                          <span className="truncate text-[#E8E5DF]">
+                            {item.applicationFee}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-3 mt-4 border-t border-white/[0.06]">
+                  <button
+                    type="button"
+                    onClick={() => toggleLatestUpdatePublished(item.id)}
+                    className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors cursor-pointer ${
+                      item.published ? 'text-emerald-400' : 'text-[#85838A]'
                     }`}
                   >
-                    {item.status}
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-sm text-[#1A1818] dark:text-[#E8E4E0] line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-[#857878] dark:text-[#B5A8A8] line-clamp-3 mt-1 leading-relaxed">
-                    {item.shortDescription}
-                  </p>
-                </div>
-
-                {/* Dates & Eligibility Highlights */}
-                <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] font-mono space-y-1 text-[#857878] dark:text-[#B5A8A8]">
-                  {item.importantDates?.lastDate && (
-                    <div className="flex justify-between">
-                      <span>Last Date:</span>
-                      <span className="font-bold text-rose-600 dark:text-rose-400">{item.importantDates.lastDate}</span>
-                    </div>
-                  )}
-                  {item.eligibility?.qualification && (
-                    <div className="flex justify-between">
-                      <span>Eligibility:</span>
-                      <span className="truncate max-w-[130px]">{item.eligibility.qualification}</span>
-                    </div>
-                  )}
-                  {item.applicationFee && (
-                    <div className="flex justify-between">
-                      <span>Fee:</span>
-                      <span>{item.applicationFee}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Card Footer Actions */}
-              <div className="flex items-center justify-between pt-3 mt-4 border-t border-[rgba(196,176,176,0.2)] dark:border-[rgba(196,176,176,0.08)]">
-                <button
-                  onClick={() => toggleLatestUpdatePublished(item.id)}
-                  className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
-                    item.published
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-gray-500'
-                  }`}
-                  title="Toggle Public Visibility"
-                >
-                  {item.published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                  <span>{item.published ? 'Live on Door 0' : 'Draft (Hidden)'}</span>
-                </button>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleOpenEdit(item)}
-                    className="p-1.5 rounded-lg text-[#1A1818] dark:text-[#E8E4E0] hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-                    title="Edit Update"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    {item.published ? (
+                      <Eye className="w-3.5 h-3.5" />
+                    ) : (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    )}
+                    <span>{item.published ? 'Live' : 'Draft'}</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${item.title}"?`)) {
-                        deleteLatestUpdate(item.id);
-                      }
-                    }}
-                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
-                    title="Delete Update"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEdit(item)}
+                      className="p-1.5 rounded-lg text-[#E8E5DF] hover:bg-white/[0.06] transition-colors cursor-pointer"
+                      title="Edit Update"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete "${item.title}"?`)) {
+                          if (item.posterImage) {
+                            void deleteStorageFileByUrl(item.posterImage);
+                          }
+                          deleteLatestUpdate(item.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Delete Update"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Create / Edit Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-[#F0ECE9] dark:bg-[#1A1818] border border-[rgba(196,176,176,0.35)] dark:border-[rgba(196,176,176,0.2)] rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-              <h3 className="text-base font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-                {editingItem ? 'Edit Sarkari Update' : 'Publish New Sarkari Update'}
-              </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1 rounded-lg text-[#857878] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Announcement / Job Title *
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. SSC CGL 2026 Recruitment Online Form"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                    Category *
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as UpdateCategory)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                    Status Badge
-                  </label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as UpdateStatus)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  >
-                    {STATUSES.map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Short Summary / Post Details *
-                </label>
-                <textarea
-                  required
-                  rows={2}
-                  placeholder="Key vacancies, departments, or exam dates..."
-                  value={shortDescription}
-                  onChange={(e) => setShortDescription(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-[rgba(196,176,176,0.2)]">
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#857878] mb-0.5">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[11px] outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#857878] mb-0.5">
-                    Last Date
-                  </label>
-                  <input
-                    type="date"
-                    value={lastDate}
-                    onChange={(e) => setLastDate(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[11px] outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#857878] mb-0.5">
-                    Exam Date
-                  </label>
-                  <input
-                    type="date"
-                    value={examDate}
-                    onChange={(e) => setExamDate(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-lg bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[11px] outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                    Qualification Eligibility
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 10th / 12th / Bachelor Degree"
-                    value={qualification}
-                    onChange={(e) => setQualification(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                    Application Fee Note
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. ₹100 for Gen/OBC, ₹0 for SC/ST"
-                    value={applicationFee}
-                    onChange={(e) => setApplicationFee(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Official Portal / Notification URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={officialLink}
-                  onChange={(e) => setOfficialLink(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] font-mono text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Notification Poster / Graphic (Optional)
-                </label>
-                <div className="flex gap-2">
-                  <label className="px-3 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] font-medium flex items-center gap-1.5 cursor-pointer shrink-0">
-                    {uploadingPoster ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    <span>{uploadingPoster ? 'Uploading...' : 'Upload Poster'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePosterUpload}
-                      disabled={uploadingPoster}
-                      className="hidden"
-                    />
-                  </label>
-                  <input
-                    type="url"
-                    placeholder="Or paste poster URL (https://...)"
-                    value={posterImage}
-                    onChange={(e) => setPosterImage(e.target.value)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] font-mono text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="publishedCheck"
-                  checked={published}
-                  onChange={(e) => setPublished(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="publishedCheck" className="text-xs text-[#1A1818] dark:text-[#E8E4E0]">
-                  Publish immediately to public website (Door 0)
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-3 py-2 rounded-xl border border-[rgba(196,176,176,0.3)] text-[#857878] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] font-semibold hover:opacity-90"
-                >
-                  {editingItem ? 'Save Changes' : 'Publish Update'}
-                </button>
-              </div>
-            </form>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </CmsSurfaceCard>
+
+      <CmsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingItem ? 'Edit Latest Update' : 'Publish Latest Update'}
+        subtitle="Published entries update the public Latest Updates door immediately."
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Announcement / Exam Title *
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g., SSC CGL 2026 Online Application"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">
+                Category *
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as UpdateCategory)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">
+                Status Badge
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as UpdateStatus)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              >
+                {STATUSES.map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Short Summary *
+            </label>
+            <textarea
+              required
+              rows={2}
+              value={shortDescription}
+              onChange={(e) => setShortDescription(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 rounded-xl bg-[#101014] border border-white/[0.07]">
+            <div>
+              <label className="block text-[10px] font-mono text-[#85838A] mb-1">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono text-[#85838A] mb-1">
+                Last Date
+              </label>
+              <input
+                type="date"
+                value={lastDate}
+                onChange={(e) => setLastDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-mono text-[#85838A] mb-1">
+                Exam Date
+              </label>
+              <input
+                type="date"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">
+                Qualification Eligibility
+              </label>
+              <input
+                type="text"
+                value={qualification}
+                onChange={(e) => setQualification(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+              />
+            </div>
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">
+                Application Fee Note
+              </label>
+              <input
+                type="text"
+                value={applicationFee}
+                onChange={(e) => setApplicationFee(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Official Notification URL
+            </label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={officialLink}
+              onChange={(e) => setOfficialLink(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] font-mono text-[#E8E5DF] outline-none"
+            />
+          </div>
+
+          <CmsMediaField
+            label="Notification Poster (Optional)"
+            value={posterImage}
+            onChange={(url) => setPosterImage(url)}
+            onRemove={(prev) => {
+              void deleteStorageFileByUrl(prev);
+            }}
+            bucket="update-posters"
+            folder="updates"
+            aspectClass="aspect-video max-w-sm"
+            onError={(msg) => showToast('Poster Upload Failed', msg, 'error')}
+          />
+
+          <CmsToggle
+            checked={published}
+            onChange={setPublished}
+            label="Publish Immediately"
+            description="Visible on the public Latest Updates door."
+          />
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.07]">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="px-4 py-2 rounded-xl bg-[#101014] border border-white/[0.08] text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] font-semibold cursor-pointer"
+            >
+              {editingItem ? 'Save Changes' : 'Publish Update'}
+            </button>
+          </div>
+        </form>
+      </CmsModal>
     </div>
   );
 };

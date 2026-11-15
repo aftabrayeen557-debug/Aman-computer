@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
+import {
+  Copy,
+  ExternalLink,
+  FileCode,
+  FileText,
+  FolderOpen,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { MediaAsset } from '../types';
-import { 
-  FolderOpen, 
-  Plus, 
-  Trash2, 
-  FileText, 
-  Image as ImageIcon, 
-  FileCode, 
-  Copy, 
-  Upload, 
-  ExternalLink,
-  Loader2,
-} from 'lucide-react';
-import { uploadFileToStorage } from '../services/storageService';
+import { deleteStorageFileByUrl, uploadFileToStorage } from '../services/storageService';
+import { CmsModal, CmsPageHeader, CmsSurfaceCard } from '../components/CmsPrimitives';
 
 export const MediaLibraryView: React.FC = () => {
   const { mediaAssets, addMediaAsset, deleteMediaAsset, showToast } = useAdmin();
@@ -42,7 +42,11 @@ export const MediaLibraryView: React.FC = () => {
     try {
       const res = await uploadFileToStorage('media-library', file, formData.category, 'any');
       if (!res.success || !res.url) {
-        showToast('Upload Failed', res.error || 'Could not upload file to Supabase Storage.', 'error');
+        showToast(
+          'Upload Failed',
+          res.error || "We couldn't upload this file right now.",
+          'error'
+        );
         return;
       }
       const detectedType: 'image' | 'pdf' | 'doc' = file.type.startsWith('image/')
@@ -58,7 +62,7 @@ export const MediaLibraryView: React.FC = () => {
         fileSize: res.fileSize || prev.fileSize,
         url: res.url!,
       }));
-      showToast('File Uploaded', 'Asset stored in Supabase media-library bucket.');
+      showToast('File Uploaded', 'Your file has been saved to media storage.');
     } finally {
       setUploadingFile(false);
       e.target.value = '';
@@ -97,51 +101,44 @@ export const MediaLibraryView: React.FC = () => {
   const getFileIcon = (fileType: MediaAsset['fileType']) => {
     switch (fileType) {
       case 'image':
-        return <ImageIcon className="w-5 h-5 text-amber-500" />;
+        return <ImageIcon className="w-5 h-5 text-[#C9A96E]" />;
       case 'pdf':
-        return <FileText className="w-5 h-5 text-red-500" />;
+        return <FileText className="w-5 h-5 text-rose-400" />;
       case 'doc':
       default:
-        return <FileCode className="w-5 h-5 text-blue-500" />;
+        return <FileCode className="w-5 h-5 text-blue-400" />;
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="p-6 rounded-xl border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 bg-[#E4DFDA] dark:bg-[#201D1D] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-[#6B5C5C] dark:text-[#A89898]">
-            <FolderOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            Central Documents, PDFs & Banners
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#2E2828] dark:text-[#E8E4E0] mt-1">
-            Media & Document Library
-          </h2>
-          <p className="text-xs text-[#6B5C5C] dark:text-[#A89898] mt-0.5">
-            Store downloadable government offline application forms, affidavit templates, brand logos, and promotional graphics.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold tracking-wide hover:opacity-90 transition-opacity shadow-sm self-start sm:self-auto cursor-pointer"
-        >
-          <Upload className="w-4 h-4" />
-          Upload Asset / Form
-        </button>
-      </div>
+      <CmsPageHeader
+        eyebrow="Media & Assets"
+        title="Media Library"
+        description="Manage uploaded images, downloadable government application PDFs, affidavit templates, and brand assets."
+        actions={
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold transition-colors cursor-pointer"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Upload Asset / Form</span>
+          </button>
+        }
+      />
 
       {/* Category Filter */}
-      <div className="flex items-center gap-2 border-b border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {categories.map((cat) => (
           <button
             key={cat}
+            type="button"
             onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors capitalize ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-colors capitalize whitespace-nowrap ${
               selectedCategory === cat
-                ? 'bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]'
-                : 'bg-[#DFDAD5] dark:bg-[#252222] text-[#6B5C5C] dark:text-[#A89898]'
+                ? 'bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492]'
+                : 'bg-[#141419] border border-white/[0.07] text-[#85838A] hover:text-[#E8E5DF]'
             }`}
           >
             {cat === 'all' ? 'All Assets' : cat.replace('-', ' ')}
@@ -150,198 +147,224 @@ export const MediaLibraryView: React.FC = () => {
       </div>
 
       {/* Media Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((item) => (
-          <div
-            key={item.id}
-            className="p-4 rounded-xl border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 bg-[#DFDAD5] dark:bg-[#201D1D] shadow-sm flex flex-col justify-between hover:border-[#6B5C5C]/40 dark:hover:border-[#C4B0B0]/40 transition-colors"
-          >
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="w-10 h-10 rounded-lg bg-[#E4DFDA] dark:bg-[#252222] border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 flex items-center justify-center">
-                  {getFileIcon(item.fileType)}
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleCopyLink(item.url)}
-                    className="p-1.5 rounded text-[#6B5C5C] dark:text-[#A89898] hover:text-[#2E2828] dark:hover:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-                    title="Copy direct URL"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 rounded text-[#6B5C5C] dark:text-[#A89898] hover:text-[#2E2828] dark:hover:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5"
-                    title="Open link"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${item.name}"?`)) deleteMediaAsset(item.id);
-                    }}
-                    className="p-1.5 rounded text-red-400 hover:text-red-500 hover:bg-red-500/10 cursor-pointer"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              <h4 className="font-semibold text-xs text-[#2E2828] dark:text-[#E8E4E0] line-clamp-1">
-                {item.name}
-              </h4>
-
-              <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-[#8F7E7E] dark:text-[#7A6E6E]">
-                <span className="px-1.5 py-0.5 rounded bg-[#E4DFDA] dark:bg-[#252222] uppercase">
-                  {item.fileType}
-                </span>
-                <span>{item.fileSize}</span>
-                <span>•</span>
-                <span>{item.uploadedDate}</span>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-[#6B5C5C]/10 dark:border-[#C4B0B0]/10 flex items-center justify-between text-[11px] text-[#6B5C5C] dark:text-[#A89898]">
-              <span className="font-mono capitalize">{item.category.replace('-', ' ')}</span>
-              <button
-                onClick={() => handleCopyLink(item.url)}
-                className="text-xs font-medium hover:text-[#2E2828] dark:hover:text-[#E8E4E0] cursor-pointer"
-              >
-                Copy Link
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Upload Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[#E4DFDA] dark:bg-[#201D1D] rounded-xl border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 max-w-md w-full p-6 shadow-2xl animate-in fade-in duration-200">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15">
-              <h3 className="text-base font-bold text-[#2E2828] dark:text-[#E8E4E0]">
-                Register Document / Media Asset
-              </h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-xs font-mono text-[#6B5C5C] dark:text-[#A89898] hover:text-[#2E2828] cursor-pointer"
-              >
-                ✕ Close
-              </button>
-            </div>
-
-            <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
+      {filtered.length === 0 ? (
+        <CmsSurfaceCard className="text-center py-12 border-dashed border-white/[0.12]">
+          <FolderOpen className="w-10 h-10 mx-auto text-[#C9A96E]/70 mb-3" />
+          <h3 className="font-editorial text-xl text-[#E8E5DF] mb-1">
+            No Assets in This Category
+          </h3>
+          <p className="text-xs text-[#85838A] max-w-sm mx-auto">
+            Upload photos, logos, or printable forms to manage them from your Media Library.
+          </p>
+        </CmsSurfaceCard>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((item) => (
+            <div
+              key={item.id}
+              className="p-4 rounded-2xl border border-white/[0.07] bg-[#141419] flex flex-col justify-between hover:border-[#C9A96E]/35 transition-colors"
+            >
               <div>
-                <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                  Asset Title / Form Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Form 49A PAN Application Blank Format"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                    File Type
-                  </label>
-                  <select
-                    value={formData.fileType}
-                    onChange={(e) => setFormData({ ...formData, fileType: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-                  >
-                    <option value="pdf">PDF Document (.pdf)</option>
-                    <option value="image">Image (.jpg / .png)</option>
-                    <option value="doc">Word / Text Form (.docx)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                    Category
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none capitalize"
-                  >
-                    <option value="document-template">Document Template</option>
-                    <option value="banner">Banner</option>
-                    <option value="logo">Logo / Seal</option>
-                    <option value="gallery">Gallery Photo</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                    File Size
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.fileSize}
-                    onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                    Asset File or URL *
-                  </label>
-                  <div className="space-y-2">
-                    <label className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] font-medium cursor-pointer">
-                      {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                      <span>{uploadingFile ? 'Uploading...' : 'Upload PDF / Doc / Image'}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx,image/*"
-                        onChange={handleFilePick}
-                        disabled={uploadingFile}
-                        className="hidden"
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#101014] border border-white/[0.08] flex items-center justify-center overflow-hidden">
+                    {item.fileType === 'image' && item.url ? (
+                      <img
+                        src={item.url}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
                       />
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://..."
-                      value={formData.url}
-                      onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none font-mono text-[10px]"
-                    />
+                    ) : (
+                      getFileIcon(item.fileType)
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(item.url)}
+                      className="p-1.5 rounded-lg text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.05] cursor-pointer"
+                      title="Copy direct URL"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1.5 rounded-lg text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.05]"
+                      title="Open link"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`Delete "${item.name}"?`)) {
+                          if (item.url) void deleteStorageFileByUrl(item.url);
+                          deleteMediaAsset(item.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
+
+                <h4 className="font-medium text-xs text-[#E8E5DF] line-clamp-1">{item.name}</h4>
+
+                <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-[#85838A]">
+                  <span className="px-1.5 py-0.5 rounded bg-[#0A0A0E] border border-white/[0.06] uppercase text-[#C9A96E]">
+                    {item.fileType}
+                  </span>
+                  <span>{item.fileSize}</span>
+                  <span>·</span>
+                  <span>{item.uploadedDate}</span>
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15">
+              <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-[#85838A]">
+                <span className="font-mono capitalize">{item.category.replace('-', ' ')}</span>
                 <button
                   type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-[#6B5C5C] dark:text-[#A89898] hover:bg-black/5 cursor-pointer"
+                  onClick={() => handleCopyLink(item.url)}
+                  className="text-xs font-medium text-[#C9A96E] hover:text-[#DFC492] cursor-pointer"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold hover:opacity-90 cursor-pointer"
-                >
-                  Register Asset
+                  Copy Link
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Upload Modal */}
+      <CmsModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Register Document / Media Asset"
+        subtitle="Upload files or register a direct HTTPS asset URL"
+        maxWidthClass="max-w-md"
+      >
+        <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Asset Title / Form Name *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Form 49A PAN Application Blank Format"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">File Type</label>
+              <select
+                value={formData.fileType}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    fileType: e.target.value as 'image' | 'pdf' | 'doc',
+                  })
+                }
+                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              >
+                <option value="pdf">PDF Document (.pdf)</option>
+                <option value="image">Image (.jpg / .png)</option>
+                <option value="doc">Word / Text Form (.docx)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">Category</label>
+              <select
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    category: e.target.value as
+                      | 'banner'
+                      | 'logo'
+                      | 'document-template'
+                      | 'gallery',
+                  })
+                }
+                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 capitalize"
+              >
+                <option value="document-template">Document Template</option>
+                <option value="banner">Banner</option>
+                <option value="logo">Logo / Seal</option>
+                <option value="gallery">Gallery Photo</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">File Size</label>
+              <input
+                type="text"
+                value={formData.fileSize}
+                onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] font-mono text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              />
+            </div>
+
+            <div>
+              <label className="block font-medium text-[#E8E5DF] mb-1.5">
+                Upload File or URL *
+              </label>
+              <div className="space-y-2">
+                <label className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#211B16] border border-[#C9A96E]/35 text-[#DFC492] font-medium cursor-pointer hover:border-[#C9A96E]/65">
+                  {uploadingFile ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A96E]" />
+                  ) : (
+                    <Upload className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  )}
+                  <span>{uploadingFile ? 'Uploading…' : 'Choose File'}</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,image/*"
+                    onChange={handleFilePick}
+                    disabled={uploadingFile}
+                    className="hidden"
+                  />
+                </label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://..."
+                  value={formData.url}
+                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-mono text-[10px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.07]">
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-white/[0.1] text-xs font-medium text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold cursor-pointer"
+            >
+              Register Asset
+            </button>
+          </div>
+        </form>
+      </CmsModal>
     </div>
   );
 };

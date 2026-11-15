@@ -632,15 +632,124 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
 
 export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
   hero: {
-    badge: 'Authorised Digital Seva & Cyber Center',
-    headline: 'Your Trust, Our Service — Fast, Honest & 100% Reliable Digital Services',
-    subheadline: 'From competitive exam forms, PAN & Aadhaar smart cards, to instant photo studio and heavy-duty printing, Aman Computer is your local neighborhood digital partner.',
-    ctaPrimaryText: 'Enquire on WhatsApp',
+    badge: 'CYBER CAFE & DIGITAL CENTER',
+    headline: 'Welcome to Aman Computer.',
+    subheadline: 'Your one-stop center for',
+    ctaPrimaryText: 'WhatsApp Us',
     ctaPrimaryLink: 'https://wa.me/918595515718',
-    ctaSecondaryText: 'Explore All 16 Services',
-    ctaSecondaryLink: '#services',
-    announcement: 'SSC CGL 2026 & UP Police Constable application counters open. Avoid last-day server crash!',
-    timingNotice: 'Open Daily: 8:00 AM – 9:00 PM (Sunday Open till 2:00 PM)',
+    ctaSecondaryText: 'Explore Services',
+    ctaSecondaryLink: '#works',
+    announcement: 'SSC CGL & UP State Citizen Portal counters open daily for fast verified applications.',
+    timingNotice: 'Open Mon–Sat: 8:00 AM – 9:00 PM · Sun: 9:00 AM – 2:00 PM',
+  },
+  heroShowcase: [
+    { id: 'hs-1', label: 'Online Job Forms & Exam Registration', visible: true, displayOrder: 1 },
+    { id: 'hs-2', label: 'PAN Card Services', visible: true, displayOrder: 2 },
+    { id: 'hs-3', label: 'Aadhaar Services', visible: true, displayOrder: 3 },
+    { id: 'hs-4', label: 'Voter ID Services', visible: true, displayOrder: 4 },
+    { id: 'hs-5', label: 'Driving Licence & RTO', visible: true, displayOrder: 5 },
+    { id: 'hs-6', label: 'Passport & Visa Assistance', visible: true, displayOrder: 6 },
+    { id: 'hs-7', label: 'Income, Caste & Domicile Certificates', visible: true, displayOrder: 7 },
+    { id: 'hs-8', label: 'Printing & Photocopy', visible: true, displayOrder: 8 },
+    { id: 'hs-9', label: 'Scanning & Lamination', visible: true, displayOrder: 9 },
+    { id: 'hs-10', label: 'Passport Photography', visible: true, displayOrder: 10 },
+    { id: 'hs-11', label: 'AEPS & Money Transfer', visible: true, displayOrder: 11 },
+    { id: 'hs-12', label: 'Bill Payments & FASTag', visible: true, displayOrder: 12 },
+    { id: 'hs-13', label: 'Government Schemes', visible: true, displayOrder: 13 },
+    { id: 'hs-14', label: 'Train, Bus & Flight Booking', visible: true, displayOrder: 14 },
+    { id: 'hs-15', label: 'Typing & Resume Making', visible: true, displayOrder: 15 },
+    { id: 'hs-16', label: 'Document & Legal Drafting', visible: true, displayOrder: 16 },
+  ],
+  ownerPortrait: {
+    imageUrl: '',
+    visible: false,
+    caption: 'Sharique Aman',
+    subcaption: 'Founder & Proprietor',
+    altText: 'Aman Computer Proprietor Portrait',
+  },
+  brandSettings: {
+    shopName: 'Aman Computer',
+    tagline: 'Cyber Cafe & Digital Center — Your Trust, Our Service.',
+    headerBadgeText: 'Authorised Digital Seva Center',
+    logoUrl: '/icon-192.png',
+    faviconUrl: '/favicon.ico',
+    accentColor: '#C9A96E',
+    footerBrandWordmark: 'Aman Computer',
+  },
+  doorsConfig: {
+    sectionHeading: 'Magic happens behind the doors',
+    door0: {
+      doorIndex: 0,
+      title: 'Latest Updates',
+      subtitle: 'Live notifications, exam forms, admit cards & results',
+      highlights: [
+        'Verified government recruitment notifications',
+        'Admit card & examination result alerts',
+        'Important deadline reminders',
+        'Scholarship & citizen scheme notices',
+        'Direct portal assistance at our counter',
+      ],
+    },
+    door1: {
+      doorIndex: 1,
+      title: 'Documents Needed',
+      subtitle: 'Complete checklists before you visit the counter',
+      highlights: [
+        'PAN Card & Aadhaar update checklists',
+        'Income, Caste & Domicile document lists',
+        'Passport & Driving Licence prerequisites',
+        'Scholarship & pension verification papers',
+        'Zero-rejection pre-submission review',
+      ],
+    },
+    door2: {
+      doorIndex: 2,
+      title: 'Our Services',
+      subtitle: 'Fast, honest & reliable digital citizen services',
+      highlights: [
+        'Online forms & competitive exam registrations',
+        'Identity cards, E-District & Banking AEPS',
+        'High-speed laser printing, scanning & lamination',
+        'IRCTC railway & domestic flight bookings',
+        'Transparent pricing with counter receipts',
+      ],
+    },
+    door3: {
+      doorIndex: 3,
+      title: 'Gallery',
+      subtitle: 'Inside Aman Computer center, workspace & print samples',
+      highlights: [
+        'Commercial Canon & Epson print workstations',
+        'Dedicated digital seva counters',
+        'Smart card lamination & studio samples',
+        'Verified local citizen center photos',
+        'Varanasi main market square location',
+      ],
+    },
+  },
+  websiteSettings: {
+    maintenanceMode: false,
+    maintenanceMessage:
+      'Our website is currently undergoing a brief scheduled update. Please reach us directly on WhatsApp (+91 85955 15718) for immediate digital service assistance.',
+    announcementEnabled: false,
+    announcementText: '',
+    whatsappButtonEnabled: true,
+    sectionVisibility: {
+      hero: true,
+      doors: true,
+      schemes: true,
+      journey: true,
+      footer: true,
+    },
+  },
+  seoSettings: {
+    pageTitle: 'Aman Computer — Cyber Cafe & Digital Center, Varanasi',
+    metaDescription:
+      'Authorized digital seva, online government forms, PAN & Aadhaar facilitation, AEPS banking, ticket booking, and commercial printing at Aman Computer, Varanasi.',
+    keywords:
+      'Aman Computer, Cyber Cafe Varanasi, Digital Seva Kendra, PAN Card Center, Aadhaar Update, Online Exam Forms, CSC Center',
+    ogImageUrl: '/og.jpg',
+    canonicalUrl: '',
   },
   about: {
     heading: 'About Aman Computer',
@@ -685,7 +794,27 @@ export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
     copyrightText: '© 2026 Aman Computer. All rights reserved.',
     disclaimer: 'We are an independent digital facilitation center and cyber cafe. All government portals, trademarks, and logos belong to their respective statutory authorities.',
   },
+  ownerProfile: {
+    fullName: 'Sharique Aman',
+    designation: 'Founder & Proprietor',
+    businessIdentity: 'Aman Computer — Cyber Cafe & Digital Center',
+    bio: 'Leading Aman Computer since 2014 with reliable government portal assistance, identity card facilitation, commercial printing, and transparent digital citizen services in Varanasi.',
+    email: 'shariqueaman77@gmail.com',
+    phone: '+91 85955 15718',
+    profileImage: '',
+    locationLabel: 'Varanasi, Uttar Pradesh',
+    experienceLabel: '12+ Years Experience',
+    socialLinks: {
+      website: '',
+      linkedin: '',
+      instagram: '',
+      facebook: '',
+      other: [],
+    },
+  },
 };
+
+export const INITIAL_GOVERNMENT_SCHEMES = [];
 
 export const INITIAL_GALLERY: GalleryItem[] = [];
 
@@ -881,7 +1010,7 @@ export const INITIAL_JOURNEY: JourneyItem[] = [
 export const INITIAL_BUSINESS_PROFILE: BusinessProfile = {
   businessName: 'Aman Computer',
   tagline: 'Cyber Cafe & Digital Center — Your Trust, Our Service.',
-  proprietorName: 'Aman Sharma',
+  proprietorName: 'Sharique Aman',
   tradeLicenseNo: 'UDYAM-UP-67-0094821',
   addressLine: 'Shop No. 4 & 5, Commercial Complex, Main Market Road',
   city: 'Varanasi',
@@ -892,7 +1021,7 @@ export const INITIAL_BUSINESS_PROFILE: BusinessProfile = {
   primaryPhone: '+91 85955 15718',
   whatsappNumber: '+91 85955 15718',
   secondaryPhone: '+91 94150 98765',
-  email: 'contact@amancomputervns.com',
+  email: 'shariqueaman77@gmail.com',
   telegramChannel: 'https://t.me/amancomputer_alerts',
   openingHours: '08:00 AM – 09:00 PM (Monday to Saturday)',
   workingDays: 'Open all 7 days (Sunday till 2:00 PM)',

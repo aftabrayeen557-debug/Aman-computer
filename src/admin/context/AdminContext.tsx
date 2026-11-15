@@ -20,8 +20,15 @@ import {
   StaffMember,
   ActivityLog,
   TerminalSettings,
+  OwnerProfile,
+  GovernmentSchemeItem,
 } from '../types';
 import { isKnownAdminTab, resolveStudioTab } from '../config/navigation';
+import {
+  normalizeOwnerProfile,
+  validateOwnerProfileDraft,
+} from '../services/ownerProfileService';
+import { deleteStorageFileByUrl } from '../services/storageService';
 import {
   INITIAL_SERVICES,
   INITIAL_ENQUIRIES,
@@ -29,6 +36,7 @@ import {
   INITIAL_RECEIPTS,
   INITIAL_WEBSITE_CONTENT,
   INITIAL_GALLERY,
+  INITIAL_GOVERNMENT_SCHEMES,
   INITIAL_TESTIMONIALS,
   INITIAL_FAQS,
   INITIAL_LATEST_UPDATES,
@@ -98,6 +106,9 @@ import {
   dbAddActivityLog,
   dbGetTerminalSettings,
   dbSaveTerminalSettings,
+  dbGetGovernmentSchemes,
+  dbUpsertGovernmentScheme,
+  dbDeleteGovernmentScheme,
 } from '../services/supabaseService';
 
 export type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated' | 'unauthorized';
@@ -199,9 +210,21 @@ interface AdminContextType {
   deleteJourneyItem: (id: string) => void;
   toggleJourneyPublished: (id: string) => void;
 
-  // 2. Website Content: Sections (Hero, About, etc.)
+  // 2B. Website Content: Government Schemes
+  governmentSchemes: GovernmentSchemeItem[];
+  addGovernmentScheme: (scheme: Omit<GovernmentSchemeItem, 'id'>) => void;
+  updateGovernmentScheme: (id: string, updates: Partial<GovernmentSchemeItem>) => void;
+  deleteGovernmentScheme: (id: string) => void;
+  toggleGovernmentSchemePublished: (id: string) => void;
+
+  // 2. Website Content: Sections (Hero, Showcase, Portrait, Brand, Doors, Settings, SEO) & Owner Profile
   websiteContent: WebsiteSectionContent;
   updateWebsiteContent: (section: keyof WebsiteSectionContent, data: any) => void;
+  ownerProfile: OwnerProfile;
+  ownerProfileStatus: 'ready' | 'loading' | 'saving' | 'error';
+  ownerProfileError: string | null;
+  updateOwnerProfile: (profile: OwnerProfile) => Promise<boolean>;
+  refreshOwnerProfile: () => Promise<void>;
 
   // 2. Website Content: FAQs
   faqs: FaqItem[];
@@ -493,7 +516,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       toastType: ToastMessage['type'] = 'success'
     ): Promise<boolean> => {
       if (!isSupabaseActive) {
-        showToast(`${successTitle} (Local Cache)`, `${successMsg} — Configure .env for cloud persistence.`, 'info');
+        showToast(`${successTitle} (Saved Locally)`, `${successMsg} Changes are saved in offline mode.`, 'info');
         return true;
       }
 
@@ -501,10 +524,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       try {
         const res = await operation();
         if (!res.ok) {
+          console.error('Persist write rejected:', res.error);
           setDbSyncStatus('error');
           showToast(
-            'Database Save Failed',
-            res.error || 'Supabase rejected the operation. Check RLS policy or network.',
+            'Unable to Save Changes',
+            "We couldn't save your changes right now. Please try again.",
             'error'
           );
           return false;
@@ -513,8 +537,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         showToast(successTitle, successMsg, toastType);
         return true;
       } catch (err: any) {
+        console.error('Persist write exception:', err);
         setDbSyncStatus('error');
-        showToast('Database Error', err?.message || 'Unexpected error communicating with Supabase.', 'error');
+        showToast('Unable to Save Changes', "We couldn't save your changes. Please try again.", 'error');
         return false;
       }
     },
@@ -546,6 +571,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [journey, setJourney] = useState<JourneyItem[]>(() =>
     safeGetStorage<JourneyItem[]>('aman_journey', INITIAL_JOURNEY)
   );
+  const [governmentSchemes, setGovernmentSchemes] = useState<GovernmentSchemeItem[]>(() =>
+    safeGetStorage<GovernmentSchemeItem[]>('aman_government_schemes', INITIAL_GOVERNMENT_SCHEMES)
+  );
   const [websiteContent, setWebsiteContent] = useState<WebsiteSectionContent>(() =>
     safeGetStorage<WebsiteSectionContent>('aman_website_content', INITIAL_WEBSITE_CONTENT)
   );
@@ -558,6 +586,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [businessProfile, setBusinessProfile] = useState<BusinessProfile>(() =>
     safeGetStorage<BusinessProfile>('aman_business_profile', INITIAL_BUSINESS_PROFILE)
   );
+  const [ownerProfileStatus, setOwnerProfileStatus] = useState<'ready' | 'loading' | 'saving' | 'error'>('ready');
+  const [ownerProfileError, setOwnerProfileError] = useState<string | null>(null);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>(() =>
     safeGetStorage<MediaAsset[]>('aman_media', INITIAL_MEDIA_ASSETS)
   );
@@ -626,6 +656,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dbStf,
         dbLogs,
         dbSettings,
+        dbSchemes,
       ] = await Promise.all([
         dbGetCustomers(),
         dbGetEnquiries(),
@@ -644,6 +675,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dbGetStaffMembers(),
         dbGetActivityLogs(),
         dbGetTerminalSettings(),
+        dbGetGovernmentSchemes(),
       ]);
 
       // Detect whether cloud database is completely unseeded before overwriting local cache
@@ -657,9 +689,21 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         (dbJrn?.length || 0) +
         (dbFaq?.length || 0) +
         (dbTst?.length || 0) +
-        (dbRcp?.length || 0);
+        (dbRcp?.length || 0) +
+        (dbSchemes?.length || 0);
 
       if (totalCloudRows === 0) {
+        if (dbProf !== null) setBusinessProfile(dbProf);
+        if (dbWeb !== null) {
+          setWebsiteContent((prev) => ({
+            ...INITIAL_WEBSITE_CONTENT,
+            ...prev,
+            ...dbWeb,
+          }));
+          if (Array.isArray(dbWeb.governmentSchemesFallback) && dbWeb.governmentSchemesFallback.length > 0) {
+            setGovernmentSchemes(dbWeb.governmentSchemesFallback);
+          }
+        }
         // Hydrate any pre-migration local private records strictly after authentication
         setCustomers(safeGetStorage<Customer[]>('aman_customers', []));
         setEnquiries(safeGetStorage<Enquiry[]>('aman_enquiries', []));
@@ -669,11 +713,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActivityLogs(safeGetStorage<ActivityLog[]>('aman_activity_logs', []));
 
         setDbSyncStatus('synced');
-        showToast(
-          'Cloud Database Ready',
-          'Supabase database is connected and empty. Use Backup & Restore to migrate existing local data.',
-          'info'
-        );
         return;
       }
 
@@ -685,7 +724,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (dbGal !== null) setGallery(dbGal);
       if (dbJrn !== null) setJourney(sortJourneyChronologically(dbJrn));
       if (dbProf !== null) setBusinessProfile(dbProf);
-      if (dbWeb !== null) setWebsiteContent(dbWeb);
+      if (dbWeb !== null) {
+        setWebsiteContent((prev) => ({
+          ...INITIAL_WEBSITE_CONTENT,
+          ...prev,
+          ...dbWeb,
+        }));
+      }
+      if (dbSchemes !== null) {
+        setGovernmentSchemes(dbSchemes);
+      } else if (dbWeb && Array.isArray(dbWeb.governmentSchemesFallback)) {
+        setGovernmentSchemes(dbWeb.governmentSchemesFallback);
+      }
       if (dbFaq !== null) setFaqs(dbFaq);
       if (dbTst !== null) setTestimonials(dbTst);
       if (dbRcp !== null) setReceipts(dbRcp);
@@ -697,9 +747,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setDbSyncStatus('synced');
     } catch (err: any) {
-      console.error('Supabase hydration error:', err);
+      console.error('Workspace sync error:', err);
       setDbSyncStatus('error');
-      showToast('Cloud Sync Error', err?.message || 'Unable to load records from Supabase.', 'error');
+      showToast('Unable to Load Information', 'We could not load your latest records right now. Please try again.', 'error');
     } finally {
       isHydratingRef.current = false;
     }
@@ -715,7 +765,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
-    const unsubscribe = subscribeToAdminAuth((user, profile, reason) => {
+    const unsubscribe = subscribeToAdminAuth((user, profile, reason, errorMessage) => {
       if (loginTransitionTimerRef.current) {
         window.clearTimeout(loginTransitionTimerRef.current);
         loginTransitionTimerRef.current = null;
@@ -757,7 +807,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setAuthError(
           reason === 'unauthorized'
-            ? 'Access denied: Only the sole authorized Aman Computer administrator can access this terminal.'
+            ? errorMessage ||
+                'Access denied: Only the sole authorized Aman Computer administrator can access this terminal.'
             : null
         );
         setAuthViewModeState('login');
@@ -798,7 +849,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     await signOutAdmin();
     setAuthViewModeState('login');
     syncRouteForAuth('login');
-    showToast('Signed Out', 'Admin terminal locked, Firebase session closed, and private cache cleared.', 'info');
+    showToast('Signed Out', 'You have signed out safely and your workspace is locked.', 'info');
   }, [clearPrivateAdminState, syncRouteForAuth, showToast]);
 
   // Persist private states strictly when authenticated; never leak private data into localStorage when logged out
@@ -850,10 +901,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [journey]);
 
-  useEffect(() => safeSetStorage('aman_website_content', websiteContent), [websiteContent]);
-  useEffect(() => safeSetStorage('aman_faqs', faqs), [faqs]);
+  useEffect(() => {
+    safeSetStorage('aman_government_schemes', governmentSchemes);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aman_schemes_changed', { detail: governmentSchemes }));
+    }
+  }, [governmentSchemes]);
+
+  useEffect(() => {
+    safeSetStorage('aman_website_content', websiteContent);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aman_website_content_changed', { detail: websiteContent }));
+    }
+  }, [websiteContent]);
+
+  useEffect(() => {
+    safeSetStorage('aman_faqs', faqs);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aman_faqs_changed', { detail: faqs }));
+    }
+  }, [faqs]);
+
   useEffect(() => safeSetStorage('aman_testimonials', testimonials), [testimonials]);
-  useEffect(() => safeSetStorage('aman_business_profile', businessProfile), [businessProfile]);
+
+  useEffect(() => {
+    safeSetStorage('aman_business_profile', businessProfile);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aman_business_profile_changed', { detail: businessProfile }));
+    }
+  }, [businessProfile]);
+
   useEffect(() => safeSetStorage('aman_media', mediaAssets), [mediaAssets]);
   useEffect(() => {
     if (authStatus === 'authenticated') safeSetStorage('aman_notifications', notifications);
@@ -1276,6 +1353,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteLatestUpdate = (id: string) => {
+    const existing = latestUpdates.find((u) => u.id === id);
+    if (existing?.posterImage) {
+      void deleteStorageFileByUrl(existing.posterImage);
+    }
     setLatestUpdates((prev) => prev.filter((u) => u.id !== id));
     addActivityLog('UPDATE_DELETE', 'Latest Updates', `Deleted update: ${id}`);
     void persistWrite(
@@ -1380,6 +1461,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteGalleryItem = (id: string) => {
+    const existing = gallery.find((g) => g.id === id);
+    if (existing?.imageUrl) {
+      void deleteStorageFileByUrl(existing.imageUrl);
+    }
     setGallery((prev) => prev.filter((g) => g.id !== id));
     addActivityLog('DELETE_IMAGE', 'Gallery', `Deleted gallery image ${id}`);
     void persistWrite(
@@ -1432,6 +1517,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateJourneyItem = (id: string, updates: Partial<JourneyItem>) => {
     const existing = journey.find((j) => j.id === id);
     if (!existing) return;
+    if (existing.imageUrl && updates.imageUrl !== undefined && updates.imageUrl !== existing.imageUrl) {
+      void deleteStorageFileByUrl(existing.imageUrl);
+    }
     const updated = { ...existing, ...updates };
     setJourney((prev) => sortJourneyChronologically(prev.map((j) => (j.id === id ? updated : j))));
     addActivityLog('JOURNEY_EDIT', 'Our Journey', `Updated entry ID: ${id}`);
@@ -1443,6 +1531,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteJourneyItem = (id: string) => {
+    const existing = journey.find((j) => j.id === id);
+    if (existing?.imageUrl) {
+      void deleteStorageFileByUrl(existing.imageUrl);
+    }
     setJourney((prev) => prev.filter((j) => j.id !== id));
     addActivityLog('JOURNEY_DELETE', 'Our Journey', `Deleted milestone ID: ${id}`);
     void persistWrite(
@@ -1465,18 +1557,179 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  // 9. Website Content CRUD
-  const updateWebsiteContent = (section: keyof WebsiteSectionContent, data: any) => {
-    const next = {
+  // 8B. Government Schemes CRUD
+  const syncSchemesWithFallback = async (
+    nextList: GovernmentSchemeItem[],
+    primaryOp: () => Promise<DbWriteResult>
+  ): Promise<DbWriteResult> => {
+    const res = await primaryOp();
+    if (res.ok) return res;
+    if (res.error && /(government_schemes|schema cache|does not exist|PGRST205|42P01)/i.test(res.error)) {
+      const nextWeb: WebsiteSectionContent = {
+        ...websiteContent,
+        governmentSchemesFallback: nextList,
+      };
+      setWebsiteContent(nextWeb);
+      return dbSaveWebsiteContent(nextWeb);
+    }
+    return res;
+  };
+
+  const addGovernmentScheme = (scheme: Omit<GovernmentSchemeItem, 'id'>) => {
+    const newScheme: GovernmentSchemeItem = {
+      ...scheme,
+      id: 'sch-' + Date.now().toString(36),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const nextList = [newScheme, ...governmentSchemes];
+    setGovernmentSchemes(nextList);
+    addActivityLog('SCHEME_ADD', 'Government Schemes', `Published scheme: ${newScheme.title}`);
+    void persistWrite(
+      () => syncSchemesWithFallback(nextList, () => dbUpsertGovernmentScheme(newScheme)),
+      'Scheme Saved',
+      `${newScheme.title} added to Government Schemes.`
+    );
+  };
+
+  const updateGovernmentScheme = (id: string, updates: Partial<GovernmentSchemeItem>) => {
+    const existing = governmentSchemes.find((s) => s.id === id);
+    if (!existing) return;
+    if (existing.posterImage && updates.posterImage !== undefined && updates.posterImage !== existing.posterImage) {
+      void deleteStorageFileByUrl(existing.posterImage);
+    }
+    const updated: GovernmentSchemeItem = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    const nextList = governmentSchemes.map((s) => (s.id === id ? updated : s));
+    setGovernmentSchemes(nextList);
+    addActivityLog('SCHEME_UPDATE', 'Government Schemes', `Updated scheme: ${updated.title}`);
+    void persistWrite(
+      () => syncSchemesWithFallback(nextList, () => dbUpsertGovernmentScheme(updated)),
+      'Scheme Updated',
+      `${updated.title} updated successfully.`
+    );
+  };
+
+  const deleteGovernmentScheme = (id: string) => {
+    const existing = governmentSchemes.find((s) => s.id === id);
+    if (existing?.posterImage) {
+      void deleteStorageFileByUrl(existing.posterImage);
+    }
+    const nextList = governmentSchemes.filter((s) => s.id !== id);
+    setGovernmentSchemes(nextList);
+    addActivityLog('SCHEME_DELETE', 'Government Schemes', `Deleted scheme ID: ${id}`);
+    void persistWrite(
+      () => syncSchemesWithFallback(nextList, () => dbDeleteGovernmentScheme(id)),
+      'Scheme Deleted',
+      'Government scheme entry removed.',
+      'info'
+    );
+  };
+
+  const toggleGovernmentSchemePublished = (id: string) => {
+    const existing = governmentSchemes.find((s) => s.id === id);
+    if (!existing) return;
+    updateGovernmentScheme(id, { published: !existing.published });
+  };
+
+  // 9. Website Content & Owner Profile CRUD
+  const ownerProfile: OwnerProfile = normalizeOwnerProfile(websiteContent.ownerProfile, {
+    fullName: currentUser?.name || INITIAL_WEBSITE_CONTENT.ownerProfile?.fullName || 'Sharique Aman',
+    email: currentUser?.email || INITIAL_WEBSITE_CONTENT.ownerProfile?.email || 'shariqueaman77@gmail.com',
+    phone: businessProfile.primaryPhone || INITIAL_WEBSITE_CONTENT.ownerProfile?.phone || '',
+    businessIdentity: businessProfile.businessName
+      ? `${businessProfile.businessName} — Cyber Cafe & Digital Center`
+      : undefined,
+  });
+
+  const refreshOwnerProfile = useCallback(async () => {
+    setOwnerProfileStatus('loading');
+    setOwnerProfileError(null);
+    if (!isSupabaseActive) {
+      const localWeb = safeGetStorage<WebsiteSectionContent>('aman_website_content', INITIAL_WEBSITE_CONTENT);
+      setWebsiteContent((prev) => ({ ...INITIAL_WEBSITE_CONTENT, ...prev, ...localWeb }));
+      setOwnerProfileStatus('ready');
+      return;
+    }
+    try {
+      const dbWeb = await dbGetWebsiteContent();
+      if (dbWeb) {
+        setWebsiteContent((prev) => ({
+          ...INITIAL_WEBSITE_CONTENT,
+          ...prev,
+          ...dbWeb,
+        }));
+      }
+      setOwnerProfileStatus('ready');
+    } catch (err: any) {
+      console.error('Owner profile refresh error:', err);
+      setOwnerProfileStatus('error');
+      setOwnerProfileError('Unable to refresh your profile right now. Please try again.');
+    }
+  }, [isSupabaseActive]);
+
+  const updateOwnerProfile = async (draft: OwnerProfile): Promise<boolean> => {
+    const validation = validateOwnerProfileDraft(draft);
+    if (!validation.valid) {
+      const firstError = Object.values(validation.errors)[0] || 'Please check the highlighted profile fields.';
+      setOwnerProfileStatus('error');
+      setOwnerProfileError(firstError);
+      showToast('Validation Error', firstError, 'error');
+      return false;
+    }
+
+    const previousContent = websiteContent;
+    const nextContent: WebsiteSectionContent = {
+      ...INITIAL_WEBSITE_CONTENT,
       ...websiteContent,
-      [section]: { ...websiteContent[section], ...data },
+      ownerProfile: validation.sanitized,
+    };
+
+    setOwnerProfileStatus('saving');
+    setOwnerProfileError(null);
+    setWebsiteContent(nextContent);
+    addActivityLog(
+      'OWNER_PROFILE_UPDATE',
+      'Owner Profile',
+      `Updated owner profile details for ${validation.sanitized.fullName}`
+    );
+
+    const saved = await persistWrite(
+      () => dbSaveWebsiteContent(nextContent),
+      'Profile Updated',
+      'Your changes have been saved successfully.'
+    );
+
+    if (!saved) {
+      setWebsiteContent(previousContent);
+      setOwnerProfileStatus('error');
+      setOwnerProfileError("We couldn't save your profile changes. Your previous saved details remain intact.");
+      return false;
+    }
+
+    setOwnerProfileStatus('ready');
+    return true;
+  };
+
+  const updateWebsiteContent = (section: keyof WebsiteSectionContent, data: any) => {
+    const existingSection = websiteContent[section];
+    const nextValue = Array.isArray(data)
+      ? data
+      : { ...(existingSection && typeof existingSection === 'object' ? existingSection : {}), ...data };
+    const next: WebsiteSectionContent = {
+      ...INITIAL_WEBSITE_CONTENT,
+      ...websiteContent,
+      [section]: nextValue,
     };
     setWebsiteContent(next);
-    addActivityLog('CONTENT_UPDATE', 'Website Content', `Edited ${String(section)} section`);
+    addActivityLog('CONTENT_UPDATE', 'Website Content', `Updated ${String(section)}`);
     void persistWrite(
       () => dbSaveWebsiteContent(next),
-      'Content Saved',
-      `${String(section).toUpperCase()} changes saved.`
+      'Changes Saved',
+      'Your website updates are saved and live.'
     );
   };
 
@@ -1590,6 +1843,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteMediaAsset = (id: string) => {
+    const existing = mediaAssets.find((m) => m.id === id);
+    if (existing?.url) {
+      void deleteStorageFileByUrl(existing.url);
+    }
     setMediaAssets((prev) => prev.filter((m) => m.id !== id));
     void persistWrite(
       () => dbDeleteMediaAsset(id),
@@ -1712,15 +1969,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    addActivityLog('BACKUP_EXPORT', 'Backup & Restore', 'Generated full JSON backup of all terminal records');
-    showToast('Backup Created', 'Full system backup JSON downloaded successfully.');
+    addActivityLog('BACKUP_EXPORT', 'Backup & Restore', 'Generated full business backup file');
+    showToast('Backup Created', 'Your backup file has been downloaded successfully.');
   };
 
   const restoreBackupJSON = (jsonString: string): boolean => {
     try {
       const data = JSON.parse(jsonString);
       if (!data || typeof data !== 'object') {
-        showToast('Invalid File', 'The uploaded file is not a valid JSON snapshot.', 'error');
+        showToast('Invalid File', 'The selected file is not a valid backup file.', 'error');
         return false;
       }
 
@@ -1740,17 +1997,17 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (data.staff && Array.isArray(data.staff)) setStaff(data.staff);
       if (data.terminalSettings && typeof data.terminalSettings === 'object') setTerminalSettings(data.terminalSettings);
 
-      addActivityLog('BACKUP_RESTORE', 'Backup & Restore', 'Restored complete system state from backup JSON');
+      addActivityLog('BACKUP_RESTORE', 'Backup & Restore', 'Restored business data from backup file');
       showToast(
-        'Snapshot Restored Locally',
+        'Backup Restored Locally',
         isSupabaseActive
-          ? 'Modules updated. Click "Sync Local Data to Cloud Vault" below to push restored records to Supabase.'
-          : 'All modules restored to local vault.'
+          ? 'Sections updated. Select "Sync Local Data Online" below to save restored records.'
+          : 'All sections restored to local storage.'
       );
       return true;
     } catch (e) {
-      console.error('Failed to parse restore JSON', e);
-      showToast('Restore Failed', 'Corrupt or unreadable JSON file.', 'error');
+      console.error('Failed to parse restore backup file', e);
+      showToast('Restore Failed', 'The selected backup file could not be read.', 'error');
       return false;
     }
   };
@@ -1792,8 +2049,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     safeSetStorage('aman_activity_logs', INITIAL_ACTIVITY_LOGS);
     safeSetStorage('aman_terminal_settings', INITIAL_SETTINGS);
 
-    addActivityLog('SYSTEM_RESET', 'System', 'Reset local cache to initial state');
-    showToast('Local Cache Reset', 'Local terminal storage reset to defaults.', 'warning');
+    addActivityLog('SYSTEM_RESET', 'System', 'Reset local workspace records to default state');
+    showToast('Workspace Reset', 'Local workspace records restored to default.', 'warning');
   };
 
   return (
@@ -1877,8 +2134,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deleteJourneyItem,
         toggleJourneyPublished,
 
+        governmentSchemes,
+        addGovernmentScheme,
+        updateGovernmentScheme,
+        deleteGovernmentScheme,
+        toggleGovernmentSchemePublished,
+
         websiteContent,
         updateWebsiteContent,
+        ownerProfile,
+        ownerProfileStatus,
+        ownerProfileError,
+        updateOwnerProfile,
+        refreshOwnerProfile,
 
         faqs,
         addFaq,

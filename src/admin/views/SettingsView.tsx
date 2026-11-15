@@ -140,14 +140,14 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Architecture & Persistence Status */}
+        {/* Workspace & Online Sync Status */}
         <div className="p-6 rounded-3xl bg-[rgba(242,238,235,0.65)] dark:bg-[rgba(196,176,176,0.05)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] space-y-2 shadow-xs">
           <div className="flex items-center gap-2 text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0]">
             <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>Architecture & Persistence Status</span>
+            <span>Account &amp; Website Sync Status</span>
           </div>
           <p className="text-xs text-[#857878] dark:text-[#B5A8A8] leading-relaxed">
-            The Aman Computer Admin Terminal authenticates operators via Firebase Email/Password Authentication and persists records to Supabase PostgreSQL protected by Zero-Trust Row Level Security (RLS) policies, while maintaining browser cache synchronization (<code className="font-mono text-[10px]">aman_services_changed</code>, <code className="font-mono text-[10px]">aman_journey_changed</code>, <code className="font-mono text-[10px]">aman_docs_changed</code>, <code className="font-mono text-[10px]">aman_updates_changed</code>, <code className="font-mono text-[10px]">aman_gallery_changed</code>) for instant public door updates.
+            Your Aman Computer workspace is protected with verified owner access. Updates made to your services, notices, documents, and gallery sync automatically to the public website.
           </p>
         </div>
 

@@ -5,17 +5,29 @@ import {
   Plus,
   Trash2,
   Edit2,
-  FileCheck2,
-  CheckCircle2,
-  XCircle,
   Eye,
   EyeOff,
   Search,
   AlertCircle,
   ListOrdered,
   Layers,
-  ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
+import {
+  CmsModal,
+  CmsPageHeader,
+  CmsSurfaceCard,
+  CmsToggle,
+} from '../components/CmsPrimitives';
+
+const CATEGORIES = [
+  'Identity & Cards',
+  'Government Forms',
+  'Travel & Ticketing',
+  'Financial & Banking',
+  'Certificates & Legal',
+  'Other Services',
+];
 
 export const DocumentRequirementsView: React.FC = () => {
   const {
@@ -27,16 +39,12 @@ export const DocumentRequirementsView: React.FC = () => {
     showToast,
   } = useAdmin();
 
-  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState<{
     serviceTitle: string;
     requiredDocuments: string[];
@@ -50,8 +58,6 @@ export const DocumentRequirementsView: React.FC = () => {
     category: 'Identity & Cards',
     published: true,
   });
-
-  const categories = ['Identity & Cards', 'Government Forms', 'Travel & Ticketing', 'Financial & Banking', 'Certificates & Legal', 'Other Services'];
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -69,7 +75,8 @@ export const DocumentRequirementsView: React.FC = () => {
     setEditingId(item.id);
     setFormData({
       serviceTitle: item.serviceTitle,
-      requiredDocuments: item.requiredDocuments.length > 0 ? [...item.requiredDocuments] : [''],
+      requiredDocuments:
+        item.requiredDocuments.length > 0 ? [...item.requiredDocuments] : [''],
       importantNote: item.importantNote || '',
       category: item.category || 'Identity & Cards',
       published: item.published,
@@ -112,7 +119,11 @@ export const DocumentRequirementsView: React.FC = () => {
       .filter((d) => d.length > 0);
 
     if (cleanDocs.length === 0) {
-      showToast('Validation Error', 'At least one required document item is mandatory', 'error');
+      showToast(
+        'Validation Error',
+        'At least one required document item is required',
+        'error'
+      );
       return;
     }
 
@@ -136,10 +147,14 @@ export const DocumentRequirementsView: React.FC = () => {
   const filteredItems = docRequirements.filter((item) => {
     const matchSearch =
       item.serviceTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.requiredDocuments.some((d) => d.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.importantNote && item.importantNote.toLowerCase().includes(searchQuery.toLowerCase()));
+      item.requiredDocuments.some((d) =>
+        d.toLowerCase().includes(searchQuery.toLowerCase())
+      ) ||
+      (item.importantNote &&
+        item.importantNote.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchCategory = filterCategory === 'all' || item.category === filterCategory;
+    const matchCategory =
+      filterCategory === 'all' || item.category === filterCategory;
     const matchStatus =
       filterStatus === 'all' ||
       (filterStatus === 'published' && item.published) ||
@@ -149,362 +164,323 @@ export const DocumentRequirementsView: React.FC = () => {
   });
 
   const publishedCount = docRequirements.filter((d) => d.published).length;
-  const draftCount = docRequirements.filter((d) => !d.published).length;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header Banner */}
-      <div className="p-6 rounded-xl border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 bg-[#E4DFDA] dark:bg-[#201D1D] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-[#6B5C5C] dark:text-[#A89898]">
-            <FileCheck2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            Door 1 — Documents Need Checklist
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#2E2828] dark:text-[#E8E4E0] mt-1">
-            Document Requirements Cards
-          </h2>
-          <p className="text-xs text-[#6B5C5C] dark:text-[#A89898] mt-0.5">
-            Every entry here dynamically creates <strong className="text-[#2E2828] dark:text-[#E8E4E0]">exactly ONE card</strong> on the public <strong className="text-[#2E2828] dark:text-[#E8E4E0]">Documents Need</strong> door with a numbered list of mandatory documents.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <CmsPageHeader
+        eyebrow="Doors Management · Door 2 Checklist"
+        title="Documents Needed Checklists"
+        description="Define clear numbered document requirements for every citizen service so customers arrive fully prepared."
+        actions={
+          <>
+            <a
+              href="/app-developer/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#101014] border border-white/[0.08] text-xs font-medium text-[#E8E5DF] hover:border-[#C9A96E]/45 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-[#C9A96E]" />
+              <span>Preview Door</span>
+            </a>
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Checklist Card</span>
+            </button>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2">
-          <a
-            href="/app-developer/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-xs font-medium text-[#2E2828] dark:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            <span>Preview Door 1</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-          <button
-            onClick={handleOpenAdd}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold tracking-wide hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Requirement Card
-          </button>
-        </div>
-      </div>
-
-      {/* Controls Bar: Stats, Search & Filters */}
-      <div className="p-4 rounded-xl border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15 bg-[#E4DFDA] dark:bg-[#201D1D] shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#DFDAD5] dark:bg-[#1A1818] text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-            <span className="font-bold text-[#2E2828] dark:text-[#E8E4E0]">{publishedCount}</span>
-            <span className="text-[#6B5C5C] dark:text-[#A89898]">Live Cards on Door 1</span>
-          </div>
-          {draftCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-[#DFDAD5] dark:bg-[#1A1818] text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" />
-              <span className="font-bold text-[#2E2828] dark:text-[#E8E4E0]">{draftCount}</span>
-              <span className="text-[#6B5C5C] dark:text-[#A89898]">Drafts (Hidden)</span>
+      <CmsSurfaceCard
+        title="Document Checklists"
+        subtitle={`${publishedCount} live cards published on the Documents Needed door.`}
+        headerRight={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#85838A]" />
+              <input
+                type="text"
+                placeholder="Search service or docs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+              />
             </div>
-          )}
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Search */}
-          <div className="relative flex-1 sm:flex-initial">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8F7E7E]" />
-            <input
-              type="text"
-              placeholder="Search service or documents..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none w-full sm:w-56"
-            />
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+            >
+              <option value="all">All Categories</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-1.5 text-xs rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+            >
+              <option value="all">All Status</option>
+              <option value="published">Published Only</option>
+              <option value="draft">Drafts Only</option>
+            </select>
           </div>
-
-          {/* Category Filter */}
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-          >
-            <option value="all">All Categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="published">Published Only</option>
-            <option value="draft">Drafts Only</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Cards List */}
-      <div className="space-y-3">
+        }
+      >
         {filteredItems.length === 0 ? (
-          <div className="p-8 text-center rounded-xl border border-dashed border-[#6B5C5C]/25 dark:border-[#C4B0B0]/25 bg-[#DFDAD5]/50 dark:bg-[#201D1D]/50">
-            <Layers className="w-8 h-8 mx-auto text-[#8F7E7E] mb-2" />
-            <p className="text-sm font-semibold text-[#2E2828] dark:text-[#E8E4E0]">No document requirements found</p>
-            <p className="text-xs text-[#6B5C5C] dark:text-[#A89898] mt-1">
-              {docRequirements.length === 0
-                ? 'Door 1 currently displays "No Document Requirements Available". Click "Add Requirement Card" to create one.'
-                : 'Try adjusting your search query or filters.'}
+          <div className="p-10 text-center rounded-xl border border-dashed border-white/[0.1] bg-[#0A0A0E]">
+            <Layers className="w-8 h-8 mx-auto text-[#C9A96E]/60 mb-2" />
+            <p className="font-editorial text-lg text-[#E8E5DF]">
+              No Document Checklists Found
+            </p>
+            <p className="text-xs text-[#85838A] mt-1">
+              Add a checklist card to display required documents cleanly for customers.
             </p>
           </div>
         ) : (
-          filteredItems.map((item, index) => (
-            <div
-              key={item.id}
-              className={`p-5 rounded-xl border transition-all bg-[#DFDAD5] dark:bg-[#201D1D] shadow-sm flex flex-col md:flex-row items-start justify-between gap-4 ${
-                item.published
-                  ? 'border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20'
-                  : 'border-dashed border-neutral-400/40 opacity-70'
-              }`}
-            >
-              {/* Card Badge & Title */}
-              <div className="space-y-2 flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#6B5C5C]/15 dark:bg-[#C4B0B0]/15 text-[#2E2828] dark:text-[#E8E4E0]">
-                    Card #{index + 1}
-                  </span>
-                  {item.category && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-neutral-200 dark:bg-neutral-800 text-[#6B5C5C] dark:text-[#A89898]">
-                      {item.category}
-                    </span>
-                  )}
-                  {item.published ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-400 border border-emerald-500/20">
-                      LIVE ON DOOR 1
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-neutral-400/20 text-neutral-600 dark:text-neutral-400 border border-neutral-400/30">
-                      DRAFT (HIDDEN)
-                    </span>
-                  )}
-                </div>
-
-                <h3 className="font-bold text-base text-[#2E2828] dark:text-[#E8E4E0] tracking-tight">
-                  {item.serviceTitle}
-                </h3>
-
-                {/* Numbered Documents List */}
-                <div className="pt-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#A4552C] dark:text-[#D9C6C6] mb-1.5 flex items-center gap-1">
-                    <ListOrdered className="w-3.5 h-3.5" />
-                    Required Documents ({item.requiredDocuments.length})
-                  </p>
-                  <ol className="list-decimal list-inside space-y-1 text-xs text-[#2E2828] dark:text-[#E8E4E0]/90 pl-1">
-                    {item.requiredDocuments.map((doc, docIdx) => (
-                      <li key={docIdx} className="leading-relaxed">
-                        <span className="ml-1">{doc}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                {/* Optional Note */}
-                {item.importantNote && (
-                  <div className="mt-2.5 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong>Important Note:</strong> {item.importantNote}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                {/* Publish / Draft Toggle */}
-                <button
-                  onClick={() => toggleDocRequirementPublished(item.id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-                    item.published
-                      ? 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-400 hover:bg-emerald-500/25'
-                      : 'bg-neutral-400/20 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-400/30'
-                  }`}
-                  title={item.published ? 'Visible on Door 1. Click to hide.' : 'Draft only. Click to publish.'}
-                >
-                  {item.published ? (
-                    <>
-                      <Eye className="w-3.5 h-3.5" /> Published
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5" /> Draft
-                    </>
-                  )}
-                </button>
-
-                {/* Edit Button */}
-                <button
-                  onClick={() => handleOpenEdit(item)}
-                  className="p-1.5 rounded text-[#6B5C5C] dark:text-[#A89898] hover:text-[#2E2828] hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                  title="Edit entry"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-
-                {/* Delete Button */}
-                <button
-                  onClick={() => {
-                    if (confirm(`Delete requirement card for "${item.serviceTitle}"?`)) {
-                      deleteDocRequirement(item.id);
-                    }
-                  }}
-                  className="p-1.5 rounded text-red-400 hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                  title="Delete entry"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* ===================== ADD / EDIT MODAL ===================== */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-[#E4DFDA] dark:bg-[#201D1D] rounded-xl border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 max-w-2xl w-full p-6 shadow-2xl animate-in fade-in duration-200 my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15">
-              <h3 className="text-base font-bold text-[#2E2828] dark:text-[#E8E4E0]">
-                {editingId ? 'Edit Document Requirement Card' : 'Create New Document Requirement Card'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-xs font-mono text-[#6B5C5C] dark:text-[#A89898] hover:text-[#2E2828] cursor-pointer"
+          <div className="space-y-3">
+            {filteredItems.map((item, index) => (
+              <div
+                key={item.id}
+                className={`p-5 rounded-xl border transition-all flex flex-col md:flex-row items-start justify-between gap-4 ${
+                  item.published
+                    ? 'bg-[#101014] border-white/[0.08]'
+                    : 'bg-[#0A0A0E] border-dashed border-white/[0.1] opacity-65'
+                }`}
               >
-                ✕ Close
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#16161B] border border-white/[0.07] text-[#C9A96E]">
+                      Card #{index + 1}
+                    </span>
+                    {item.category && (
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#16161B] text-[#85838A]">
+                        {item.category}
+                      </span>
+                    )}
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono ${
+                        item.published
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                          : 'bg-white/[0.05] text-[#85838A]'
+                      }`}
+                    >
+                      {item.published ? 'LIVE' : 'DRAFT'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-editorial text-lg text-[#E8E5DF]">
+                    {item.serviceTitle}
+                  </h3>
+
+                  <div>
+                    <p className="text-[11px] font-mono uppercase tracking-wider text-[#C9A96E] mb-1.5 flex items-center gap-1.5">
+                      <ListOrdered className="w-3.5 h-3.5" />
+                      Required Documents ({item.requiredDocuments.length})
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-xs text-[#E8E5DF]/85 pl-1">
+                      {item.requiredDocuments.map((doc, docIdx) => (
+                        <li key={docIdx}>{doc}</li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {item.importantNote && (
+                    <div className="mt-2 p-2.5 rounded-lg bg-[#211B16] border border-[#C9A96E]/25 text-xs text-[#DFC492] flex items-start gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-[#C9A96E] shrink-0 mt-0.5" />
+                      <span>
+                        <strong>Note:</strong> {item.importantNote}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                  <button
+                    type="button"
+                    onClick={() => toggleDocRequirementPublished(item.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      item.published
+                        ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'
+                        : 'bg-[#16161B] text-[#85838A] border border-white/[0.08]'
+                    }`}
+                  >
+                    {item.published ? (
+                      <>
+                        <Eye className="w-3.5 h-3.5" /> Live
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5" /> Draft
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEdit(item)}
+                    className="p-1.5 rounded-lg text-[#E8E5DF] hover:bg-white/[0.06] transition-colors cursor-pointer"
+                    title="Edit"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Delete requirement card for "${item.serviceTitle}"?`
+                        )
+                      ) {
+                        deleteDocRequirement(item.id);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CmsSurfaceCard>
+
+      <CmsModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={
+          editingId
+            ? 'Edit Document Requirement Card'
+            : 'Add Document Requirement Card'
+        }
+        subtitle="Specify the service title and numbered documents customers must bring."
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Service Title *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g., PAN Card Correction or New Application"
+              value={formData.serviceTitle}
+              onChange={(e) =>
+                setFormData({ ...formData, serviceTitle: e.target.value })
+              }
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Category
+            </label>
+            <select
+              value={formData.category}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2.5 p-3.5 rounded-xl bg-[#101014] border border-white/[0.07]">
+            <div className="flex items-center justify-between">
+              <label className="font-medium text-[#E8E5DF] flex items-center gap-1.5">
+                <ListOrdered className="w-3.5 h-3.5 text-[#C9A96E]" />
+                Required Documents List *
+              </label>
+              <button
+                type="button"
+                onClick={handleAddDocItem}
+                className="inline-flex items-center gap-1 text-[11px] font-medium text-[#DFC492] hover:underline cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Item
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              {/* Service Title */}
-              <div>
-                <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                  Service Title * (Large and bold on card)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. AADHAAR CORRECTION or NEW PAN CARD"
-                  value={formData.serviceTitle}
-                  onChange={(e) => setFormData({ ...formData, serviceTitle: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none font-semibold text-sm"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                  Category
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-                >
-                  {categories.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Required Documents Dynamic List */}
-              <div className="space-y-2 p-3.5 rounded-lg bg-[#DFDAD5]/60 dark:bg-[#1A1818]/60 border border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-[#2E2828] dark:text-[#E8E4E0] flex items-center gap-1.5">
-                    <ListOrdered className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    Required Documents List * (Numbered 1, 2, 3...)
-                  </label>
+            <div className="space-y-2">
+              {formData.requiredDocuments.map((doc, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-6 text-center font-mono text-xs text-[#C9A96E]">
+                    {idx + 1}.
+                  </span>
+                  <input
+                    type="text"
+                    required={idx === 0}
+                    placeholder={`Document #${idx + 1}`}
+                    value={doc}
+                    onChange={(e) => handleDocItemChange(idx, e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-lg bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+                  />
                   <button
                     type="button"
-                    onClick={handleAddDocItem}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
+                    onClick={() => handleRemoveDocItem(idx)}
+                    className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add Document
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-
-                <div className="space-y-2">
-                  {formData.requiredDocuments.map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="w-6 text-center font-mono font-bold text-xs text-[#A4552C] dark:text-[#D9C6C6]">
-                        {idx + 1}.
-                      </span>
-                      <input
-                        type="text"
-                        required={idx === 0}
-                        placeholder={`Document item #${idx + 1} (e.g. Aadhaar Card)`}
-                        value={doc}
-                        onChange={(e) => handleDocItemChange(idx, e.target.value)}
-                        className="flex-1 px-3 py-1.5 rounded bg-[#E4DFDA] dark:bg-[#201D1D] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDocItem(idx)}
-                        className="p-1 text-red-400 hover:text-red-500 transition-colors cursor-pointer"
-                        title="Remove item"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Optional Important Note */}
-              <div>
-                <label className="block font-semibold text-[#2E2828] dark:text-[#E8E4E0] mb-1">
-                  Important Note (Optional — will be hidden if empty)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Physical presence of cardholder required for biometric scanning."
-                  value={formData.importantNote}
-                  onChange={(e) => setFormData({ ...formData, importantNote: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg bg-[#DFDAD5] dark:bg-[#1A1818] border border-[#6B5C5C]/20 dark:border-[#C4B0B0]/20 text-[#2E2828] dark:text-[#E8E4E0] focus:outline-none text-xs"
-                />
-              </div>
-
-              {/* Published Toggle */}
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="docPublished"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="rounded text-emerald-600"
-                />
-                <label htmlFor="docPublished" className="text-xs text-[#2E2828] dark:text-[#E8E4E0] cursor-pointer">
-                  <strong>Publish immediately</strong> to public Documents Need door (Uncheck to save as draft)
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#6B5C5C]/15 dark:border-[#C4B0B0]/15">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-[#6B5C5C] dark:text-[#A89898] hover:bg-black/5 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#2E2828] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold hover:opacity-90 cursor-pointer"
-                >
-                  {editingId ? 'Save Changes' : 'Publish Card'}
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block font-medium text-[#E8E5DF] mb-1.5">
+              Important Note (Optional)
+            </label>
+            <textarea
+              rows={2}
+              value={formData.importantNote}
+              onChange={(e) =>
+                setFormData({ ...formData, importantNote: e.target.value })
+              }
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none"
+            />
+          </div>
+
+          <CmsToggle
+            checked={formData.published}
+            onChange={(next) => setFormData({ ...formData, published: next })}
+            label="Publish Immediately"
+            description="Visible to visitors browsing the Documents Needed door."
+          />
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.07]">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 rounded-xl bg-[#101014] border border-white/[0.08] text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] font-semibold cursor-pointer"
+            >
+              {editingId ? 'Save Changes' : 'Publish Card'}
+            </button>
+          </div>
+        </form>
+      </CmsModal>
     </div>
   );
 };

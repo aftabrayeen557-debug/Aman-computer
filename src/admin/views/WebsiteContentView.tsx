@@ -1,24 +1,41 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { CheckCircle2, Eye, Save } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
-import { Save, Eye, Layers, Sparkles, CheckCircle2 } from 'lucide-react';
+import { CmsPageHeader, CmsSurfaceCard } from '../components/CmsPrimitives';
 
-export const WebsiteContentView: React.FC = () => {
+type ContentSectionKey = 'about' | 'whyUs' | 'howItWorks' | 'contact' | 'footer';
+
+export const WebsiteContentView: React.FC<{
+  focusedSection?: 'about' | 'contact' | 'footer';
+}> = ({ focusedSection }) => {
   const { websiteContent, updateWebsiteContent } = useAdmin();
-  const [activeSection, setActiveSection] = useState<'hero' | 'about' | 'whyUs' | 'howItWorks' | 'contact' | 'footer'>('hero');
+  const [activeSection, setActiveSection] = useState<ContentSectionKey>(
+    focusedSection || 'about'
+  );
 
-  // Form local states initialized from context
-  const [heroForm, setHeroForm] = useState(websiteContent.hero);
   const [aboutForm, setAboutForm] = useState(websiteContent.about);
   const [whyUsForm, setWhyUsForm] = useState(websiteContent.whyChooseUs);
   const [howItWorksForm, setHowItWorksForm] = useState(websiteContent.howItWorks);
   const [contactForm, setContactForm] = useState(websiteContent.contact);
   const [footerForm, setFooterForm] = useState(websiteContent.footer);
-
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  useEffect(() => {
+    if (focusedSection) {
+      setActiveSection(focusedSection);
+    }
+  }, [focusedSection]);
+
+  useEffect(() => {
+    setAboutForm(websiteContent.about);
+    setWhyUsForm(websiteContent.whyChooseUs);
+    setHowItWorksForm(websiteContent.howItWorks);
+    setContactForm(websiteContent.contact);
+    setFooterForm(websiteContent.footer);
+  }, [websiteContent]);
+
   const handleSaveCurrentSection = () => {
-    if (activeSection === 'hero') updateWebsiteContent('hero', heroForm);
-    else if (activeSection === 'about') updateWebsiteContent('about', aboutForm);
+    if (activeSection === 'about') updateWebsiteContent('about', aboutForm);
     else if (activeSection === 'whyUs') updateWebsiteContent('whyChooseUs', whyUsForm);
     else if (activeSection === 'howItWorks') updateWebsiteContent('howItWorks', howItWorksForm);
     else if (activeSection === 'contact') updateWebsiteContent('contact', contactForm);
@@ -28,47 +45,47 @@ export const WebsiteContentView: React.FC = () => {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
+  const tabs: Array<{ id: ContentSectionKey; label: string }> = [
+    { id: 'about', label: 'About Section' },
+    { id: 'whyUs', label: 'Why Choose Us' },
+    { id: 'howItWorks', label: 'How It Works' },
+    { id: 'contact', label: 'Contact Section' },
+    { id: 'footer', label: 'Footer Content' },
+  ];
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* View Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0]">
-            Website Content Management System (CMS)
-          </h1>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8]">
-            Customize public marketing headlines, announcements, why choose us proofs & contact prompts
-          </p>
-        </div>
+    <div className="space-y-6">
+      <CmsPageHeader
+        eyebrow="Website Copy & Sections"
+        title="Website Content Editor"
+        description="Customize your About story, trust pillars, step-by-step center process, customer contact prompts, and legal footer disclaimers."
+        actions={
+          <button
+            type="button"
+            onClick={handleSaveCurrentSection}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] font-semibold text-xs transition-colors cursor-pointer"
+          >
+            {savedSuccess ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-900" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            <span>{savedSuccess ? 'Published Live' : 'Publish Section'}</span>
+          </button>
+        }
+      />
 
-        <button
-          onClick={handleSaveCurrentSection}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1A1818] hover:bg-[#302A2A] dark:bg-[#E8E4E0] dark:hover:bg-white text-[#E8E4E0] dark:text-[#1A1818] font-semibold text-xs shadow-xs transition-colors self-start sm:self-auto"
-        >
-          {savedSuccess ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Save className="w-4 h-4" />}
-          <span>{savedSuccess ? 'Saved to Live Site!' : 'Publish Section Changes'}</span>
-        </button>
-      </div>
-
-      {/* Section Navigation Tabs */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] overflow-x-auto scrollbar-none">
-        {(
-          [
-            { id: 'hero', label: '1. Hero & Announcements' },
-            { id: 'about', label: '2. About & Experience' },
-            { id: 'whyUs', label: '3. Why Choose Us' },
-            { id: 'howItWorks', label: '4. How It Works (3 Steps)' },
-            { id: 'contact', label: '5. Contact & Visiting' },
-            { id: 'footer', label: '6. Footer & Legal Disclaimer' },
-          ] as const
-        ).map((tab) => (
+      {/* Section Tabs */}
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#141419] border border-white/[0.07] overflow-x-auto scrollbar-none">
+        {tabs.map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveSection(tab.id)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeSection === tab.id
-                ? 'bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] shadow-xs'
-                : 'text-[#6B5C5C] dark:text-[#B5A8A8] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]'
+                ? 'bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492]'
+                : 'text-[#85838A] hover:text-[#E8E5DF]'
             }`}
           >
             {tab.label}
@@ -76,238 +93,153 @@ export const WebsiteContentView: React.FC = () => {
         ))}
       </div>
 
-      {/* Grid: Editor Form on Left + Real-time Visual Preview on Right */}
+      {/* Editor + Live Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Editor Form Column */}
-        <div className="lg:col-span-7 p-6 rounded-3xl bg-[rgba(242,238,235,0.65)] dark:bg-[rgba(196,176,176,0.05)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] backdrop-blur-md shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[rgba(196,176,176,0.2)] dark:border-[rgba(196,176,176,0.08)]">
-            <h3 className="text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0] uppercase tracking-wide font-mono">
-              Editing: {activeSection.toUpperCase()}
-            </h3>
-            <span className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">
-              Live Preview Synchronized
+        <CmsSurfaceCard
+          className="lg:col-span-7 space-y-4"
+          title={`Editing: ${tabs.find((t) => t.id === activeSection)?.label || ''}`}
+          headerRight={
+            <span className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#C9A96E]">
+              Live Sync Ready
             </span>
-          </div>
-
-          {/* SECTION: HERO */}
-          {activeSection === 'hero' && (
-            <div className="space-y-3.5">
-              <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Top Chip Badge
-                </label>
-                <input
-                  type="text"
-                  value={heroForm.badge}
-                  onChange={(e) => setHeroForm({ ...heroForm, badge: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Main Headline
-                </label>
-                <textarea
-                  rows={2}
-                  value={heroForm.headline}
-                  onChange={(e) => setHeroForm({ ...heroForm, headline: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Subheadline / Value Pitch
-                </label>
-                <textarea
-                  rows={2}
-                  value={heroForm.subheadline}
-                  onChange={(e) => setHeroForm({ ...heroForm, subheadline: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                    Primary Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={heroForm.ctaPrimaryText}
-                    onChange={(e) => setHeroForm({ ...heroForm, ctaPrimaryText: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                    Primary Destination Link
-                  </label>
-                  <input
-                    type="text"
-                    value={heroForm.ctaPrimaryLink}
-                    onChange={(e) => setHeroForm({ ...heroForm, ctaPrimaryLink: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Urgent Notice Ticker (Top Bar)
-                </label>
-                <input
-                  type="text"
-                  value={heroForm.announcement}
-                  onChange={(e) => setHeroForm({ ...heroForm, announcement: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Store Operating Hours Text
-                </label>
-                <input
-                  type="text"
-                  value={heroForm.timingNotice}
-                  onChange={(e) => setHeroForm({ ...heroForm, timingNotice: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* SECTION: ABOUT */}
+          }
+        >
           {activeSection === 'about' && (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Section Heading
                 </label>
                 <input
                   type="text"
                   value={aboutForm.heading}
                   onChange={(e) => setAboutForm({ ...aboutForm, heading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Subheading
                 </label>
                 <input
                   type="text"
                   value={aboutForm.subheading}
                   onChange={(e) => setAboutForm({ ...aboutForm, subheading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Full Story Bio
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+                  Full Center Story
                 </label>
                 <textarea
                   rows={4}
                   value={aboutForm.bio}
                   onChange={(e) => setAboutForm({ ...aboutForm, bio: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 leading-relaxed"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                  <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                     Years Active
                   </label>
                   <input
                     type="text"
                     value={aboutForm.experienceYears}
-                    onChange={(e) => setAboutForm({ ...aboutForm, experienceYears: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs font-mono font-bold text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                    onChange={(e) =>
+                      setAboutForm({ ...aboutForm, experienceYears: e.target.value })
+                    }
+                    className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs font-mono text-[#C9A96E] outline-none focus:border-[#C9A96E]/60"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                  <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                     Clients Served
                   </label>
                   <input
                     type="text"
                     value={aboutForm.customersServed}
-                    onChange={(e) => setAboutForm({ ...aboutForm, customersServed: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs font-mono font-bold text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                    onChange={(e) =>
+                      setAboutForm({ ...aboutForm, customersServed: e.target.value })
+                    }
+                    className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs font-mono text-[#C9A96E] outline-none focus:border-[#C9A96E]/60"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                  <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                     Success Rate
                   </label>
                   <input
                     type="text"
                     value={aboutForm.successRate}
-                    onChange={(e) => setAboutForm({ ...aboutForm, successRate: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs font-mono font-bold text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                    onChange={(e) =>
+                      setAboutForm({ ...aboutForm, successRate: e.target.value })
+                    }
+                    className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs font-mono text-[#C9A96E] outline-none focus:border-[#C9A96E]/60"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* SECTION: WHY CHOOSE US */}
           {activeSection === 'whyUs' && (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Section Heading
                 </label>
                 <input
                   type="text"
                   value={whyUsForm.heading}
                   onChange={(e) => setWhyUsForm({ ...whyUsForm, heading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Subheading
                 </label>
                 <input
                   type="text"
                   value={whyUsForm.subheading}
                   onChange={(e) => setWhyUsForm({ ...whyUsForm, subheading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                 />
               </div>
 
-              <div className="space-y-2 pt-2">
-                <span className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block">
-                  Trust Pillars (4 Core Points)
+              <div className="space-y-2.5 pt-2">
+                <span className="text-xs font-medium text-[#E8E5DF] block">
+                  Trust Pillars
                 </span>
                 {whyUsForm.points.map((pt, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-white/40 dark:bg-black/20 border border-[rgba(196,176,176,0.2)] space-y-1.5">
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-[#101014] border border-white/[0.07] space-y-2"
+                  >
                     <input
                       type="text"
                       value={pt.title}
                       onChange={(e) => {
                         const newPts = [...whyUsForm.points];
-                        newPts[idx].title = e.target.value;
+                        newPts[idx] = { ...newPts[idx], title: e.target.value };
                         setWhyUsForm({ ...whyUsForm, points: newPts });
                       }}
-                      className="w-full p-1.5 rounded-lg bg-transparent font-bold text-xs text-[#1A1818] dark:text-[#E8E4E0]"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.06] font-semibold text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                     />
                     <textarea
                       rows={2}
                       value={pt.desc}
                       onChange={(e) => {
                         const newPts = [...whyUsForm.points];
-                        newPts[idx].desc = e.target.value;
+                        newPts[idx] = { ...newPts[idx], desc: e.target.value };
                         setWhyUsForm({ ...whyUsForm, points: newPts });
                       }}
-                      className="w-full p-1.5 rounded-lg bg-transparent text-xs text-[#857878] dark:text-[#B5A8A8]"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.06] text-xs text-[#85838A] outline-none focus:border-[#C9A96E]/60"
                     />
                   </div>
                 ))}
@@ -315,26 +247,30 @@ export const WebsiteContentView: React.FC = () => {
             </div>
           )}
 
-          {/* SECTION: HOW IT WORKS */}
           {activeSection === 'howItWorks' && (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Section Heading
                 </label>
                 <input
                   type="text"
                   value={howItWorksForm.heading}
-                  onChange={(e) => setHowItWorksForm({ ...howItWorksForm, heading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
+                  onChange={(e) =>
+                    setHowItWorksForm({ ...howItWorksForm, heading: e.target.value })
+                  }
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-semibold"
                 />
               </div>
 
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2.5 pt-1">
                 {howItWorksForm.steps.map((st, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-white/40 dark:bg-black/20 border border-[rgba(196,176,176,0.2)] space-y-1">
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-[#101014] border border-white/[0.07] space-y-2"
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-[#6B5C5C] dark:text-[#C4B0B0]">
+                      <span className="text-[11px] font-mono font-semibold text-[#C9A96E] shrink-0">
                         Step {st.stepNumber}
                       </span>
                       <input
@@ -342,10 +278,10 @@ export const WebsiteContentView: React.FC = () => {
                         value={st.title}
                         onChange={(e) => {
                           const newSteps = [...howItWorksForm.steps];
-                          newSteps[idx].title = e.target.value;
+                          newSteps[idx] = { ...newSteps[idx], title: e.target.value };
                           setHowItWorksForm({ ...howItWorksForm, steps: newSteps });
                         }}
-                        className="flex-1 p-1 rounded-lg bg-transparent font-bold text-xs text-[#1A1818] dark:text-[#E8E4E0]"
+                        className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.06] font-semibold text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                       />
                     </div>
                     <textarea
@@ -353,10 +289,10 @@ export const WebsiteContentView: React.FC = () => {
                       value={st.desc}
                       onChange={(e) => {
                         const newSteps = [...howItWorksForm.steps];
-                        newSteps[idx].desc = e.target.value;
+                        newSteps[idx] = { ...newSteps[idx], desc: e.target.value };
                         setHowItWorksForm({ ...howItWorksForm, steps: newSteps });
                       }}
-                      className="w-full p-1 rounded-lg bg-transparent text-xs text-[#857878] dark:text-[#B5A8A8]"
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-[#0A0A0E] border border-white/[0.06] text-xs text-[#85838A] outline-none focus:border-[#C9A96E]/60"
                     />
                   </div>
                 ))}
@@ -364,124 +300,199 @@ export const WebsiteContentView: React.FC = () => {
             </div>
           )}
 
-          {/* SECTION: CONTACT */}
           {activeSection === 'contact' && (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Contact Heading
                 </label>
                 <input
                   type="text"
                   value={contactForm.heading}
                   onChange={(e) => setContactForm({ ...contactForm, heading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-semibold"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Subheading
                 </label>
                 <input
                   type="text"
                   value={contactForm.subheading}
                   onChange={(e) => setContactForm({ ...contactForm, subheading: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+                  Phone Call Prompt
+                </label>
+                <input
+                  type="text"
+                  value={contactForm.phonePrompt}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, phonePrompt: e.target.value })
+                  }
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   WhatsApp Direct Prompt
                 </label>
                 <input
                   type="text"
                   value={contactForm.whatsappPrompt}
-                  onChange={(e) => setContactForm({ ...contactForm, whatsappPrompt: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, whatsappPrompt: e.target.value })
+                  }
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+                  Walk-In Visiting Prompt
+                </label>
+                <input
+                  type="text"
+                  value={contactForm.visitingPrompt}
+                  onChange={(e) =>
+                    setContactForm({ ...contactForm, visitingPrompt: e.target.value })
+                  }
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                 />
               </div>
             </div>
           )}
 
-          {/* SECTION: FOOTER */}
           {activeSection === 'footer' && (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Official Tagline
                 </label>
                 <input
                   type="text"
                   value={footerForm.tagline}
                   onChange={(e) => setFooterForm({ ...footerForm, tagline: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden font-bold"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-semibold"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
                   Copyright Notice
                 </label>
                 <input
                   type="text"
                   value={footerForm.copyrightText}
-                  onChange={(e) => setFooterForm({ ...footerForm, copyrightText: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  onChange={(e) =>
+                    setFooterForm({ ...footerForm, copyrightText: e.target.value })
+                  }
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] block mb-1">
-                  Legal Statutory Disclaimer
+                <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+                  Legal Disclaimer
                 </label>
                 <textarea
                   rows={3}
                   value={footerForm.disclaimer}
                   onChange={(e) => setFooterForm({ ...footerForm, disclaimer: e.target.value })}
-                  className="w-full p-2.5 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] text-xs text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
+                  className="w-full p-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 leading-relaxed"
                 />
               </div>
             </div>
           )}
-        </div>
+        </CmsSurfaceCard>
 
-        {/* Live Preview Column */}
-        <div className="lg:col-span-5 p-6 rounded-3xl bg-[#F0ECE9] dark:bg-[#1A1818] border border-[rgba(196,176,176,0.35)] dark:border-[rgba(196,176,176,0.18)] shadow-lg sticky top-20 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[rgba(196,176,176,0.2)] dark:border-[rgba(196,176,176,0.08)]">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-              <Eye className="w-4 h-4 text-emerald-500" />
-              <span>Real-Time Public Preview</span>
+        {/* Preview Column */}
+        <CmsSurfaceCard
+          className="lg:col-span-5 sticky top-20 space-y-4"
+          title="Real-Time Public Preview"
+          headerRight={
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-400">
+              <Eye className="w-3.5 h-3.5" />
+              <span>Synchronized</span>
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.25)] space-y-3">
-            <div className="inline-block text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]">
-              {heroForm.badge}
+          }
+        >
+          {activeSection === 'about' && (
+            <div className="p-4 rounded-xl bg-[#0A0A0E] border border-white/[0.07] space-y-3">
+              <div className="font-editorial text-xl text-[#E8E5DF]">{aboutForm.heading}</div>
+              <div className="text-xs text-[#DFC492]">{aboutForm.subheading}</div>
+              <p className="text-xs text-[#85838A] leading-relaxed">{aboutForm.bio}</p>
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/[0.06] text-center">
+                <div>
+                  <div className="font-mono text-sm text-[#C9A96E]">{aboutForm.experienceYears}</div>
+                  <div className="text-[10px] text-[#85838A]">Years</div>
+                </div>
+                <div>
+                  <div className="font-mono text-sm text-[#C9A96E]">{aboutForm.customersServed}</div>
+                  <div className="text-[10px] text-[#85838A]">Clients</div>
+                </div>
+                <div>
+                  <div className="font-mono text-sm text-[#C9A96E]">{aboutForm.successRate}</div>
+                  <div className="text-[10px] text-[#85838A]">Accuracy</div>
+                </div>
+              </div>
             </div>
-            <h2 className="text-base font-bold text-[#1A1818] dark:text-[#E8E4E0] leading-snug">
-              {heroForm.headline}
-            </h2>
-            <p className="text-xs text-[#857878] dark:text-[#B5A8A8] leading-relaxed">
-              {heroForm.subheadline}
-            </p>
+          )}
 
-            <div className="pt-2 flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs">
-                {heroForm.ctaPrimaryText}
-              </span>
-              <span className="px-3 py-1.5 rounded-xl border border-[rgba(196,176,176,0.4)] text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0]">
-                {heroForm.ctaSecondaryText}
-              </span>
+          {activeSection === 'whyUs' && (
+            <div className="p-4 rounded-xl bg-[#0A0A0E] border border-white/[0.07] space-y-3">
+              <div className="font-editorial text-xl text-[#E8E5DF]">{whyUsForm.heading}</div>
+              <div className="text-xs text-[#85838A]">{whyUsForm.subheading}</div>
+              <div className="space-y-2">
+                {whyUsForm.points.map((pt, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-[#141419] border border-white/[0.06]">
+                    <div className="text-xs font-medium text-[#E8E5DF]">{pt.title}</div>
+                    <div className="text-[11px] text-[#85838A] mt-0.5">{pt.desc}</div>
+                  </div>
+                ))}
+              </div>
             </div>
+          )}
 
-            <div className="pt-2 text-[10px] font-mono text-[#857878] dark:text-[#B5A8A8] border-t border-[rgba(196,176,176,0.2)]">
-              📢 {heroForm.announcement}
+          {activeSection === 'howItWorks' && (
+            <div className="p-4 rounded-xl bg-[#0A0A0E] border border-white/[0.07] space-y-3">
+              <div className="font-editorial text-xl text-[#E8E5DF]">{howItWorksForm.heading}</div>
+              <div className="space-y-2">
+                {howItWorksForm.steps.map((st, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-[#141419] border border-white/[0.06]">
+                    <div className="text-xs font-medium text-[#DFC492]">
+                      Step {st.stepNumber} — {st.title}
+                    </div>
+                    <div className="text-[11px] text-[#85838A] mt-0.5">{st.desc}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="p-3 rounded-xl bg-black/5 dark:bg-white/5 text-[11px] text-[#857878] dark:text-[#B5A8A8] font-mono">
-            {footerForm.tagline}
-          </div>
-        </div>
+          {activeSection === 'contact' && (
+            <div className="p-4 rounded-xl bg-[#0A0A0E] border border-white/[0.07] space-y-2.5">
+              <div className="font-editorial text-xl text-[#E8E5DF]">{contactForm.heading}</div>
+              <div className="text-xs text-[#85838A]">{contactForm.subheading}</div>
+              <div className="pt-2 space-y-1.5 text-[11px] text-[#E8E5DF]/80">
+                <div>Phone: {contactForm.phonePrompt}</div>
+                <div>WhatsApp: {contactForm.whatsappPrompt}</div>
+                <div>Visiting: {contactForm.visitingPrompt}</div>
+              </div>
+            </div>
+          )}
+
+          {activeSection === 'footer' && (
+            <div className="p-4 rounded-xl bg-[#0A0A0E] border border-white/[0.07] space-y-2.5">
+              <div className="font-editorial text-lg text-[#E8E5DF]">{footerForm.tagline}</div>
+              <div className="text-[11px] font-mono text-[#C9A96E]">{footerForm.copyrightText}</div>
+              <p className="text-[11px] text-[#85838A] leading-relaxed">
+                {footerForm.disclaimer}
+              </p>
+            </div>
+          )}
+        </CmsSurfaceCard>
       </div>
     </div>
   );

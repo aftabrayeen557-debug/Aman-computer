@@ -786,6 +786,7 @@ void main() {
       inputs.forEach((el) => {
         el.readOnly = true;
       });
+      setBackendNotice(null);
       msg.textContent = 'Authenticating with Firebase…';
 
       try {
@@ -802,6 +803,7 @@ void main() {
         const res = await signInAdmin(email, pass);
         if (res.success && res.isAuthorizedAdmin) {
           clearBad();
+          setBackendNotice(null);
           lock();
           msg.textContent = 'Authorization verified. Opening terminal…';
           setTimeout(() => {

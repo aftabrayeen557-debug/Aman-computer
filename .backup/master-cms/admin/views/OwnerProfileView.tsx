@@ -1,0 +1,1239 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  AlertCircle,
+  ArrowRight,
+  Briefcase,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Facebook,
+  Globe,
+  ImagePlus,
+  Instagram,
+  Link2,
+  Linkedin,
+  Loader2,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserCheck,
+} from 'lucide-react';
+import { useAdmin } from '../context/AdminContext';
+import { OwnerCustomLink, OwnerProfile } from '../types';
+import {
+  calculateOwnerProfileCompletion,
+  getOwnerProfileChanges,
+  getOwnerProfileInitials,
+  validateHttpUrl,
+  validateOwnerProfileDraft,
+} from '../services/ownerProfileService';
+import { formatFileSize, uploadFileToStorage, validateUploadFile } from '../services/storageService';
+import { StudioLoadingState } from '../components/StateViews';
+
+const cloneOwnerProfile = (profile: OwnerProfile): OwnerProfile => ({
+  ...profile,
+  socialLinks: {
+    ...profile.socialLinks,
+    other: (profile.socialLinks.other || []).map((link) => ({ ...link })),
+  },
+});
+
+const generateCustomLinkId = () =>
+  `link-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+const safeHref = (rawUrl: string): string | null => {
+  const check = validateHttpUrl(rawUrl, 'Link', { allowRelativeAsset: false });
+  if (!check.valid || !check.normalized) return null;
+  return check.normalized;
+};
+
+export const OwnerProfileView: React.FC = () => {
+  const {
+    currentUser,
+    ownerProfile,
+    ownerProfileStatus,
+    ownerProfileError,
+    updateOwnerProfile,
+    refreshOwnerProfile,
+    addMediaAsset,
+    isSupabaseActive,
+    showToast,
+  } = useAdmin();
+
+  const [draft, setDraft] = useState<OwnerProfile>(() => cloneOwnerProfile(ownerProfile));
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [previewMode, setPreviewMode] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadDragging, setUploadDragging] = useState(false);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
+  const [previewAvatarLoadError, setPreviewAvatarLoadError] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const syncedSerializedRef = useRef<string>(JSON.stringify(ownerProfile));
+
+  const savedSerialized = useMemo(() => JSON.stringify(ownerProfile), [ownerProfile]);
+  const stagedChanges = useMemo(
+    () => getOwnerProfileChanges(ownerProfile, draft),
+    [ownerProfile, draft]
+  );
+  const isDirty = stagedChanges.length > 0;
+
+  // Keep local draft synchronized if Supabase finishes hydrating while user hasn't edited yet
+  useEffect(() => {
+    if (savedSerialized !== syncedSerializedRef.current) {
+      syncedSerializedRef.current = savedSerialized;
+      setDraft((prev) => {
+        const prevDirty = getOwnerProfileChanges(
+          JSON.parse(syncedSerializedRef.current) as OwnerProfile,
+          prev
+        ).length > 0;
+        return prevDirty && isDirty ? prev : cloneOwnerProfile(ownerProfile);
+      });
+    }
+  }, [ownerProfile, savedSerialized, isDirty]);
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+    setPreviewAvatarLoadError(false);
+  }, [draft.profileImage, ownerProfile.profileImage]);
+
+  const savedCompletion = useMemo(
+    () => calculateOwnerProfileCompletion(ownerProfile),
+    [ownerProfile]
+  );
+  const draftCompletion = useMemo(
+    () => calculateOwnerProfileCompletion(draft),
+    [draft]
+  );
+
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const handleFieldChange = <K extends keyof OwnerProfile>(key: K, value: OwnerProfile[K]) => {
+    setDraft((prev) => ({ ...prev, [key]: value }));
+    clearFieldError(String(key));
+  };
+
+  const handleSocialChange = (
+    key: 'website' | 'linkedin' | 'instagram' | 'facebook',
+    value: string
+  ) => {
+    setDraft((prev) => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        [key]: value,
+      },
+    }));
+    clearFieldError(key);
+  };
+
+  const handleAddCustomLink = () => {
+    const newItem: OwnerCustomLink = {
+      id: generateCustomLinkId(),
+      label: '',
+      url: '',
+    };
+    setDraft((prev) => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        other: [...(prev.socialLinks.other || []), newItem],
+      },
+    }));
+  };
+
+  const handleUpdateCustomLink = (
+    id: string,
+    patch: Partial<Pick<OwnerCustomLink, 'label' | 'url'>>
+  ) => {
+    setDraft((prev) => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        other: (prev.socialLinks.other || []).map((item) =>
+          item.id === id ? { ...item, ...patch } : item
+        ),
+      },
+    }));
+    clearFieldError(`other.${id}`);
+  };
+
+  const handleRemoveCustomLink = (id: string) => {
+    setDraft((prev) => ({
+      ...prev,
+      socialLinks: {
+        ...prev.socialLinks,
+        other: (prev.socialLinks.other || []).filter((item) => item.id !== id),
+      },
+    }));
+    clearFieldError(`other.${id}`);
+  };
+
+  const focusTargetInput = (inputId: string) => {
+    setPreviewMode(false);
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById(inputId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus();
+      }
+    });
+  };
+
+  const handleImageFileSelected = async (file: File | undefined | null) => {
+    if (!file) return;
+    setUploadError(null);
+
+    const validation = validateUploadFile(file, 'image');
+    if (!validation.valid) {
+      setUploadError(validation.error || 'Unsupported portrait file.');
+      showToast('Portrait Upload Rejected', validation.error || 'Unsupported file.', 'warning');
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const result = await uploadFileToStorage('media-library', file, 'owner-profile', 'image');
+      if (!result.success || !result.url) {
+        const msg =
+          result.error ||
+          'Unable to upload portrait photo. Check storage permissions or provide a direct HTTPS image URL.';
+        setUploadError(msg);
+        showToast('Portrait Upload Failed', msg, 'error');
+        return;
+      }
+
+      setDraft((prev) => ({ ...prev, profileImage: result.url! }));
+      clearFieldError('profileImage');
+      setAvatarLoadError(false);
+
+      addMediaAsset({
+        name: `Owner Portrait — ${file.name}`,
+        url: result.url,
+        fileType: 'image',
+        fileSize: result.fileSize || formatFileSize(file.size),
+        category: 'gallery',
+      });
+
+      showToast(
+        'Portrait Ready',
+        'Image uploaded to media storage. Select "Save Profile" to apply this change.',
+        'success'
+      );
+    } finally {
+      setImageUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(cloneOwnerProfile(ownerProfile));
+    setFieldErrors({});
+    setUploadError(null);
+    setPreviewMode(false);
+    showToast('Edits Discarded', 'Reverted staged edits to last saved owner profile.', 'info');
+  };
+
+  const handleSave = async (): Promise<boolean> => {
+    const validation = validateOwnerProfileDraft(draft);
+    if (!validation.valid) {
+      setFieldErrors(validation.errors);
+      const firstError =
+        Object.values(validation.errors)[0] || 'Please fix the highlighted profile fields.';
+      showToast('Validation Required', firstError, 'warning');
+      setPreviewMode(false);
+      return false;
+    }
+
+    setFieldErrors({});
+    const ok = await updateOwnerProfile(validation.sanitized);
+    if (ok) {
+      setDraft(cloneOwnerProfile(validation.sanitized));
+      setPreviewMode(false);
+    }
+    return ok;
+  };
+
+  if (ownerProfileStatus === 'loading' && !isDirty) {
+    return (
+      <StudioLoadingState
+        title="Loading your information..."
+        subtitle="Preparing your proprietor profile and public details."
+      />
+    );
+  }
+
+  const activeOverviewSocials = [
+    { key: 'Website', url: ownerProfile.socialLinks.website, icon: Globe },
+    { key: 'LinkedIn', url: ownerProfile.socialLinks.linkedin, icon: Linkedin },
+    { key: 'Instagram', url: ownerProfile.socialLinks.instagram, icon: Instagram },
+    { key: 'Facebook', url: ownerProfile.socialLinks.facebook, icon: Facebook },
+    ...(ownerProfile.socialLinks.other || []).map((item) => ({
+      key: item.label || 'Custom Link',
+      url: item.url,
+      icon: Link2,
+    })),
+  ]
+    .map((entry) => ({ ...entry, href: safeHref(entry.url) }))
+    .filter((entry): entry is typeof entry & { href: string } => Boolean(entry.href));
+
+  const previewSocials = [
+    { key: 'Website', url: draft.socialLinks.website, icon: Globe },
+    { key: 'LinkedIn', url: draft.socialLinks.linkedin, icon: Linkedin },
+    { key: 'Instagram', url: draft.socialLinks.instagram, icon: Instagram },
+    { key: 'Facebook', url: draft.socialLinks.facebook, icon: Facebook },
+    ...(draft.socialLinks.other || []).map((item) => ({
+      key: item.label || 'Custom Link',
+      url: item.url,
+      icon: Link2,
+    })),
+  ]
+    .map((entry) => ({ ...entry, href: safeHref(entry.url) }))
+    .filter((entry): entry is typeof entry & { href: string } => Boolean(entry.href));
+
+  const savedInitials = getOwnerProfileInitials(ownerProfile.fullName);
+  const draftInitials = getOwnerProfileInitials(draft.fullName);
+  const bioLength = draft.bio.trim().length;
+
+  return (
+    <div className="space-y-6">
+      {/* Error Recovery Banner */}
+      {ownerProfileError && (
+        <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-2.5 text-xs text-rose-100">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold">Unable to Save Profile</div>
+              <p className="text-rose-200/80 mt-0.5">{ownerProfileError}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void refreshOwnerProfile()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-400/30 bg-[#111318] text-[11px] font-medium text-rose-100 hover:bg-rose-500/15 transition-colors shrink-0 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Try Again</span>
+          </button>
+        </div>
+      )}
+
+      {/* Top Sticky Action Bar */}
+      <div className="rounded-2xl bg-[#111318] border border-orange-500/20 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-[0_0_40px_-24px_rgba(249,115,22,0.4)]">
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-[0.16em] text-orange-400">
+            <span>Owner &amp; Brand</span>
+            <span className="text-[#92949B]">/</span>
+            <span className="text-[#F5F2EC]">Proprietor Profile</span>
+            {isDirty ? (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/35 text-amber-200 text-[10px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                {stagedChanges.length} Unsaved {stagedChanges.length === 1 ? 'Change' : 'Changes'}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px]">
+                <CheckCircle2 className="w-3 h-3" />
+                Saved
+              </span>
+            )}
+          </div>
+          <h1 className="font-editorial text-2xl sm:text-3xl font-normal tracking-tight text-[#F5F2EC]">
+            Owner Profile &amp; Public Identity
+          </h1>
+          <p className="text-xs text-[#92949B] leading-relaxed">
+            Manage your proprietor details, profile photo, public contact information, and online presence with a live preview before saving.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setPreviewMode((prev) => !prev)}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+              previewMode
+                ? 'border-orange-400/60 bg-orange-500/15 text-orange-100'
+                : 'border-white/[0.1] bg-[#191C22] text-[#F5F2EC] hover:border-orange-500/40 hover:bg-orange-500/10'
+            }`}
+          >
+            {previewMode ? <EyeOff className="w-3.5 h-3.5 text-orange-400" /> : <Eye className="w-3.5 h-3.5 text-orange-400" />}
+            <span>{previewMode ? 'Back to Editor' : 'Preview Changes'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={!isDirty || ownerProfileStatus === 'saving'}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/[0.08] bg-[#191C22] text-xs font-medium text-[#92949B] hover:text-[#F5F2EC] hover:border-white/[0.18] disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Cancel</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={!isDirty || ownerProfileStatus === 'saving' || imageUploading}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-[#090A0C] text-xs font-semibold hover:brightness-110 disabled:opacity-45 disabled:pointer-events-none transition-all shadow-[0_0_24px_-6px_rgba(249,115,22,0.55)] cursor-pointer"
+          >
+            {ownerProfileStatus === 'saving' ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            <span>{ownerProfileStatus === 'saving' ? 'Saving…' : 'Save Profile'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Saved Overview + Profile Completion Card */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <div className="xl:col-span-8 relative rounded-2xl bg-[#111318] border border-white/[0.07] p-6 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(249,115,22,0.10),transparent_60%)]" />
+          <div className="relative flex flex-col sm:flex-row sm:items-start gap-5">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-orange-500/35 bg-gradient-to-br from-orange-500/20 to-amber-500/10 flex items-center justify-center overflow-hidden shadow-[0_0_28px_-10px_rgba(249,115,22,0.45)]">
+                {ownerProfile.profileImage && !avatarLoadError ? (
+                  <img
+                    src={ownerProfile.profileImage}
+                    alt={ownerProfile.fullName}
+                    onError={() => setAvatarLoadError(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="font-editorial text-2xl sm:text-3xl text-orange-300 tracking-wide">
+                    {savedInitials}
+                  </span>
+                )}
+              </div>
+              <span
+                title="Verified Administrator"
+                className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-lg bg-[#111318] border border-orange-500/40 flex items-center justify-center text-orange-400"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </span>
+            </div>
+
+            {/* Identity Details */}
+            <div className="flex-1 min-w-0 space-y-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-editorial text-2xl text-[#F5F2EC] tracking-tight truncate">
+                    {ownerProfile.fullName || 'Sharique Aman'}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-md bg-orange-500/15 border border-orange-500/30 text-[10px] font-mono uppercase tracking-[0.12em] text-orange-300">
+                    Verified Proprietor
+                  </span>
+                </div>
+                <div className="text-sm text-orange-300/90 font-medium mt-0.5">
+                  {ownerProfile.designation || 'Founder & Proprietor'}
+                </div>
+                <div className="text-xs text-[#92949B] mt-0.5">
+                  {ownerProfile.businessIdentity || 'Aman Computer — Cyber Cafe & Digital Center'}
+                </div>
+              </div>
+
+              {ownerProfile.bio ? (
+                <p className="text-xs sm:text-[13px] text-[#C7C9D1] leading-relaxed">
+                  {ownerProfile.bio}
+                </p>
+              ) : (
+                <p className="text-xs italic text-[#92949B]">
+                  No biography added yet. Add a short introduction about your experience and services below.
+                </p>
+              )}
+
+              {/* Quick Meta Badges */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-[#92949B] pt-1">
+                {ownerProfile.locationLabel && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-orange-400" />
+                    <span className="text-[#F5F2EC]">{ownerProfile.locationLabel}</span>
+                  </span>
+                )}
+                {ownerProfile.experienceLabel && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Briefcase className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[#F5F2EC]">{ownerProfile.experienceLabel}</span>
+                  </span>
+                )}
+                {ownerProfile.email && (
+                  <span className="inline-flex items-center gap-1.5 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                    <span className="text-[#F5F2EC] truncate">{ownerProfile.email}</span>
+                  </span>
+                )}
+                {ownerProfile.phone && (
+                  <span className="inline-flex items-center gap-1.5 font-mono">
+                    <Phone className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                    <span className="text-[#F5F2EC]">{ownerProfile.phone}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Active Social Links */}
+              <div className="pt-2 border-t border-white/[0.06] flex flex-wrap items-center gap-2">
+                {activeOverviewSocials.length > 0 ? (
+                  activeOverviewSocials.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <a
+                        key={`${item.key}-${item.href}`}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#191C22] border border-white/[0.08] hover:border-orange-500/45 hover:bg-orange-500/10 text-[11px] text-[#F5F2EC] transition-colors"
+                      >
+                        <Icon className="w-3.5 h-3.5 text-orange-400" />
+                        <span>{item.key}</span>
+                      </a>
+                    );
+                  })
+                ) : (
+                  <span className="text-[11px] text-[#92949B]">
+                    No public social or portfolio links added yet.
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Profile Completion Indicator */}
+        <div className="xl:col-span-4 rounded-2xl bg-[#191C22] border border-white/[0.07] p-5 flex flex-col justify-between gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-orange-400" />
+                <span className="text-xs font-mono uppercase tracking-[0.14em] text-[#92949B]">
+                  Profile Completeness
+                </span>
+              </div>
+              <span className="font-mono text-sm font-semibold text-orange-300 tabular-nums">
+                {draftCompletion.percentage}%
+              </span>
+            </div>
+
+            <div className="h-2 rounded-full bg-[#090A0C] border border-white/[0.06] overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-300 transition-all duration-500"
+                style={{ width: `${draftCompletion.percentage}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-[#92949B]">
+              <span>
+                {draftCompletion.completedCount} of {draftCompletion.totalCount} details completed
+              </span>
+              {savedCompletion.percentage !== draftCompletion.percentage && (
+                <span className="font-mono text-amber-300">
+                  Saved: {savedCompletion.percentage}%
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            {draftCompletion.missingFields.length > 0 ? (
+              <>
+                <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#92949B]">
+                  Recommended Additions
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {draftCompletion.missingFields.map((missing) => (
+                    <button
+                      key={missing.key}
+                      type="button"
+                      onClick={() => focusTargetInput(missing.targetInputId)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#111318] border border-orange-500/25 hover:border-orange-400/60 text-[11px] text-orange-200 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3 text-orange-400" />
+                      <span>{missing.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 flex items-center gap-2 text-xs text-emerald-200">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>Your owner profile is 100% complete.</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Preview Changes Panel */}
+      <AnimatePresence mode="wait">
+        {previewMode && (
+          <motion.section
+            key="owner-preview-panel"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+            className="rounded-2xl bg-[#111318] border border-orange-500/35 p-6 space-y-6 shadow-[0_0_45px_-22px_rgba(249,115,22,0.5)]"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/[0.07]">
+              <div>
+                <div className="text-[11px] font-mono uppercase tracking-[0.16em] text-orange-400">
+                  Live Staged Preview
+                </div>
+                <h3 className="font-editorial text-xl text-[#F5F2EC] mt-0.5">
+                  Compare Saved vs Staged Profile Appearance
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode(false)}
+                  className="px-3.5 py-2 rounded-lg border border-white/[0.1] bg-[#191C22] text-xs text-[#F5F2EC] hover:border-white/[0.2] transition-colors cursor-pointer"
+                >
+                  Continue Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleSave()}
+                  disabled={!isDirty || ownerProfileStatus === 'saving'}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-[#090A0C] text-xs font-semibold hover:brightness-110 disabled:opacity-45 disabled:pointer-events-none transition-all cursor-pointer"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Confirm &amp; Save Changes</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Simulated Rendered Card + TopBar Pill */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#92949B]">
+                  Rendered Proprietor Card Preview
+                </div>
+                <div className="rounded-xl bg-[#191C22] border border-orange-500/25 p-5 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-xl border border-orange-500/40 bg-orange-500/15 flex items-center justify-center overflow-hidden shrink-0">
+                      {draft.profileImage && !previewAvatarLoadError ? (
+                        <img
+                          src={draft.profileImage}
+                          alt={draft.fullName}
+                          onError={() => setPreviewAvatarLoadError(true)}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-editorial text-xl text-orange-300">
+                          {draftInitials}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-editorial text-xl text-[#F5F2EC] truncate">
+                        {draft.fullName || '(Name Required)'}
+                      </div>
+                      <div className="text-xs text-orange-300 font-medium">
+                        {draft.designation || '(Designation)'}
+                      </div>
+                      <div className="text-[11px] text-[#92949B]">
+                        {draft.businessIdentity || '(Business Identity)'}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#C7C9D1] leading-relaxed">
+                    {draft.bio || 'No biography set.'}
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-[11px] text-[#92949B]">
+                    {draft.locationLabel && <span>{draft.locationLabel}</span>}
+                    {draft.experienceLabel && <span>· {draft.experienceLabel}</span>}
+                    {draft.email && <span>· {draft.email}</span>}
+                    {draft.phone && <span className="font-mono">· {draft.phone}</span>}
+                  </div>
+                  {previewSocials.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-white/[0.06]">
+                      {previewSocials.map((s) => (
+                        <span
+                          key={`${s.key}-${s.href}`}
+                          className="px-2 py-1 rounded-md bg-[#111318] border border-white/[0.08] text-[10px] text-orange-200"
+                        >
+                          {s.key}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* TopBar Chip Simulation */}
+                <div>
+                  <div className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#92949B] mb-2">
+                    Top Navigation Bar Identity Chip
+                  </div>
+                  <div className="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#191C22] border border-white/[0.08]">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500/30 to-amber-500/15 border border-orange-500/40 flex items-center justify-center overflow-hidden">
+                      {draft.profileImage && !previewAvatarLoadError ? (
+                        <img
+                          src={draft.profileImage}
+                          alt={draft.fullName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs font-semibold text-orange-300">
+                          {draftInitials}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-[#F5F2EC]">
+                        {draft.fullName || 'Sharique Aman'}
+                      </div>
+                      <div className="text-[10px] text-[#92949B]">
+                        {draft.designation || 'Proprietor'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Field Diff Ledger */}
+              <div className="lg:col-span-5 space-y-3">
+                <div className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#92949B]">
+                  Field-by-Field Changes ({stagedChanges.length})
+                </div>
+                {stagedChanges.length === 0 ? (
+                  <div className="rounded-xl bg-[#191C22] border border-white/[0.07] p-5 text-xs text-[#92949B]">
+                    No unstaged differences yet. Edit any field below to preview changes before saving.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-[340px] overflow-y-auto admin-studio-scroll pr-1">
+                    {stagedChanges.map((change) => (
+                      <div
+                        key={change.field}
+                        className="rounded-xl bg-[#191C22] border border-white/[0.07] p-3 space-y-1.5"
+                      >
+                        <div className="text-[11px] font-mono text-orange-300">
+                          {change.field}
+                        </div>
+                        <div className="text-[11px] text-[#92949B] break-all">
+                          <span className="line-through opacity-75">{change.before}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-[11px] text-emerald-300 break-all">
+                          <ArrowRight className="w-3.5 h-3.5 shrink-0 mt-0.5 text-orange-400" />
+                          <span>{change.after}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Main Editor Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Portrait Upload + Locked Admin Auth Context */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Profile Photo Management */}
+          <section className="rounded-2xl bg-[#191C22] border border-white/[0.07] p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ImagePlus className="w-4 h-4 text-orange-400" />
+                <h3 className="text-sm font-medium text-[#F5F2EC]">Profile Image</h3>
+              </div>
+              {draft.profileImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleFieldChange('profileImage', '');
+                    setUploadError(null);
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-rose-300 hover:text-rose-200 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove</span>
+                </button>
+              )}
+            </div>
+
+            {/* Preview Frame */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setUploadDragging(true);
+              }}
+              onDragLeave={() => setUploadDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setUploadDragging(false);
+                void handleImageFileSelected(e.dataTransfer.files?.[0]);
+              }}
+              className={`rounded-xl border border-dashed p-4 transition-colors text-center ${
+                uploadDragging
+                  ? 'border-orange-400 bg-orange-500/10'
+                  : 'border-white/[0.12] bg-[#111318]'
+              }`}
+            >
+              <div className="w-24 h-24 mx-auto rounded-2xl border border-orange-500/35 bg-[#191C22] flex items-center justify-center overflow-hidden mb-3">
+                {draft.profileImage && !avatarLoadError ? (
+                  <img
+                    src={draft.profileImage}
+                    alt="Owner portrait preview"
+                    onError={() => setAvatarLoadError(true)}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="font-editorial text-2xl text-orange-300">
+                    {draftInitials}
+                  </span>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => void handleImageFileSelected(e.target.files?.[0])}
+              />
+
+              <button
+                type="button"
+                disabled={imageUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#191C22] border border-orange-500/35 hover:border-orange-400 hover:bg-orange-500/10 text-xs font-medium text-[#F5F2EC] transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {imageUploading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-orange-400" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5 text-orange-400" />
+                )}
+                <span>{imageUploading ? 'Uploading Portrait…' : 'Upload Portrait Photo'}</span>
+              </button>
+
+              <p className="text-[11px] text-[#92949B] mt-2">
+                Drag &amp; drop or choose JPG, PNG, WEBP (max 5 MB).
+              </p>
+            </div>
+
+            {uploadError && (
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200 flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
+            {/* Image URL Option */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="owner-profile-image-input"
+                className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+              >
+                Image URL (Optional)
+              </label>
+              <input
+                id="owner-profile-image-input"
+                type="text"
+                value={draft.profileImage}
+                onChange={(e) => handleFieldChange('profileImage', e.target.value)}
+                placeholder="https://example.com/portrait.jpg"
+                className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3 py-2 text-xs text-[#F5F2EC] placeholder:text-[#92949B]/55"
+              />
+              {fieldErrors.profileImage && (
+                <p className="text-[11px] text-rose-400">{fieldErrors.profileImage}</p>
+              )}
+            </div>
+          </section>
+
+          {/* Owner Account Protection Summary */}
+          <section className="rounded-2xl bg-[#111318] border border-white/[0.07] p-5 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-[#F5F2EC]">
+              <UserCheck className="w-4 h-4 text-orange-400" />
+              <span>Owner Account Protection</span>
+            </div>
+            <p className="text-[11px] text-[#92949B] leading-relaxed">
+              Your account is protected and restricted exclusively to the authorized Aman Computer owner. Updating public profile details here does not affect your sign-in credentials.
+            </p>
+            <div className="rounded-xl bg-[#191C22] border border-white/[0.06] p-3 space-y-2 text-[11px] font-mono">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[#92949B]">Account Security</span>
+                <span className="text-emerald-400">Your account is protected</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[#92949B]">Sign-In Email</span>
+                <span className="text-[#F5F2EC] truncate">{currentUser?.email || 'Verified Owner'}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[#92949B]">Online Sync Status</span>
+                <span className={isSupabaseActive ? 'text-emerald-400' : 'text-amber-300'}>
+                  {isSupabaseActive ? 'Services Operational' : 'Offline Mode'}
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        {/* Right Column: Identity, Contact & Social Links Forms */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Identity & Biography */}
+          <section className="rounded-2xl bg-[#191C22] border border-white/[0.07] p-5 sm:p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3.5">
+              <div>
+                <h3 className="text-sm font-medium text-[#F5F2EC]">Identity &amp; Biography</h3>
+                <p className="text-[11px] text-[#92949B] mt-0.5">
+                  Updates your studio workspace greeting, TopBar identity badge, and public owner card.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-full-name"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Full Name <span className="text-orange-400">*</span>
+                </label>
+                <input
+                  id="owner-full-name"
+                  type="text"
+                  maxLength={80}
+                  value={draft.fullName}
+                  onChange={(e) => handleFieldChange('fullName', e.target.value)}
+                  placeholder="Sharique Aman"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                />
+                {fieldErrors.fullName && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.fullName}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-designation"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Professional Designation <span className="text-orange-400">*</span>
+                </label>
+                <input
+                  id="owner-designation"
+                  type="text"
+                  maxLength={100}
+                  value={draft.designation}
+                  onChange={(e) => handleFieldChange('designation', e.target.value)}
+                  placeholder="Founder & Proprietor"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                />
+                {fieldErrors.designation && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.designation}</p>
+                )}
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <label
+                  htmlFor="owner-business-identity"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Business Identity <span className="text-orange-400">*</span>
+                </label>
+                <input
+                  id="owner-business-identity"
+                  type="text"
+                  maxLength={120}
+                  value={draft.businessIdentity}
+                  onChange={(e) => handleFieldChange('businessIdentity', e.target.value)}
+                  placeholder="Aman Computer — Cyber Cafe & Digital Center"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                />
+                {fieldErrors.businessIdentity && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.businessIdentity}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-location"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  City / Center Location
+                </label>
+                <input
+                  id="owner-location"
+                  type="text"
+                  maxLength={80}
+                  value={draft.locationLabel || ''}
+                  onChange={(e) => handleFieldChange('locationLabel', e.target.value)}
+                  placeholder="Varanasi, Uttar Pradesh"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-experience"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Experience Badge
+                </label>
+                <input
+                  id="owner-experience"
+                  type="text"
+                  maxLength={60}
+                  value={draft.experienceLabel || ''}
+                  onChange={(e) => handleFieldChange('experienceLabel', e.target.value)}
+                  placeholder="12+ Years Experience"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                />
+              </div>
+
+              <div className="sm:col-span-2 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="owner-bio"
+                    className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                  >
+                    Short Biography
+                  </label>
+                  <span
+                    className={`text-[11px] font-mono tabular-nums ${
+                      bioLength > 800 ? 'text-rose-400' : 'text-[#92949B]'
+                    }`}
+                  >
+                    {bioLength} / 800
+                  </span>
+                </div>
+                <textarea
+                  id="owner-bio"
+                  rows={4}
+                  value={draft.bio}
+                  onChange={(e) => handleFieldChange('bio', e.target.value)}
+                  placeholder="Describe your proprietor journey, government portal expertise, and service standards…"
+                  className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55 leading-relaxed resize-y"
+                />
+                {fieldErrors.bio && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.bio}</p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Public Contact Information */}
+          <section className="rounded-2xl bg-[#191C22] border border-white/[0.07] p-5 sm:p-6 space-y-4">
+            <div className="border-b border-white/[0.06] pb-3.5">
+              <h3 className="text-sm font-medium text-[#F5F2EC]">Public Contact Information</h3>
+              <p className="text-[11px] text-[#92949B] mt-0.5">
+                Shown on your Owner Card and dashboard header. Updating this email does not change your sign-in account.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-email"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Public Email
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-[#92949B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    id="owner-email"
+                    type="email"
+                    value={draft.email}
+                    onChange={(e) => handleFieldChange('email', e.target.value)}
+                    placeholder="shariqueaman77@gmail.com"
+                    className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none pl-9 pr-3.5 py-2.5 text-sm text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                  />
+                </div>
+                {fieldErrors.email && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="owner-phone"
+                  className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                >
+                  Public Phone
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-[#92949B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    id="owner-phone"
+                    type="tel"
+                    value={draft.phone}
+                    onChange={(e) => handleFieldChange('phone', e.target.value)}
+                    placeholder="+91 85955 15718"
+                    className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none pl-9 pr-3.5 py-2.5 text-sm font-mono text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                  />
+                </div>
+                {fieldErrors.phone && (
+                  <p className="text-[11px] text-rose-400">{fieldErrors.phone}</p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Online Presence */}
+          <section className="rounded-2xl bg-[#191C22] border border-white/[0.07] p-5 sm:p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3.5">
+              <div>
+                <h3 className="text-sm font-medium text-[#F5F2EC]">Online Presence</h3>
+                <p className="text-[11px] text-[#92949B] mt-0.5">
+                  Optional website and social profile links shown on your Owner Card. Leave blank if unused.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCustomLink}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-orange-500/35 bg-[#111318] hover:border-orange-400 hover:bg-orange-500/10 text-xs font-medium text-orange-200 transition-colors shrink-0 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 text-orange-400" />
+                <span>Add Custom Link</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  id: 'owner-social-website',
+                  key: 'website' as const,
+                  label: 'Website / Portfolio',
+                  icon: Globe,
+                  placeholder: 'https://amancomputer.in',
+                },
+                {
+                  id: 'owner-social-linkedin',
+                  key: 'linkedin' as const,
+                  label: 'LinkedIn',
+                  icon: Linkedin,
+                  placeholder: 'https://linkedin.com/in/username',
+                },
+                {
+                  id: 'owner-social-instagram',
+                  key: 'instagram' as const,
+                  label: 'Instagram',
+                  icon: Instagram,
+                  placeholder: 'https://instagram.com/amancomputer',
+                },
+                {
+                  id: 'owner-social-facebook',
+                  key: 'facebook' as const,
+                  label: 'Facebook',
+                  icon: Facebook,
+                  placeholder: 'https://facebook.com/amancomputer',
+                },
+              ].map((social) => {
+                const Icon = social.icon;
+                const val = draft.socialLinks[social.key];
+                return (
+                  <div key={social.key} className="space-y-1.5">
+                    <label
+                      htmlFor={social.id}
+                      className="block text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]"
+                    >
+                      {social.label}
+                    </label>
+                    <div className="relative">
+                      <Icon className="w-4 h-4 text-orange-400/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        id={social.id}
+                        type="url"
+                        value={val}
+                        onChange={(e) => handleSocialChange(social.key, e.target.value)}
+                        placeholder={social.placeholder}
+                        className="w-full rounded-lg bg-[#111318] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none pl-9 pr-3.5 py-2.5 text-xs text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                      />
+                    </div>
+                    {fieldErrors[social.key] && (
+                      <p className="text-[11px] text-rose-400">{fieldErrors[social.key]}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Dynamic "Other" Professional Links */}
+            <div className="space-y-3 pt-2">
+              <div className="text-[11px] font-mono uppercase tracking-[0.12em] text-[#92949B]">
+                Other Links ({draft.socialLinks.other.length})
+              </div>
+
+              {draft.socialLinks.other.length === 0 ? (
+                <div className="rounded-xl bg-[#111318] border border-white/[0.06] px-4 py-3 text-xs text-[#92949B]">
+                  Need YouTube, GitHub, X/Twitter, WhatsApp Channel, or Google Business Profile? Click &ldquo;Add Custom Link&rdquo;.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {draft.socialLinks.other.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="rounded-xl bg-[#111318] border border-white/[0.07] p-3 space-y-2"
+                    >
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                        <div className="sm:col-span-4">
+                          <input
+                            type="text"
+                            value={item.label}
+                            onChange={(e) =>
+                              handleUpdateCustomLink(item.id, { label: e.target.value })
+                            }
+                            placeholder={`Platform #${idx + 1} (e.g. YouTube)`}
+                            className="w-full rounded-lg bg-[#191C22] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3 py-2 text-xs text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                          />
+                        </div>
+                        <div className="sm:col-span-7">
+                          <input
+                            type="url"
+                            value={item.url}
+                            onChange={(e) =>
+                              handleUpdateCustomLink(item.id, { url: e.target.value })
+                            }
+                            placeholder="https://..."
+                            className="w-full rounded-lg bg-[#191C22] border border-white/[0.08] focus:border-orange-400/70 focus:outline-none px-3 py-2 text-xs text-[#F5F2EC] placeholder:text-[#92949B]/55"
+                          />
+                        </div>
+                        <div className="sm:col-span-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveCustomLink(item.id)}
+                            aria-label="Remove custom link"
+                            className="p-2 rounded-lg text-[#92949B] hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {fieldErrors[`other.${item.id}`] && (
+                        <p className="text-[11px] text-rose-400">
+                          {fieldErrors[`other.${item.id}`]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+};

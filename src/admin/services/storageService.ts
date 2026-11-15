@@ -86,10 +86,42 @@ export const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const KNOWN_BUCKETS: StorageBucketName[] = [
+  'gallery-images',
+  'update-posters',
+  'media-library',
+  'customer-documents',
+];
+
 /**
- * Uploads a validated file directly to a Supabase Storage bucket.
- * Requires valid Supabase configuration and authenticated admin session (via Third-Party Auth).
- * Never stores large Base64 payloads in localStorage.
+ * Extracts bucket name and object path from a Supabase Storage public or signed URL.
+ * Returns null if the URL is external or not a managed media storage object.
+ */
+export const extractStorageLocationFromUrl = (
+  url?: string | null
+): { bucket: StorageBucketName; path: string } | null => {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const markerMatch =
+    /\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/?#]+)\/([^?#]+)/.exec(
+      trimmed
+    );
+  if (!markerMatch) return null;
+
+  const bucketCandidate = decodeURIComponent(markerMatch[1]) as StorageBucketName;
+  if (!KNOWN_BUCKETS.includes(bucketCandidate)) return null;
+
+  const objectPath = decodeURIComponent(markerMatch[2]);
+  if (!objectPath) return null;
+
+  return { bucket: bucketCandidate, path: objectPath };
+};
+
+/**
+ * Uploads a validated file directly to Supabase Storage.
+ * Requires valid Supabase configuration and authenticated admin session.
  */
 export const uploadFileToStorage = async (
   bucket: StorageBucketName,
@@ -106,7 +138,7 @@ export const uploadFileToStorage = async (
     return {
       success: false,
       error:
-        'Supabase Storage is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env or supply a hosted HTTPS URL.',
+        'Media storage is currently unavailable. Please enter an image URL instead.',
     };
   }
 
@@ -126,16 +158,17 @@ export const uploadFileToStorage = async (
       });
 
     if (error) {
+      console.error('Media storage upload rejected:', error);
       return {
         success: false,
-        error: `Storage upload rejected: ${error.message}`,
+        error: "We couldn't upload your file right now. Please try again or use a different image.",
       };
     }
 
     if (bucket === 'customer-documents') {
       const { data: signedData, error: signErr } = await supabase.storage
         .from(bucket)
-        .createSignedUrl(data.path, 60 * 60 * 24 * 7); // 7-day signed URL for private bucket
+        .createSignedUrl(data.path, 60 * 60 * 24 * 7);
 
       if (signErr || !signedData) {
         return {
@@ -165,30 +198,46 @@ export const uploadFileToStorage = async (
       fileSize: formatFileSize(file.size),
     };
   } catch (err: any) {
+    console.error('Media upload failure:', err);
     return {
       success: false,
-      error: err?.message || 'Network failure while uploading file to Supabase Storage.',
+      error: 'Unable to upload file due to a connection issue. Please try again.',
     };
   }
 };
 
 /**
- * Deletes an object from a Supabase Storage bucket
+ * Deletes an object from Supabase Storage
  */
 export const deleteFileFromStorage = async (
   bucket: StorageBucketName,
   path: string
 ): Promise<{ success: boolean; error?: string }> => {
   if (!isSupabaseConfigured() || !supabase) {
-    return { success: false, error: 'Supabase Storage is not configured.' };
+    return { success: false, error: 'Media storage is currently unavailable.' };
   }
   try {
     const { error } = await supabase.storage.from(bucket).remove([path]);
     if (error) {
-      return { success: false, error: error.message };
+      console.error('Media deletion error:', error);
+      return { success: false, error: 'Unable to remove this file right now.' };
     }
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message || 'Storage deletion error' };
+    console.error('Media deletion exception:', err);
+    return { success: false, error: 'Unable to remove this file right now.' };
   }
+};
+
+/**
+ * Safely deletes a file referenced by its public/signed URL if hosted in our managed storage.
+ * Ignores external URLs or unconfigured environments cleanly.
+ */
+export const deleteStorageFileByUrl = async (
+  url?: string | null
+): Promise<{ deleted: boolean; error?: string }> => {
+  const loc = extractStorageLocationFromUrl(url);
+  if (!loc) return { deleted: false };
+  const res = await deleteFileFromStorage(loc.bucket, loc.path);
+  return { deleted: res.success, error: res.error };
 };

@@ -1,21 +1,18 @@
 import React, { useState } from 'react';
+import {
+  ArrowRight,
+  Download,
+  Eye,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { Customer, CustomerCategory } from '../types';
-import {
-  Users,
-  Search,
-  Plus,
-  Download,
-  Phone,
-  MapPin,
-  Calendar,
-  Ticket,
-  Eye,
-  Trash2,
-  X,
-  CreditCard,
-  MessageSquare,
-} from 'lucide-react';
+import { CmsModal, CmsPageHeader, CmsSurfaceCard } from '../components/CmsPrimitives';
 
 const CATEGORIES: CustomerCategory[] = [
   'Student / Job Aspirant',
@@ -28,7 +25,6 @@ export const CustomersView: React.FC = () => {
   const {
     customers,
     addCustomer,
-    updateCustomer,
     deleteCustomer,
     exportCustomersCSV,
     receipts,
@@ -40,10 +36,8 @@ export const CustomersView: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Form State
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('+91 ');
-  const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [category, setCategory] = useState<CustomerCategory>('Student / Job Aspirant');
   const [notes, setNotes] = useState('');
@@ -60,7 +54,6 @@ export const CustomersView: React.FC = () => {
   const handleOpenAdd = () => {
     setName('');
     setPhone('+91 ');
-    setEmail('');
     setAddress('Varanasi');
     setCategory('Student / Job Aspirant');
     setNotes('');
@@ -74,7 +67,6 @@ export const CustomersView: React.FC = () => {
     addCustomer({
       name: name.trim(),
       phone: phone.trim(),
-      email: email.trim() || undefined,
       address: address.trim(),
       category,
       notes: notes.trim() || undefined,
@@ -83,136 +75,141 @@ export const CustomersView: React.FC = () => {
   };
 
   const customerReceipts = selectedCustomer
-    ? receipts.filter((r) => r.customerId === selectedCustomer.id || r.customerPhone === selectedCustomer.phone)
+    ? receipts.filter(
+        (r) =>
+          r.customerId === selectedCustomer.id ||
+          r.customerPhone === selectedCustomer.phone
+      )
     : [];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0] flex items-center gap-2">
-            <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <span>Customer Management Directory</span>
-          </h1>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8] mt-0.5">
-            Maintain customer records, visit frequency, contact details, and transaction history.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={exportCustomersCSV}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.15)] bg-white/50 dark:bg-black/20 text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
-          <button
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold hover:opacity-90 transition-opacity shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Customer</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filter and Search Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#857878] dark:text-[#B5A8A8]" />
-          <input
-            type="text"
-            placeholder="Search customers by name, phone number, or locality..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] text-xs text-[#1A1818] dark:text-[#E8E4E0] placeholder-[#857878] dark:placeholder-[#B5A8A8] outline-hidden focus:border-[#1A1818] dark:focus:border-[#E8E4E0]"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors ${
-              selectedCategory === 'all'
-                ? 'bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]'
-                : 'bg-black/5 dark:bg-white/5 text-[#857878] dark:text-[#B5A8A8] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]'
-            }`}
-          >
-            All Categories ({customers.length})
-          </button>
-          {CATEGORIES.map((cat) => (
+    <div className="space-y-6">
+      <CmsPageHeader
+        eyebrow="Client Directory"
+        title="Customers"
+        description="Maintain client records, contact numbers, visit frequency, and counter history."
+        actions={
+          <>
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors ${
-                selectedCategory === cat
-                  ? 'bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]'
-                  : 'bg-black/5 dark:bg-white/5 text-[#857878] dark:text-[#B5A8A8] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]'
+              type="button"
+              onClick={exportCustomersCSV}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-white/[0.1] bg-[#141419] text-xs font-medium text-[#E8E5DF] hover:border-[#C9A96E]/40 transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-[#C9A96E]" />
+              <span>Export CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Customer</span>
+            </button>
+          </>
+        }
+      />
+
+      <CmsSurfaceCard className="p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#85838A]" />
+            <input
+              type="text"
+              placeholder="Search customers by name, phone number, or locality..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                selectedCategory === 'all'
+                  ? 'bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492]'
+                  : 'bg-[#0A0A0E] border border-white/[0.07] text-[#85838A] hover:text-[#E8E5DF]'
               }`}
             >
-              {cat}
+              All ({customers.length})
             </button>
-          ))}
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-colors cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492]'
+                    : 'bg-[#0A0A0E] border border-white/[0.07] text-[#85838A] hover:text-[#E8E5DF]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </CmsSurfaceCard>
 
-      {/* Customer Directory Table */}
-      <div className="rounded-3xl bg-[rgba(242,238,235,0.65)] dark:bg-[rgba(196,176,176,0.05)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)] overflow-hidden shadow-xs">
+      {/* Table */}
+      <div className="rounded-2xl bg-[#141419] border border-white/[0.07] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[rgba(196,176,176,0.2)] dark:border-[rgba(196,176,176,0.08)] bg-black/5 dark:bg-white/5 text-[#857878] dark:text-[#B5A8A8] font-mono uppercase text-[10px] tracking-wider">
-                <th className="py-3 px-4">Customer Name & ID</th>
-                <th className="py-3 px-4">Contact Info</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Visits</th>
-                <th className="py-3 px-4">Total Spent</th>
-                <th className="py-3 px-4">Last Visit</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="border-b border-white/[0.07] bg-[#101014] text-[#85838A] font-mono uppercase text-[10px] tracking-wider">
+                <th className="py-3.5 px-4">Customer Name &amp; ID</th>
+                <th className="py-3.5 px-4">Contact Info</th>
+                <th className="py-3.5 px-4">Category</th>
+                <th className="py-3.5 px-4">Visits</th>
+                <th className="py-3.5 px-4">Total Spent</th>
+                <th className="py-3.5 px-4">Last Visit</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[rgba(196,176,176,0.15)] dark:divide-[rgba(196,176,176,0.08)]">
+            <tbody className="divide-y divide-white/[0.06]">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-[#857878] dark:text-[#B5A8A8]">
-                    No customers found matching current filters.
+                  <td colSpan={7} className="py-10 text-center text-[#85838A]">
+                    No customers match your current filters.
                   </td>
                 </tr>
               ) : (
                 filteredCustomers.map((cust) => {
                   const cleanPhone = cust.phone.replace(/[^0-9]/g, '');
-                  const waUrl = `https://wa.me/${cleanPhone}?text=Namaste%20${encodeURIComponent(cust.name)}`;
+                  const waUrl = `https://wa.me/${cleanPhone}?text=Namaste%20${encodeURIComponent(
+                    cust.name
+                  )}`;
 
                   return (
                     <tr
                       key={cust.id}
-                      className="hover:bg-[rgba(196,176,176,0.1)] transition-colors group cursor-pointer"
+                      className="hover:bg-white/[0.03] transition-colors cursor-pointer"
                       onClick={() => setSelectedCustomer(cust)}
                     >
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-[#1A1818] dark:text-[#E8E4E0]">{cust.name}</div>
-                        <div className="text-[10px] font-mono text-[#857878] dark:text-[#B5A8A8]">{cust.id}</div>
+                        <div className="font-medium text-[#E8E5DF]">{cust.name}</div>
+                        <div className="text-[10px] font-mono text-[#85838A]">{cust.id}</div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="font-mono text-[#1A1818] dark:text-[#E8E4E0]">{cust.phone}</div>
-                        <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] truncate max-w-[160px]">
+                        <div className="font-mono text-[#E8E5DF]">{cust.phone}</div>
+                        <div className="text-[10px] text-[#85838A] truncate max-w-[160px]">
                           {cust.address}
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/5 dark:bg-white/10 text-[#1A1818] dark:text-[#E8E4E0]">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#211B16] border border-[#C9A96E]/25 text-[#DFC492]">
                           {cust.category}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-semibold text-[#1A1818] dark:text-[#E8E4E0]">
+                      <td className="py-3.5 px-4 font-mono text-[#E8E5DF]">
                         {cust.totalVisits} visits
                       </td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-emerald-400">
                         ₹{cust.totalSpent.toLocaleString('en-IN')}
                       </td>
-                      <td className="py-3.5 px-4 text-[11px] font-mono text-[#857878] dark:text-[#B5A8A8]">
+                      <td className="py-3.5 px-4 text-[11px] font-mono text-[#85838A]">
                         {cust.lastVisitDate}
                       </td>
                       <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -221,25 +218,29 @@ export const CustomersView: React.FC = () => {
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                             title="WhatsApp Customer"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                           </a>
                           <button
+                            type="button"
                             onClick={() => setSelectedCustomer(cust)}
-                            className="p-1.5 rounded-lg text-[#1A1818] dark:text-[#E8E4E0] hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-                            title="View Profile & Transactions"
+                            className="p-1.5 rounded-lg text-[#C9A96E] hover:bg-white/[0.05] transition-colors cursor-pointer"
+                            title="View Profile"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
-                              if (confirm(`Remove ${cust.name} from customer directory?`)) {
+                              if (
+                                window.confirm(`Remove ${cust.name} from customer directory?`)
+                              ) {
                                 deleteCustomer(cust.id);
                               }
                             }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                             title="Delete Customer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -255,104 +256,88 @@ export const CustomersView: React.FC = () => {
         </div>
       </div>
 
-      {/* Customer Detail Drawer / Modal */}
-      {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-[#F0ECE9] dark:bg-[#1A1818] border border-[rgba(196,176,176,0.35)] dark:border-[rgba(196,176,176,0.2)] rounded-3xl shadow-2xl max-w-xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-              <div>
-                <span className="text-[10px] font-mono text-[#857878] dark:text-[#B5A8A8] uppercase tracking-wider">
-                  Customer Profile Card
-                </span>
-                <h3 className="text-xl font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-                  {selectedCustomer.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedCustomer(null)}
-                className="p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 text-[#857878] dark:text-[#B5A8A8]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Profile Metrics Grid */}
+      {/* Customer Detail Modal */}
+      <CmsModal
+        open={Boolean(selectedCustomer)}
+        onClose={() => setSelectedCustomer(null)}
+        title={selectedCustomer?.name || ''}
+        subtitle={selectedCustomer ? `${selectedCustomer.category} · ${selectedCustomer.id}` : ''}
+        maxWidthClass="max-w-xl"
+      >
+        {selectedCustomer && (
+          <div className="space-y-5">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">Total Visits</div>
-                <div className="text-lg font-bold font-mono text-[#1A1818] dark:text-[#E8E4E0]">
+              <div className="p-3 rounded-xl bg-[#101014] border border-white/[0.06]">
+                <div className="text-[10px] text-[#85838A] font-mono">Total Visits</div>
+                <div className="text-lg font-mono text-[#E8E5DF] mt-0.5">
                   {selectedCustomer.totalVisits}
                 </div>
               </div>
-              <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">Total Spent</div>
-                <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              <div className="p-3 rounded-xl bg-[#101014] border border-white/[0.06]">
+                <div className="text-[10px] text-[#85838A] font-mono">Total Spent</div>
+                <div className="text-lg font-mono text-emerald-400 mt-0.5">
                   ₹{selectedCustomer.totalSpent}
                 </div>
               </div>
-              <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">Category</div>
-                <div className="text-xs font-semibold text-[#1A1818] dark:text-[#E8E4E0] truncate mt-1">
+              <div className="p-3 rounded-xl bg-[#101014] border border-white/[0.06]">
+                <div className="text-[10px] text-[#85838A] font-mono">Category</div>
+                <div className="text-xs font-medium text-[#DFC492] truncate mt-1">
                   {selectedCustomer.category}
                 </div>
               </div>
-              <div className="p-3 rounded-2xl bg-black/5 dark:bg-white/5">
-                <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">Registered</div>
-                <div className="text-xs font-mono text-[#1A1818] dark:text-[#E8E4E0] mt-1">
+              <div className="p-3 rounded-xl bg-[#101014] border border-white/[0.06]">
+                <div className="text-[10px] text-[#85838A] font-mono">Registered</div>
+                <div className="text-xs font-mono text-[#E8E5DF] mt-1">
                   {selectedCustomer.createdAt}
                 </div>
               </div>
             </div>
 
-            {/* Contact Details */}
-            <div className="p-4 rounded-2xl bg-white/50 dark:bg-black/20 border border-[rgba(196,176,176,0.2)] text-xs space-y-2">
-              <div className="flex items-center gap-2 text-[#1A1818] dark:text-[#E8E4E0]">
-                <Phone className="w-3.5 h-3.5 text-[#857878]" />
+            <div className="p-4 rounded-xl bg-[#101014] border border-white/[0.06] text-xs space-y-2">
+              <div className="flex items-center gap-2 text-[#E8E5DF]">
+                <Phone className="w-3.5 h-3.5 text-[#C9A96E]" />
                 <span className="font-mono">{selectedCustomer.phone}</span>
               </div>
-              <div className="flex items-center gap-2 text-[#1A1818] dark:text-[#E8E4E0]">
-                <MapPin className="w-3.5 h-3.5 text-[#857878]" />
+              <div className="flex items-center gap-2 text-[#E8E5DF]">
+                <MapPin className="w-3.5 h-3.5 text-[#C9A96E]" />
                 <span>{selectedCustomer.address}</span>
               </div>
               {selectedCustomer.notes && (
-                <div className="pt-2 text-[11px] text-[#857878] dark:text-[#B5A8A8] border-t border-[rgba(196,176,176,0.15)]">
+                <div className="pt-2 text-[11px] text-[#85838A] border-t border-white/[0.06]">
                   Note: {selectedCustomer.notes}
                 </div>
               )}
             </div>
 
-            {/* Token Transactions History */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-                <span>Transaction & Slip History</span>
-                <span className="text-[#857878] dark:text-[#B5A8A8] font-mono font-normal text-[11px]">
-                  {customerReceipts.length} slips on record
+              <div className="flex items-center justify-between text-xs font-medium text-[#E8E5DF]">
+                <span>Past Slip History</span>
+                <span className="text-[#85838A] font-mono text-[11px]">
+                  {customerReceipts.length} records
                 </span>
               </div>
 
               {customerReceipts.length === 0 ? (
-                <div className="p-4 rounded-2xl bg-black/5 dark:bg-white/5 text-center text-xs text-[#857878] dark:text-[#B5A8A8]">
-                  No past receipts associated with this customer yet.
+                <div className="p-4 rounded-xl bg-[#101014] border border-white/[0.06] text-center text-xs text-[#85838A]">
+                  No past slips associated with this customer yet.
                 </div>
               ) : (
-                <div className="divide-y divide-[rgba(196,176,176,0.15)] dark:divide-[rgba(196,176,176,0.08)] max-h-48 overflow-y-auto">
+                <div className="divide-y divide-white/[0.06] max-h-48 overflow-y-auto admin-studio-scroll">
                   {customerReceipts.map((r) => (
                     <div key={r.id} className="py-2.5 flex items-center justify-between text-xs">
                       <div>
-                        <div className="font-semibold text-[#1A1818] dark:text-[#E8E4E0]">
+                        <div className="font-medium text-[#E8E5DF]">
                           Token #{r.tokenNumber} — {r.serviceName}
                         </div>
-                        <div className="text-[10px] text-[#857878] dark:text-[#B5A8A8] font-mono">
-                          {r.createdAt} • Ref: {r.applicationRefNo || 'Counter'}
+                        <div className="text-[10px] text-[#85838A] font-mono">
+                          {r.createdAt} · Ref: {r.applicationRefNo || 'Counter'}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-mono font-bold text-[#1A1818] dark:text-[#E8E4E0]">
+                        <div className="font-mono font-semibold text-[#E8E5DF]">
                           ₹{r.totalAmount}
                         </div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                          {r.status}
-                        </div>
+                        <div className="text-[10px] text-emerald-400">{r.status}</div>
                       </div>
                     </div>
                   ))}
@@ -360,136 +345,127 @@ export const CustomersView: React.FC = () => {
               )}
             </div>
 
-            {/* Action Bar */}
-            <div className="flex items-center justify-between pt-3 border-t border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
+            <div className="flex items-center justify-between pt-3 border-t border-white/[0.07]">
               <button
+                type="button"
                 onClick={() => {
                   setSelectedCustomer(null);
-                  setCurrentTab('receipts');
+                  setCurrentTab('enquiries');
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold hover:opacity-90 transition-opacity"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold cursor-pointer"
               >
-                <Ticket className="w-3.5 h-3.5" />
-                <span>Issue New Token</span>
+                <span>View Enquiries</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
               <button
+                type="button"
                 onClick={() => setSelectedCustomer(null)}
-                className="px-4 py-2 rounded-xl border border-[rgba(196,176,176,0.3)] text-xs font-semibold text-[#857878] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]"
+                className="px-4 py-2 rounded-xl border border-white/[0.1] text-xs font-medium text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
               >
                 Close
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </CmsModal>
 
-      {/* Add New Customer Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-[#F0ECE9] dark:bg-[#1A1818] border border-[rgba(196,176,176,0.35)] dark:border-[rgba(196,176,176,0.2)] rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[rgba(196,176,176,0.25)] dark:border-[rgba(196,176,176,0.1)]">
-              <h3 className="text-base font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-                Register New Customer
-              </h3>
-              <button
-                onClick={() => setModalOpen(false)}
-                className="p-1 rounded-lg text-[#857878] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Full Customer Name *
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="e.g. Ramesh Chandra Maurya"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Phone Number *
-                </label>
-                <input
-                  required
-                  type="text"
-                  placeholder="+91 98765 43210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] font-mono text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Customer Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as CustomerCategory)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Locality / Address
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Lanka, Varanasi - 221005"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-semibold text-[#857878] dark:text-[#B5A8A8] mb-1">
-                  Operator Notes (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Prefers SMS alerts, applies for SSC / Railway..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-white/70 dark:bg-black/30 border border-[rgba(196,176,176,0.3)] text-[#1A1818] dark:text-[#E8E4E0] outline-hidden"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="px-3 py-2 rounded-xl border border-[rgba(196,176,176,0.3)] text-[#857878] hover:text-[#1A1818] dark:hover:text-[#E8E4E0]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818] font-semibold hover:opacity-90"
-                >
-                  Save Customer
-                </button>
-              </div>
-            </form>
+      {/* Add Customer Modal */}
+      <CmsModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Register New Customer"
+        subtitle="Add a client record to the Aman Computer directory"
+        maxWidthClass="max-w-md"
+      >
+        <form onSubmit={handleSave} className="space-y-3.5 text-xs">
+          <div>
+            <label className="block text-[11px] font-medium text-[#E8E5DF] mb-1.5">
+              Full Customer Name *
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="e.g. Ramesh Chandra Maurya"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-[11px] font-medium text-[#E8E5DF] mb-1.5">
+              Phone Number *
+            </label>
+            <input
+              required
+              type="text"
+              placeholder="+91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] font-mono text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-[#E8E5DF] mb-1.5">
+              Customer Category
+            </label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value as CustomerCategory)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+            >
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-[#E8E5DF] mb-1.5">
+              Locality / Address
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Lanka, Varanasi - 221005"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-medium text-[#E8E5DF] mb-1.5">
+              Notes (Optional)
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Prefers SMS alerts, applies for SSC / Railway..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/[0.07]">
+            <button
+              type="button"
+              onClick={() => setModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-white/[0.1] text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] font-semibold cursor-pointer"
+            >
+              Save Customer
+            </button>
+          </div>
+        </form>
+      </CmsModal>
     </div>
   );
 };

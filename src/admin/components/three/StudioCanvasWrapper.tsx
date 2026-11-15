@@ -7,10 +7,10 @@ const StudioFallbackVisual: React.FC = () => (
     className="relative w-full h-full min-h-[210px] flex items-center justify-center overflow-hidden select-none"
     aria-hidden="true"
   >
-    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(198,165,107,0.14),transparent_68%)]" />
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(201,169,110,0.16),transparent_68%)]" />
     <svg
       viewBox="0 0 220 220"
-      className="w-44 h-44 text-[#C6A56B]"
+      className="w-44 h-44 text-[#C9A96E]"
       fill="none"
     >
       <circle
@@ -28,7 +28,7 @@ const StudioFallbackVisual: React.FC = () => (
         ry="28"
         transform="rotate(-26 110 110)"
         stroke="currentColor"
-        strokeOpacity="0.6"
+        strokeOpacity="0.68"
         strokeWidth="1.25"
       />
       <ellipse
@@ -37,18 +37,18 @@ const StudioFallbackVisual: React.FC = () => (
         rx="62"
         ry="22"
         transform="rotate(34 110 110)"
-        stroke="#F3EFE7"
-        strokeOpacity="0.4"
+        stroke="#DFC492"
+        strokeOpacity="0.45"
         strokeWidth="1"
       />
       <polygon
         points="110,68 142,110 110,152 78,110"
-        fill="#191C22"
+        fill="#141419"
         stroke="currentColor"
         strokeWidth="1.25"
       />
       <circle cx="176" cy="78" r="3.5" fill="currentColor" />
-      <circle cx="44" cy="142" r="3" fill="#F3EFE7" fillOpacity="0.8" />
+      <circle cx="44" cy="142" r="3" fill="#DFC492" fillOpacity="0.85" />
     </svg>
   </div>
 );

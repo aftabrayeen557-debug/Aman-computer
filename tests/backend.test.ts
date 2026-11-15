@@ -7,6 +7,11 @@ import * as esbuild from 'esbuild';
 import { isFirebaseConfigured } from '../src/lib/firebase.ts';
 import { isSupabaseConfigured, testSupabaseConnection, getRefreshedSupabaseAccessToken } from '../src/lib/supabase.ts';
 import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  FunctionsRelayError,
+} from '@supabase/supabase-js';
+import {
   AUTHORIZED_ADMIN_UID,
   AUTHORIZED_ADMIN_EMAIL,
   clearPrivateAdminStorage,
@@ -16,6 +21,7 @@ import {
   PRIVATE_ADMIN_STORAGE_KEYS,
   PUBLIC_WEBSITE_STORAGE_KEYS,
   signInAdmin,
+  verifyAdminAuthorizationDetailed,
 } from '../src/admin/services/authService.ts';
 import {
   mergeAuthenticatedRoleClaims,
@@ -27,6 +33,7 @@ import {
 import {
   validateUploadFile,
   formatFileSize,
+  extractStorageLocationFromUrl,
   MAX_IMAGE_SIZE,
   MAX_DOC_SIZE,
 } from '../src/admin/services/storageService.ts';
@@ -38,13 +45,30 @@ import {
   mapDocRequirementRow,
   mapGalleryRow,
   mapJourneyRow,
+  mapGovernmentSchemeRow,
 } from '../src/admin/services/supabaseService.ts';
+import {
+  STUDIO_NAV_GROUPS,
+  ALL_STUDIO_NAV_ITEMS,
+  resolveStudioTab,
+} from '../src/admin/config/navigation.ts';
+import type { AdminTab } from '../src/admin/types/index.ts';
+import { INITIAL_WEBSITE_CONTENT } from '../src/admin/data/initialData.ts';
 import {
   syncPublicCollectionResult,
   validatePublicEnquiryPayload,
   submitPublicEnquiry,
   resetPublicEnquiryCooldownForTest,
 } from '../src/lib/publicSync.ts';
+import {
+  DEFAULT_OWNER_PROFILE,
+  validateHttpUrl,
+  normalizeOwnerProfile,
+  validateOwnerProfileDraft,
+  calculateOwnerProfileCompletion,
+  getOwnerProfileInitials,
+  getOwnerProfileChanges,
+} from '../src/admin/services/ownerProfileService.ts';
 
 const ROOT_DIR = process.cwd();
 
@@ -193,6 +217,26 @@ test('Firebase Auth error mapper returns safe descriptive messages', () => {
   assert.equal(
     mapFirebaseAuthError({ code: 'auth/invalid-email' }),
     'Please enter a valid admin email address.'
+  );
+  assert.equal(
+    mapFirebaseAuthError({ code: 'auth/operation-not-allowed' }),
+    'Email/Password sign-in is not enabled in Firebase Authentication settings.'
+  );
+  assert.equal(
+    mapFirebaseAuthError({ code: 'auth/unauthorized-domain' }),
+    'This application domain is not authorized in Firebase Authentication settings.'
+  );
+  assert.equal(
+    mapFirebaseAuthError({ code: 'auth/invalid-api-key' }),
+    'Firebase client configuration does not match an authorized Firebase project.'
+  );
+  assert.equal(
+    mapFirebaseAuthError({ code: 'auth/user-token-expired' }),
+    'Firebase session expired. Please sign in again.'
+  );
+  assert.equal(
+    mapFirebaseAuthError({ code: 'auth/internal-error' }),
+    'Firebase Authentication encountered an internal error. Please try again.'
   );
   assert.equal(
     mapFirebaseAuthError({ code: 'auth/unknown-internal-code' }),
@@ -1685,6 +1729,683 @@ test('Edge Function verify-admin enforces emailVerified, strict CORS origins, di
     assert.equal(JSON.stringify(body).includes('SENSITIVE_INTERNAL_NETWORK_DETAIL'), false);
     assert.ok(logged.length > 0, 'Unexpected exception must be logged server-side');
   }
+});
+
+test('Admin login uses user.getIdToken(), supabase.functions.invoke("verify-admin"), and returns accurate safe diagnostics', async () => {
+  const authSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/services/authService.ts'), 'utf8');
+  assert.ok(
+    authSrc.includes(".functions.invoke('verify-admin'"),
+    'authService.ts must invoke verify-admin via supabase.functions.invoke'
+  );
+  assert.ok(
+    authSrc.includes('user.getIdToken()'),
+    'authService.ts must obtain the Firebase ID token via user.getIdToken()'
+  );
+  assert.equal(
+    authSrc.includes('/functions/v1/verify-admin'),
+    false,
+    'authService.ts must not use raw fetch to /functions/v1/verify-admin'
+  );
+
+  const now = Math.floor(Date.now() / 1000);
+  const validDiagnostics = {
+    hasSub: true,
+    hasRoleAuthenticated: true,
+    emailVerified: true,
+    hasNoAdminClaim: true,
+    notDisabledClaim: true,
+    tokenValidWindow: true,
+  };
+
+  const makeFakeUser = (overrides: Record<string, unknown> = {}) => {
+    let getIdTokenCalls = 0;
+    return {
+      user: {
+        uid: AUTHORIZED_ADMIN_UID,
+        email: AUTHORIZED_ADMIN_EMAIL,
+        emailVerified: true,
+        async getIdToken() {
+          getIdTokenCalls += 1;
+          return 'fresh-firebase-id-token';
+        },
+        ...overrides,
+      } as unknown as Parameters<typeof verifyAdminAuthorizationDetailed>[0],
+      getIdTokenCalls: () => getIdTokenCalls,
+    };
+  };
+
+  const makeFakeSupabase = (
+    invokeImpl: (
+      fnName: string,
+      opts?: { method?: string; headers?: Record<string, string> }
+    ) => Promise<{ data: unknown; error: unknown }>,
+    rlsRecord: Record<string, unknown> | null = null,
+    rlsError: { code?: string; message?: string } | null = null
+  ) => {
+    const invocations: Array<{ fnName: string; opts?: { method?: string; headers?: Record<string, string> } }> = [];
+    let rlsQueried = false;
+    return {
+      invocations,
+      wasRlsQueried: () => rlsQueried,
+      client: {
+        functions: {
+          invoke: async (
+            fnName: string,
+            opts?: { method?: string; headers?: Record<string, string> }
+          ) => {
+            invocations.push({ fnName, opts });
+            return invokeImpl(fnName, opts);
+          },
+        },
+        from: (table: string) => {
+          assert.equal(table, 'admin_users');
+          rlsQueried = true;
+          const chain = {
+            select: () => chain,
+            eq: () => chain,
+            maybeSingle: async () => ({ data: rlsRecord, error: rlsError }),
+          };
+          return chain;
+        },
+      } as unknown as NonNullable<Parameters<typeof verifyAdminAuthorizationDetailed>[1]>['supabaseClient'],
+    };
+  };
+
+  // 1. Happy path: signInAdmin trims/lowercases email, obtains user.getIdToken(), calls supabase.functions.invoke('verify-admin')
+  {
+    const { user, getIdTokenCalls } = makeFakeUser();
+    const sb = makeFakeSupabase(async () => ({
+      data: {
+        authenticated: true,
+        isAuthorizedAdmin: true,
+        uid: AUTHORIZED_ADMIN_UID,
+        email: AUTHORIZED_ADMIN_EMAIL,
+        name: 'Sharique Aman',
+        role: 'Proprietor / Super Admin',
+      },
+      error: null,
+    }));
+
+    let signedInEmail = '';
+    let signedOutCount = 0;
+    const res = await signInAdmin(`  ${AUTHORIZED_ADMIN_EMAIL.toUpperCase()}  `, 'correct-pass', {
+      firebaseConfigured: true,
+      supabaseConfigured: true,
+      auth: {} as never,
+      supabaseClient: sb.client,
+      checkRoleClaimFn: async () => ({ token: 'claim-token', diagnostics: validDiagnostics }),
+      signInFn: (async (_auth, e) => {
+        signedInEmail = e;
+        return { user } as never;
+      }) as typeof import('firebase/auth').signInWithEmailAndPassword,
+      signOutFn: (async () => {
+        signedOutCount += 1;
+      }) as typeof import('firebase/auth').signOut,
+    });
+
+    assert.equal(signedInEmail, AUTHORIZED_ADMIN_EMAIL);
+    assert.equal(getIdTokenCalls(), 1);
+    assert.equal(sb.invocations.length, 1);
+    assert.equal(sb.invocations[0].fnName, 'verify-admin');
+    assert.equal(sb.invocations[0].opts?.method, 'POST');
+    assert.equal(sb.invocations[0].opts?.headers?.Authorization, 'Bearer fresh-firebase-id-token');
+    assert.equal(signedOutCount, 0);
+    assert.equal(res.success, true);
+    assert.equal(res.isAuthorizedAdmin, true);
+    assert.equal(res.profile?.uid, AUTHORIZED_ADMIN_UID);
+    assert.equal(res.profile?.email, AUTHORIZED_ADMIN_EMAIL);
+    assert.equal(res.profile?.name, 'Sharique Aman');
+    assert.equal(res.profile?.role, 'Proprietor / Super Admin');
+  }
+
+  // 2. Missing role='authenticated' claim fails closed with clear diagnostic & signs out before calling verify-admin
+  {
+    const { user } = makeFakeUser();
+    const sb = makeFakeSupabase(async () => ({ data: null, error: null }));
+    let signedOutCount = 0;
+
+    const res = await signInAdmin(AUTHORIZED_ADMIN_EMAIL, 'pass', {
+      firebaseConfigured: true,
+      supabaseConfigured: true,
+      auth: {} as never,
+      supabaseClient: sb.client,
+      checkRoleClaimFn: async () => ({
+        token: 'token-no-role',
+        diagnostics: { ...validDiagnostics, hasRoleAuthenticated: false },
+      }),
+      signInFn: (async () => ({ user } as never)) as typeof import('firebase/auth').signInWithEmailAndPassword,
+      signOutFn: (async () => {
+        signedOutCount += 1;
+      }) as typeof import('firebase/auth').signOut,
+    });
+
+    assert.equal(res.success, false);
+    assert.equal(res.isAuthorizedAdmin, false);
+    assert.equal(signedOutCount, 1);
+    assert.equal(sb.invocations.length, 0);
+    assert.match(res.error || '', /authenticated/i);
+    assert.equal(res.error?.includes('not the authorized Aman Computer administrator'), false);
+  }
+
+  // 3. Edge Function 403 errors (CORS Origin not allowed, inactive DB record, unverified email) never fall back to RLS
+  for (const caseItem of [
+    { serverMsg: 'Origin not allowed', expectedMatch: /CORS/i },
+    { serverMsg: 'Access denied: Administrator record is missing or inactive.', expectedMatch: /missing or inactive/i },
+    { serverMsg: 'Access denied: Administrator email address must be verified.', expectedMatch: /must be verified/i },
+  ]) {
+    const { user } = makeFakeUser();
+    const sb = makeFakeSupabase(
+      async () => ({
+        data: null,
+        error: new FunctionsHttpError(
+          new Response(
+            JSON.stringify({ authenticated: false, isAuthorizedAdmin: false, error: caseItem.serverMsg }),
+            { status: 403, headers: { 'Content-Type': 'application/json' } }
+          )
+        ),
+      }),
+      {
+        firebase_uid: AUTHORIZED_ADMIN_UID,
+        email: AUTHORIZED_ADMIN_EMAIL,
+        name: 'Sharique Aman',
+        role: 'Proprietor / Super Admin',
+        is_active: true,
+      }
+    );
+
+    let signedOutCount = 0;
+    const res = await signInAdmin(AUTHORIZED_ADMIN_EMAIL, 'pass', {
+      firebaseConfigured: true,
+      supabaseConfigured: true,
+      auth: {} as never,
+      supabaseClient: sb.client,
+      checkRoleClaimFn: async () => ({ token: 'claim-token', diagnostics: validDiagnostics }),
+      signInFn: (async () => ({ user } as never)) as typeof import('firebase/auth').signInWithEmailAndPassword,
+      signOutFn: (async () => {
+        signedOutCount += 1;
+      }) as typeof import('firebase/auth').signOut,
+    });
+
+    assert.equal(res.success, false);
+    assert.equal(signedOutCount, 1);
+    assert.equal(sb.wasRlsQueried(), false, 'HTTP 403 from verify-admin must fail closed without RLS fallback');
+    assert.match(res.error || '', caseItem.expectedMatch);
+  }
+
+  // 4. Edge Function 401 token rejection fails closed without RLS fallback
+  {
+    const { user } = makeFakeUser();
+    const sb = makeFakeSupabase(async () => ({
+      data: null,
+      error: new FunctionsHttpError(
+        new Response(JSON.stringify({ error: 'Invalid or expired Firebase ID token' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      ),
+    }));
+
+    const res = await verifyAdminAuthorizationDetailed(user, {
+      supabaseConfigured: true,
+      supabaseClient: sb.client,
+      checkRoleClaimFn: async () => ({ token: 'claim-token', diagnostics: validDiagnostics }),
+    });
+
+    assert.equal(res.authorized, false);
+    assert.equal(res.reason, 'invalid-token');
+    assert.equal(sb.wasRlsQueried(), false);
+    assert.match(res.error || '', /token/i);
+  }
+
+  // 5. Network/Fetch error falls back to RLS and preserves accurate network/CORS diagnostic if RLS also errors
+  {
+    const { user } = makeFakeUser();
+    const sbFail = makeFakeSupabase(
+      async () => ({
+        data: null,
+        error: new FunctionsFetchError(new TypeError('Failed to fetch')),
+      }),
+      null,
+      { code: '42501', message: 'permission denied' }
+    );
+
+    const failRes = await verifyAdminAuthorizationDetailed(user, {
+      supabaseConfigured: true,
+      supabaseClient: sbFail.client,
+      checkRoleClaimFn: async () => ({ token: 'claim-token', diagnostics: validDiagnostics }),
+    });
+
+    assert.equal(failRes.authorized, false);
+    assert.equal(sbFail.wasRlsQueried(), true);
+    assert.equal(failRes.reason, 'network-error');
+    assert.match(failRes.error || '', /verify-admin/i);
+
+    const sbRelayRecover = makeFakeSupabase(
+      async () => ({
+        data: null,
+        error: new FunctionsRelayError(new Response('Relay error', { status: 502 })),
+      }),
+      {
+        firebase_uid: AUTHORIZED_ADMIN_UID,
+        email: AUTHORIZED_ADMIN_EMAIL,
+        name: 'Sharique Aman',
+        role: 'Proprietor / Super Admin',
+        is_active: true,
+      }
+    );
+
+    const okRes = await verifyAdminAuthorizationDetailed(user, {
+      supabaseConfigured: true,
+      supabaseClient: sbRelayRecover.client,
+      checkRoleClaimFn: async () => ({
+        token: 'claim-token',
+        diagnostics: {
+          ...validDiagnostics,
+          tokenValidWindow: now > 0,
+        },
+      }),
+    });
+
+    assert.equal(okRes.authorized, true);
+    assert.equal(okRes.profile?.isAuthorized, true);
+  }
+});
+
+test('Owner Profile service validates safe URLs, calculates completion, diffs changes, and strips oversized data URIs', () => {
+  // 1. URL validation & XSS/unsafe protocol rejection
+  assert.deepEqual(validateHttpUrl('   ', 'Website'), { valid: true, normalized: '' });
+  assert.deepEqual(validateHttpUrl('https://amancomputer.in/about', 'Website'), {
+    valid: true,
+    normalized: 'https://amancomputer.in/about',
+  });
+  assert.deepEqual(validateHttpUrl('amancomputer.in', 'Website'), {
+    valid: true,
+    normalized: 'https://amancomputer.in/',
+  });
+  assert.equal(validateHttpUrl('javascript:alert(1)', 'Website').valid, false);
+  assert.equal(validateHttpUrl('data:text/html,<script>alert(1)</script>', 'Website').valid, false);
+  assert.equal(validateHttpUrl('https://user:secret@example.com', 'Website').valid, false);
+  assert.equal(validateHttpUrl('https://bad domain.com', 'Website').valid, false);
+  assert.equal(validateHttpUrl('/assets/owner.jpg', 'Website').valid, false);
+  assert.deepEqual(
+    validateHttpUrl('/assets/owner.jpg', 'Profile Image', { allowRelativeAsset: true }),
+    { valid: true, normalized: '/assets/owner.jpg' }
+  );
+  assert.equal(
+    validateHttpUrl('//evil.example.com/pic.jpg', 'Profile Image', { allowRelativeAsset: true }).valid,
+    false
+  );
+  assert.equal(
+    validateHttpUrl('/../secret.jpg', 'Profile Image', { allowRelativeAsset: true }).valid,
+    false
+  );
+
+  // 2. Normalization strips oversized data:image URIs and provides safe fallbacks
+  const hugeDataUri = 'data:image/png;base64,' + 'A'.repeat(20000);
+  const normalizedFromHuge = normalizeOwnerProfile({
+    fullName: '  Sharique Aman  ',
+    profileImage: hugeDataUri,
+    socialLinks: {
+      website: 'https://amancomputer.in',
+      other: [{ id: 'yt-1', label: 'YouTube', url: 'https://youtube.com/@amancomputer' }],
+    },
+  });
+  assert.equal(normalizedFromHuge.fullName, 'Sharique Aman');
+  assert.equal(normalizedFromHuge.profileImage, '');
+  assert.equal(normalizedFromHuge.socialLinks.other.length, 1);
+
+  // 3. Draft validation rejects invalid fields and permits empty optional fields
+  const validDraftResult = validateOwnerProfileDraft({
+    ...DEFAULT_OWNER_PROFILE,
+    bio: '',
+    email: '',
+    phone: '',
+    profileImage: '',
+    socialLinks: {
+      website: 'amancomputer.in',
+      linkedin: '',
+      instagram: '',
+      facebook: '',
+      other: [{ id: 'o-1', label: '', url: '' }], // blank custom rows are ignored cleanly
+    },
+  });
+  assert.equal(validDraftResult.valid, true);
+  assert.equal(validDraftResult.sanitized.socialLinks.website, 'https://amancomputer.in/');
+  assert.equal(validDraftResult.sanitized.socialLinks.other.length, 0);
+
+  const invalidDraftResult = validateOwnerProfileDraft({
+    ...DEFAULT_OWNER_PROFILE,
+    fullName: 'A',
+    email: 'not-an-email',
+    phone: '1234',
+    bio: 'x'.repeat(801),
+    socialLinks: {
+      website: 'javascript:alert(1)',
+      linkedin: '',
+      instagram: '',
+      facebook: '',
+      other: [{ id: 'bad-1', label: 'YouTube', url: '' }],
+    },
+  });
+  assert.equal(invalidDraftResult.valid, false);
+  assert.ok(invalidDraftResult.errors.fullName);
+  assert.ok(invalidDraftResult.errors.email);
+  assert.ok(invalidDraftResult.errors.phone);
+  assert.ok(invalidDraftResult.errors.bio);
+  assert.ok(invalidDraftResult.errors.website);
+  assert.ok(invalidDraftResult.errors['other.bad-1']);
+
+  // 4. Completion score calculation & missing-field pointers
+  const fullCompletion = calculateOwnerProfileCompletion({
+    ...DEFAULT_OWNER_PROFILE,
+    profileImage: 'https://example.supabase.co/storage/v1/object/public/media-library/owner.webp',
+    socialLinks: {
+      ...DEFAULT_OWNER_PROFILE.socialLinks,
+      website: 'https://amancomputer.in',
+    },
+  });
+  assert.equal(fullCompletion.percentage, 100);
+  assert.equal(fullCompletion.missingFields.length, 0);
+
+  const partialCompletion = calculateOwnerProfileCompletion({
+    ...DEFAULT_OWNER_PROFILE,
+    bio: 'Too short',
+    profileImage: '',
+    socialLinks: {
+      website: '',
+      linkedin: '',
+      instagram: '',
+      facebook: '',
+      other: [],
+    },
+  });
+  assert.equal(partialCompletion.completedCount, 5);
+  assert.equal(partialCompletion.totalCount, 8);
+  assert.equal(partialCompletion.percentage, 63);
+  assert.deepEqual(
+    partialCompletion.missingFields.map((m) => m.key),
+    ['profileImage', 'bio', 'socialLinks']
+  );
+
+  // 5. Initials & field-by-field preview diffing
+  assert.equal(getOwnerProfileInitials('Sharique Aman'), 'SA');
+  assert.equal(getOwnerProfileInitials('Aman'), 'A');
+  assert.equal(
+    getOwnerProfileChanges(DEFAULT_OWNER_PROFILE, { ...DEFAULT_OWNER_PROFILE }).length,
+    0
+  );
+  const diff = getOwnerProfileChanges(DEFAULT_OWNER_PROFILE, {
+    ...DEFAULT_OWNER_PROFILE,
+    designation: 'Director & Lead Architect',
+    socialLinks: {
+      ...DEFAULT_OWNER_PROFILE.socialLinks,
+      instagram: 'https://instagram.com/amancomputer',
+    },
+  });
+  assert.deepEqual(
+    diff.map((d) => d.field),
+    ['Designation', 'Instagram Link']
+  );
+});
+
+test('Luxury Editorial dashboard shell uses warm gold (#C9A96E) and matte obsidian (#101014 / #0A0A0E) with zero #C6A56B or champagne leakage', () => {
+  const studioShellFiles = [
+    'admin.html',
+    'src/index.css',
+    'src/admin/App.tsx',
+    'src/admin/components/Sidebar.tsx',
+    'src/admin/components/TopBar.tsx',
+    'src/admin/components/GlobalSearchModal.tsx',
+    'src/admin/components/StateViews.tsx',
+    'src/admin/components/ToastContainer.tsx',
+    'src/admin/components/CmsPrimitives.tsx',
+    'src/admin/components/ServiceModal.tsx',
+    'src/admin/components/EnquiryDetailDrawer.tsx',
+    'src/admin/components/three/StudioCanvasWrapper.tsx',
+    'src/admin/components/three/StudioAmbientCanvas.tsx',
+    'src/admin/views/OverviewView.tsx',
+    'src/admin/views/OwnerProfileView.tsx',
+    'src/admin/views/HeroManagerView.tsx',
+    'src/admin/views/BrandSettingsView.tsx',
+    'src/admin/views/GovernmentSchemesView.tsx',
+    'src/admin/views/WebsiteSettingsView.tsx',
+    'src/admin/views/SeoManagerView.tsx',
+    'src/admin/views/LatestUpdatesView.tsx',
+    'src/admin/views/DocumentRequirementsView.tsx',
+    'src/admin/views/ServicesView.tsx',
+    'src/admin/views/GalleryView.tsx',
+    'src/admin/views/JourneyManagementView.tsx',
+    'src/admin/views/WebsiteContentView.tsx',
+    'src/admin/views/FaqView.tsx',
+    'src/admin/views/BusinessProfileView.tsx',
+    'src/admin/views/EnquiriesView.tsx',
+    'src/admin/views/CustomersView.tsx',
+    'src/admin/views/MediaLibraryView.tsx',
+    'src/admin/views/ActivityLogsView.tsx',
+  ];
+
+  for (const relPath of studioShellFiles) {
+    const content = fs.readFileSync(path.join(ROOT_DIR, relPath), 'utf8');
+    assert.equal(
+      /#C6A56B/i.test(content) || /\bchampagne\b/i.test(content),
+      false,
+      `Studio file ${relPath} must not retain #C6A56B or champagne palette tokens`
+    );
+  }
+
+  const sidebarSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/components/Sidebar.tsx'), 'utf8');
+  assert.ok(sidebarSrc.includes('#101014'));
+  assert.ok(sidebarSrc.includes('#C9A96E'));
+  assert.ok(sidebarSrc.includes('#211B16'));
+
+  const appSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/App.tsx'), 'utf8');
+  assert.ok(appSrc.includes("case 'owner-profile':"));
+  assert.ok(appSrc.includes('<OwnerProfileView />'));
+  assert.ok(appSrc.includes('<GovernmentSchemesView />'));
+  assert.ok(appSrc.includes('<HeroManagerView'));
+
+  const ownerViewSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/views/OwnerProfileView.tsx'), 'utf8');
+  assert.ok(ownerViewSrc.includes("uploadFileToStorage('media-library', file, 'owner-profile', 'image')"));
+  assert.equal(ownerViewSrc.includes('admin_users'), false, 'OwnerProfileView must not issue direct mutations to admin_users');
+});
+
+test('Phase 2.5 clean copy guard ensures all owner-facing dashboard UI excludes backend/developer jargon and exposes no UIDs', () => {
+  const uiFiles = [
+    'admin.html',
+    'src/admin/App.tsx',
+    'src/admin/components/Sidebar.tsx',
+    'src/admin/components/TopBar.tsx',
+    'src/admin/components/GlobalSearchModal.tsx',
+    'src/admin/components/StateViews.tsx',
+    'src/admin/components/ToastContainer.tsx',
+    'src/admin/components/CmsPrimitives.tsx',
+    'src/admin/components/ServiceModal.tsx',
+    'src/admin/components/EnquiryDetailDrawer.tsx',
+    'src/admin/views/OverviewView.tsx',
+    'src/admin/views/OwnerProfileView.tsx',
+    'src/admin/views/HeroManagerView.tsx',
+    'src/admin/views/BrandSettingsView.tsx',
+    'src/admin/views/GovernmentSchemesView.tsx',
+    'src/admin/views/WebsiteSettingsView.tsx',
+    'src/admin/views/SeoManagerView.tsx',
+    'src/admin/views/LatestUpdatesView.tsx',
+    'src/admin/views/DocumentRequirementsView.tsx',
+    'src/admin/views/ServicesView.tsx',
+    'src/admin/views/GalleryView.tsx',
+    'src/admin/views/JourneyManagementView.tsx',
+    'src/admin/views/WebsiteContentView.tsx',
+    'src/admin/views/FaqView.tsx',
+    'src/admin/views/BusinessProfileView.tsx',
+    'src/admin/views/EnquiriesView.tsx',
+    'src/admin/views/CustomersView.tsx',
+    'src/admin/views/MediaLibraryView.tsx',
+    'src/admin/views/ActivityLogsView.tsx',
+    'src/admin/config/navigation.ts',
+    'src/admin/data/phase1MockPreview.ts',
+  ];
+
+  const bannedUiCopyPatterns = [
+    /Firebase Spark/i,
+    /PostgreSQL/i,
+    /\bRLS\b/,
+    /\bCRUD\b/,
+    /\bJSONB\b/,
+    /Storage bucket/i,
+    /Single-Admin Session/i,
+    /Single-Admin Security Lock/i,
+    /UID Lock/i,
+    /Sole Admin UID/i,
+    /Yr0Wr7PuuAdOIMaqohmqaINNbNC2/,
+    /VITE_SUPABASE_/,
+  ];
+
+  for (const relPath of uiFiles) {
+    const raw = fs.readFileSync(path.join(ROOT_DIR, relPath), 'utf8');
+    const content = raw.replace(/\/\/.*$/gm, '');
+    for (const pattern of bannedUiCopyPatterns) {
+      assert.equal(
+        pattern.test(content),
+        false,
+        `Banned technical UI copy (${pattern}) detected in ${relPath}`
+      );
+    }
+  }
+
+  const ownerViewSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/views/OwnerProfileView.tsx'), 'utf8');
+  assert.ok(ownerViewSrc.includes('Owner Account Protection'));
+  assert.ok(ownerViewSrc.includes('Online Sync Status'));
+  assert.ok(ownerViewSrc.includes('Profile Completeness'));
+  assert.ok(ownerViewSrc.includes('Public Contact Information'));
+  assert.ok(ownerViewSrc.includes('Online Presence'));
+  assert.ok(ownerViewSrc.includes('Image URL (Optional)'));
+});
+
+test('Master CMS navigation hierarchy has 23 unique leaf routes, excludes legacy modules, and deduplicates Gallery & Latest Updates', () => {
+  assert.equal(ALL_STUDIO_NAV_ITEMS.length, 23);
+
+  const ids = ALL_STUDIO_NAV_ITEMS.map((item) => item.id);
+  assert.equal(new Set(ids).size, 23);
+
+  // Gallery and Latest Updates must exist ONLY inside Doors Management
+  const doorsItem = STUDIO_NAV_GROUPS
+    .flatMap((g) => g.items)
+    .find((i) => i.id === 'doors-management');
+  assert.ok(doorsItem && Array.isArray(doorsItem.children));
+  const doorChildIds = doorsItem.children.map((c) => c.id);
+  assert.deepEqual(doorChildIds, ['latest-updates', 'doc-requirements', 'services', 'gallery']);
+  assert.equal(ids.filter((id) => id === 'gallery').length, 1);
+  assert.equal(ids.filter((id) => id === 'latest-updates').length, 1);
+
+  // Excluded legacy routes resolve cleanly to safe destinations
+  const excludedTabs: AdminTab[] = ['reports', 'settings', 'backup-restore', 'receipts', 'staff', 'testimonials'];
+  for (const legacyTab of excludedTabs) {
+    assert.equal(resolveStudioTab(legacyTab), 'overview');
+  }
+  assert.equal(resolveStudioTab('hero-section'), 'hero-headline');
+  assert.equal(resolveStudioTab('four-doors'), 'services');
+  assert.equal(resolveStudioTab('website-content'), 'content-about');
+});
+
+test('Master CMS storage extraction, scheme/journey mappers, WebsiteContent defaults, and SQL migration schema', () => {
+  const pubLoc = extractStorageLocationFromUrl(
+    'https://demo.supabase.co/storage/v1/object/public/gallery-images/hero-portrait/1700000000-photo.webp'
+  );
+  assert.deepEqual(pubLoc, {
+    bucket: 'gallery-images',
+    path: 'hero-portrait/1700000000-photo.webp',
+  });
+
+  const signedLoc = extractStorageLocationFromUrl(
+    'https://demo.supabase.co/storage/v1/object/sign/media-library/journey/m1.png?token=abc'
+  );
+  assert.deepEqual(signedLoc, {
+    bucket: 'media-library',
+    path: 'journey/m1.png',
+  });
+
+  assert.equal(extractStorageLocationFromUrl('https://example.com/other.jpg'), null);
+  assert.equal(extractStorageLocationFromUrl('data:image/png;base64,AAA'), null);
+
+  const scheme = mapGovernmentSchemeRow({
+    id: 'sch-1',
+    title: 'PM Vishwakarma Yojana',
+    category: 'Central Scheme',
+    department: 'Ministry of MSME',
+    short_description: 'Artisan support scheme',
+    eligibility: 'Registered artisans',
+    benefits: 'Skill training + collateral-free credit',
+    required_documents: ['Aadhaar', 'Bank Passbook'],
+    application_mode: 'CSC / Aman Computer',
+    last_date: 'Open Year-Round',
+    official_link: 'https://pmvishwakarma.gov.in',
+    poster_image: '',
+    status: 'Active',
+    featured: true,
+    published: true,
+    display_order: 1,
+  });
+  assert.equal(scheme.id, 'sch-1');
+  assert.equal(scheme.requiredDocuments.length, 2);
+  assert.equal(scheme.published, true);
+  assert.equal(scheme.featured, true);
+
+  const journey = mapJourneyRow({
+    id: 'j-1',
+    year: '2026',
+    month: 'November',
+    date: 'Nov 2026',
+    title: 'New Portal Desk',
+    image_url: 'https://demo.supabase.co/storage/v1/object/public/gallery-images/journey/j1.webp',
+    bullets: ['Fast forms'],
+    published: true,
+    display_order: 2,
+  });
+  assert.equal(
+    journey.imageUrl,
+    'https://demo.supabase.co/storage/v1/object/public/gallery-images/journey/j1.webp'
+  );
+  assert.equal(journey.displayOrder, 2);
+
+  assert.equal(INITIAL_WEBSITE_CONTENT.ownerPortrait?.visible, false);
+  assert.equal(INITIAL_WEBSITE_CONTENT.ownerPortrait?.imageUrl, '');
+  assert.equal(INITIAL_WEBSITE_CONTENT.doorsConfig?.door3.title, 'Gallery');
+  assert.equal(INITIAL_WEBSITE_CONTENT.websiteSettings?.maintenanceMode, false);
+
+  const migrationSql = fs.readFileSync(
+    path.join(ROOT_DIR, 'supabase/migrations/20261115120000_master_cms_extensions.sql'),
+    'utf8'
+  );
+  assert.ok(migrationSql.includes('CREATE TABLE IF NOT EXISTS public.government_schemes'));
+  assert.ok(migrationSql.includes('ADD COLUMN IF NOT EXISTS image_url TEXT'));
+  assert.ok(migrationSql.includes('public.is_admin()'));
+});
+
+test('Public storefront and door subpages contain no Rishi Thakor branding, dead portrait embeds, or Photographer leak', () => {
+  const publicHtmlFiles = [
+    'index.html',
+    'public/home/index.html',
+    'public/web-developer/index.html',
+    'public/app-developer/index.html',
+    'public/ui-ux-designer/index.html',
+    'public/graphic-designer/index.html',
+  ];
+
+  for (const relPath of publicHtmlFiles) {
+    const html = fs.readFileSync(path.join(ROOT_DIR, relPath), 'utf8');
+    assert.equal(/therishithakor/i.test(html), false, `${relPath} must not reference therishithakor`);
+    assert.equal(/G-12PNLHKGHK/.test(html), false, `${relPath} must not contain Rishi GA tracking ID`);
+    assert.equal(/rishithakor218@gmail\.com/i.test(html), false, `${relPath} must not contain Rishi email`);
+  }
+
+  const homeHtml = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
+  assert.equal(homeHtml.includes('id="figBase"'), false);
+  assert.equal(homeHtml.includes('id="holo"'), false);
+  assert.equal(homeHtml.includes('data-door="4"'), false);
+  assert.ok(homeHtml.includes('data-door="3"'));
+  assert.ok(homeHtml.includes('id="schemes"'));
+  assert.ok(homeHtml.includes('id="amanMaintenance"'));
+  assert.ok(homeHtml.includes('id="amanAnnouncement"'));
+  assert.ok(homeHtml.includes('id="fig" hidden'));
 });
 
 test('Live Supabase connectivity check (conditional on environment credentials)', async (t) => {

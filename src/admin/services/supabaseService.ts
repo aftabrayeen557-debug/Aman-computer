@@ -17,6 +17,7 @@ import {
   StaffMember,
   ActivityLog,
   TerminalSettings,
+  GovernmentSchemeItem,
 } from '../types';
 
 export interface DbWriteResult {
@@ -137,8 +138,32 @@ export const mapJourneyRow = (row: any): JourneyItem => ({
   subtitle: row.subtitle || undefined,
   description: row.description || undefined,
   bullets: Array.isArray(row.bullets) ? row.bullets : undefined,
+  imageUrl: row.image_url || undefined,
   published: Boolean(row.published ?? true),
   displayOrder: Number(row.display_order || 0),
+});
+
+export const mapGovernmentSchemeRow = (row: any): GovernmentSchemeItem => ({
+  id: row.id,
+  title: row.title,
+  category: row.category || 'Central Welfare',
+  department: row.department || '',
+  shortDescription: row.short_description || '',
+  eligibility: row.eligibility || '',
+  benefits: row.benefits || '',
+  requiredDocuments: Array.isArray(row.required_documents)
+    ? row.required_documents
+    : [],
+  applicationMode: row.application_mode || 'Online & Counter Assistance',
+  lastDate: row.last_date || '',
+  officialLink: row.official_link || '',
+  posterImage: row.poster_image || '',
+  status: row.status || 'Active',
+  featured: Boolean(row.featured),
+  published: Boolean(row.published ?? true),
+  displayOrder: Number(row.display_order || 0),
+  createdAt: row.created_at || undefined,
+  updatedAt: row.updated_at || undefined,
 });
 
 // =============================================================================
@@ -405,6 +430,7 @@ export const dbUpsertJourneyMilestone = async (item: JourneyItem): Promise<DbWri
     subtitle: item.subtitle || null,
     description: item.description || null,
     bullets: item.bullets || null,
+    image_url: item.imageUrl || '',
     published: item.published,
     display_order: item.displayOrder || 0,
   });
@@ -415,6 +441,54 @@ export const dbDeleteJourneyMilestone = async (id: string): Promise<DbWriteResul
   const client = getClient();
   if (!client) return errResult({ message: 'Supabase not configured' });
   const { error } = await client.from('journey_milestones').delete().eq('id', id);
+  return error ? errResult(error) : okResult();
+};
+
+// =============================================================================
+// 7B. GOVERNMENT SCHEMES
+// =============================================================================
+export const dbGetGovernmentSchemes = async (): Promise<GovernmentSchemeItem[] | null> => {
+  const client = getClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from('government_schemes')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) return null;
+  return data.map(mapGovernmentSchemeRow);
+};
+
+export const dbUpsertGovernmentScheme = async (
+  scheme: GovernmentSchemeItem
+): Promise<DbWriteResult> => {
+  const client = getClient();
+  if (!client) return errResult({ message: 'Supabase not configured' });
+  const { error } = await client.from('government_schemes').upsert({
+    id: scheme.id,
+    title: scheme.title,
+    category: scheme.category,
+    department: scheme.department || '',
+    short_description: scheme.shortDescription || '',
+    eligibility: scheme.eligibility || '',
+    benefits: scheme.benefits || '',
+    required_documents: scheme.requiredDocuments || [],
+    application_mode: scheme.applicationMode || 'Online & Counter Assistance',
+    last_date: scheme.lastDate || '',
+    official_link: scheme.officialLink || '',
+    poster_image: scheme.posterImage || '',
+    status: scheme.status || 'Active',
+    featured: scheme.featured,
+    published: scheme.published,
+    display_order: scheme.displayOrder || 0,
+    updated_at: new Date().toISOString(),
+  });
+  return error ? errResult(error) : okResult();
+};
+
+export const dbDeleteGovernmentScheme = async (id: string): Promise<DbWriteResult> => {
+  const client = getClient();
+  if (!client) return errResult({ message: 'Supabase not configured' });
+  const { error } = await client.from('government_schemes').delete().eq('id', id);
   return error ? errResult(error) : okResult();
 };
 
@@ -485,7 +559,7 @@ export const dbGetWebsiteContent = async (): Promise<WebsiteSectionContent | nul
   const client = getClient();
   if (!client) return null;
   const { data, error } = await client.from('website_content').select('*').eq('id', 'global_content').maybeSingle();
-  if (error || !data) return null;
+  if (error || !data || !data.content) return null;
   return data.content as WebsiteSectionContent;
 };
 
@@ -611,7 +685,7 @@ export const dbGetReceipts = async (): Promise<Receipt[] | null> => {
     paymentStatus: row.payment_status || 'Paid',
     status: row.status || 'Pending Processing',
     expectedDeliveryDate: row.expected_delivery_date || undefined,
-    operatorName: row.operator_name || 'Aman Sharma',
+    operatorName: row.operator_name || 'Sharique Aman',
     notes: row.notes || undefined,
     createdAt: row.created_at,
   }));

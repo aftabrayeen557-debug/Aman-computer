@@ -110,17 +110,20 @@ body {
   transform: rotateY(180deg);
 }
 
-/* Scoped Phase 1 Admin Control Center Theme Utilities */
+/* Scoped Admin Control Center Theme Utilities (Luxury Editorial Obsidian + Warm Gold) */
 .admin-studio-theme {
-  --studio-bg: #090A0C;
-  --studio-secondary: #111318;
-  --studio-surface: #191C22;
-  --studio-gold: #C6A56B;
-  --studio-ivory: #F3EFE7;
-  --studio-text: #F5F2EC;
-  --studio-muted: #92949B;
-  background-color: #090A0C;
-  color: #F5F2EC;
+  --studio-bg: #0A0A0E;
+  --studio-secondary: #101014;
+  --studio-surface: #141419;
+  --studio-elevated: #16161B;
+  --studio-active-nav: #211B16;
+  --studio-accent: #C9A96E;
+  --studio-amber: #C9A96E;
+  --studio-highlight: #DFC492;
+  --studio-text: #E8E5DF;
+  --studio-muted: #85838A;
+  background-color: #0A0A0E;
+  color: #E8E5DF;
 }
 
 .font-editorial {
@@ -137,11 +140,11 @@ body {
 }
 
 .admin-studio-scroll::-webkit-scrollbar-thumb {
-  background: rgba(198, 165, 107, 0.24);
+  background: rgba(201, 169, 110, 0.28);
   border-radius: 9999px;
 }
 
 .admin-studio-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(198, 165, 107, 0.45);
+  background: rgba(201, 169, 110, 0.5);
 }
 

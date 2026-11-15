@@ -5,6 +5,7 @@ import {
   mapDocRequirementRow,
   mapGalleryRow,
   mapJourneyRow,
+  mapGovernmentSchemeRow,
 } from '../admin/services/supabaseService';
 
 export interface PublicEnquiryPayload {
@@ -93,11 +94,82 @@ export const syncPublicCollectionResult = <TRow, TOut>(
   return { updated: changed, preservedOnError: false, count: mapped.length };
 };
 
+const emitPublicEvent = (name: string, detail: unknown) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(name, { detail }));
+  }
+};
+
 /**
- * Fetches only public-safe, published records from Supabase PostgreSQL
- * and synchronizes door/timeline caches without touching private business tables.
+ * Applies live SEO, Favicon, Brand & Maintenance settings to static HTML shells when loaded.
+ */
+export const applyPublicWebsiteMetadata = (): void => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  try {
+    const rawContent = window.localStorage.getItem('aman_website_content');
+    if (!rawContent) return;
+    const content = JSON.parse(rawContent);
+    const seo = content?.seoSettings;
+    const brand = content?.brandSettings;
+    const path = window.location.pathname || '/';
+    const isHomePage = path === '/' || path === '/home/' || path === '/home/index.html';
+
+    if (isHomePage && seo?.pageTitle) {
+      document.title = seo.pageTitle;
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const twTitle = document.querySelector('meta[name="twitter:title"]');
+      if (ogTitle) ogTitle.setAttribute('content', seo.pageTitle);
+      if (twTitle) twTitle.setAttribute('content', seo.pageTitle);
+    }
+
+    if (isHomePage && seo?.metaDescription) {
+      const desc = document.querySelector('meta[name="description"]');
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      const twDesc = document.querySelector('meta[name="twitter:description"]');
+      if (desc) desc.setAttribute('content', seo.metaDescription);
+      if (ogDesc) ogDesc.setAttribute('content', seo.metaDescription);
+      if (twDesc) twDesc.setAttribute('content', seo.metaDescription);
+    }
+
+    if (seo?.keywords) {
+      let kw = document.querySelector('meta[name="keywords"]');
+      if (!kw) {
+        kw = document.createElement('meta');
+        kw.setAttribute('name', 'keywords');
+        document.head.appendChild(kw);
+      }
+      kw.setAttribute('content', seo.keywords);
+    }
+
+    if (seo?.ogImageUrl) {
+      const ogImg = document.querySelector('meta[property="og:image"]');
+      const twImg = document.querySelector('meta[name="twitter:image"]');
+      if (ogImg) ogImg.setAttribute('content', seo.ogImageUrl);
+      if (twImg) twImg.setAttribute('content', seo.ogImageUrl);
+    }
+
+    if (brand?.faviconUrl) {
+      const icons = document.querySelectorAll('link[rel*="icon"]');
+      icons.forEach((link) => link.setAttribute('href', brand.faviconUrl));
+    }
+
+    if (brand?.shopName) {
+      const siteName = document.querySelector('meta[property="og:site_name"]');
+      if (siteName) siteName.setAttribute('content', brand.shopName);
+    }
+  } catch (err) {
+    console.warn('Skipped dynamic SEO application:', err);
+  }
+};
+
+/**
+ * Fetches only public-safe, published records from Supabase
+ * and synchronizes door/timeline/schemes caches without touching private business tables.
  */
 export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
+  if (typeof window !== 'undefined') {
+    applyPublicWebsiteMetadata();
+  }
   if (!isSupabaseConfigured() || !supabase || typeof window === 'undefined') return;
 
   try {
@@ -107,20 +179,20 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
       docRes,
       galRes,
       jrnRes,
+      schRes,
       profRes,
       webRes,
       faqRes,
-      tstRes,
     ] = await Promise.all([
       supabase.from('services').select('*').eq('visible', true).order('display_order', { ascending: true }),
       supabase.from('latest_updates').select('*').eq('published', true).order('published_date', { ascending: false }),
       supabase.from('document_requirements').select('*').eq('published', true).order('display_order', { ascending: true }),
       supabase.from('gallery_items').select('*').eq('visible', true).order('display_order', { ascending: true }),
       supabase.from('journey_milestones').select('*').eq('published', true).order('display_order', { ascending: true }),
+      supabase.from('government_schemes').select('*').eq('published', true).order('display_order', { ascending: true }),
       supabase.from('business_profile').select('*').eq('id', 'main_profile').maybeSingle(),
       supabase.from('website_content').select('*').eq('id', 'global_content').maybeSingle(),
       supabase.from('faqs').select('*').eq('visible', true).order('display_order', { ascending: true }),
-      supabase.from('testimonials').select('*').eq('approved', true).order('created_at', { ascending: false }),
     ]);
 
     syncPublicCollectionResult('aman_services', 'aman_services_changed', srvRes, mapServiceRow);
@@ -129,8 +201,19 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
     syncPublicCollectionResult('aman_gallery', 'aman_gallery_changed', galRes, mapGalleryRow);
     syncPublicCollectionResult('aman_journey', 'aman_journey_changed', jrnRes, mapJourneyRow);
 
+    if (!schRes.error && Array.isArray(schRes.data)) {
+      syncPublicCollectionResult('aman_government_schemes', 'aman_schemes_changed', schRes, mapGovernmentSchemeRow);
+    } else if (!webRes.error && Array.isArray(webRes.data?.content?.governmentSchemesFallback)) {
+      const publishedFallback = webRes.data.content.governmentSchemesFallback.filter(
+        (s: any) => s && s.published !== false
+      );
+      if (safeCachePublicJson('aman_government_schemes', publishedFallback)) {
+        emitPublicEvent('aman_schemes_changed', publishedFallback);
+      }
+    }
+
     if (!profRes.error && profRes.data) {
-      safeCachePublicJson('aman_business_profile', {
+      const profileObj = {
         businessName: profRes.data.business_name,
         tagline: profRes.data.tagline,
         proprietorName: profRes.data.proprietor_name,
@@ -150,33 +233,29 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
         workingDays: profRes.data.working_days,
         upiId: profRes.data.upi_id,
         upiQrImage: profRes.data.upi_qr_image || undefined,
-      });
+      };
+      if (safeCachePublicJson('aman_business_profile', profileObj)) {
+        emitPublicEvent('aman_business_profile_changed', profileObj);
+      }
     }
 
     if (!webRes.error && webRes.data?.content) {
-      safeCachePublicJson('aman_website_content', webRes.data.content);
+      if (safeCachePublicJson('aman_website_content', webRes.data.content)) {
+        emitPublicEvent('aman_website_content_changed', webRes.data.content);
+        applyPublicWebsiteMetadata();
+      }
     }
 
-    syncPublicCollectionResult('aman_faqs', null, faqRes, (r) => ({
-      id: r.id,
-      question: r.question,
-      answer: r.answer,
-      category: r.category,
-      displayOrder: Number(r.display_order || 0),
-      visible: Boolean(r.visible ?? true),
-    }));
-
-    syncPublicCollectionResult('aman_testimonials', null, tstRes, (r) => ({
-      id: r.id,
-      customerName: r.customer_name,
-      location: r.location || '',
-      serviceName: r.service_name || '',
-      rating: Number(r.rating || 5),
-      comment: r.comment,
-      date: r.date || r.created_at,
-      verified: Boolean(r.verified ?? true),
-      approved: Boolean(r.approved ?? true),
-    }));
+    if (!faqRes.error && Array.isArray(faqRes.data)) {
+      syncPublicCollectionResult('aman_faqs', 'aman_faqs_changed', faqRes, (r) => ({
+        id: r.id,
+        question: r.question,
+        answer: r.answer,
+        category: r.category,
+        displayOrder: Number(r.display_order || 0),
+        visible: Boolean(r.visible ?? true),
+      }));
+    }
   } catch (err) {
     console.warn('Public website Supabase sync skipped:', err);
   }
@@ -184,7 +263,6 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
 
 /**
  * Validates and rate-limits public customer enquiry input before submitting to Supabase.
- * PostgreSQL RLS and server trigger enforce identical bounds & spam limits independently.
  */
 export const validatePublicEnquiryPayload = (
   payload: PublicEnquiryPayload
@@ -211,7 +289,7 @@ export const validatePublicEnquiryPayload = (
 };
 
 /**
- * Validated public customer enquiry insert (status enforced to 'new' and source to 'website')
+ * Validated public customer enquiry insert
  */
 export const submitPublicEnquiry = async (
   payload: PublicEnquiryPayload

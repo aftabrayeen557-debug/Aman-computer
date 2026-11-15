@@ -1,23 +1,42 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Calendar,
+  Edit2,
+  Eye,
+  EyeOff,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { JourneyItem } from '../types';
 import {
-  Plus,
-  Trash2,
-  Edit2,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  Eye,
-  EyeOff,
-  Search,
-  AlertCircle,
-  Layers,
-  ArrowRight,
-  Clock,
-  MapPin,
-  Sparkles,
-} from 'lucide-react';
+  CmsMediaField,
+  CmsModal,
+  CmsPageHeader,
+  CmsSurfaceCard,
+  CmsToggle,
+} from '../components/CmsPrimitives';
+import { deleteStorageFileByUrl } from '../services/storageService';
+
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+const YEARS = ['2024', '2025', '2026', '2027'];
 
 export const JourneyManagementView: React.FC = () => {
   const {
@@ -29,16 +48,14 @@ export const JourneyManagementView: React.FC = () => {
     showToast,
   } = useAdmin();
 
-  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterYear, setFilterYear] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState('');
 
-  // Form State
   const [formData, setFormData] = useState<{
     year: string;
     month: string;
@@ -47,6 +64,7 @@ export const JourneyManagementView: React.FC = () => {
     subtitle: string;
     description: string;
     bullets: string[];
+    imageUrl: string;
     published: boolean;
   }>({
     year: '2024',
@@ -56,36 +74,32 @@ export const JourneyManagementView: React.FC = () => {
     subtitle: '',
     description: '',
     bullets: [''],
+    imageUrl: '',
     published: true,
   });
 
-  const MONTHS = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  const YEARS = ['2024', '2025', '2026'];
+  const orderedJourney = useMemo(
+    () =>
+      [...journey].sort((a, b) => {
+        const orderDiff = (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999);
+        if (orderDiff !== 0) return orderDiff;
+        return (a.year || '').localeCompare(b.year || '');
+      }),
+    [journey]
+  );
 
   const handleOpenAdd = () => {
     setEditingId(null);
+    setOriginalImageUrl('');
     setFormData({
-      year: '2024',
+      year: '2025',
       month: 'January',
-      date: 'Jan 2024',
+      date: 'Jan 2025',
       title: '',
       subtitle: '',
       description: '',
       bullets: [''],
+      imageUrl: '',
       published: true,
     });
     setIsModalOpen(true);
@@ -93,6 +107,7 @@ export const JourneyManagementView: React.FC = () => {
 
   const handleOpenEdit = (item: JourneyItem) => {
     setEditingId(item.id);
+    setOriginalImageUrl(item.imageUrl || '');
     setFormData({
       year: item.year || '2025',
       month: item.month || 'January',
@@ -101,6 +116,7 @@ export const JourneyManagementView: React.FC = () => {
       subtitle: item.subtitle || '',
       description: item.description || '',
       bullets: item.bullets && item.bullets.length > 0 ? [...item.bullets] : [''],
+      imageUrl: item.imageUrl || '',
       published: item.published,
     });
     setIsModalOpen(true);
@@ -108,12 +124,11 @@ export const JourneyManagementView: React.FC = () => {
 
   const handleMonthOrYearChange = (newMonth: string, newYear: string) => {
     const shortMonth = newMonth.slice(0, 3);
-    const autoDate = `${shortMonth} ${newYear}`;
     setFormData((prev) => ({
       ...prev,
       month: newMonth,
       year: newYear,
-      date: autoDate,
+      date: `${shortMonth} ${newYear}`,
     }));
   };
 
@@ -135,8 +150,19 @@ export const JourneyManagementView: React.FC = () => {
       setFormData({ ...formData, bullets: [''] });
       return;
     }
-    const updated = formData.bullets.filter((_, i) => i !== index);
-    setFormData({ ...formData, bullets: updated });
+    setFormData({
+      ...formData,
+      bullets: formData.bullets.filter((_, i) => i !== index),
+    });
+  };
+
+  const moveMilestone = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= orderedJourney.length) return;
+    const current = orderedJourney[index];
+    const swapWith = orderedJourney[target];
+    updateJourneyItem(current.id, { displayOrder: target + 1 });
+    updateJourneyItem(swapWith.id, { displayOrder: index + 1 });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -147,9 +173,12 @@ export const JourneyManagementView: React.FC = () => {
       return;
     }
 
-    const cleanBullets = formData.bullets
-      .map((b) => b.trim())
-      .filter((b) => b.length > 0);
+    const cleanBullets = formData.bullets.map((b) => b.trim()).filter((b) => b.length > 0);
+    const cleanImageUrl = formData.imageUrl.trim() || undefined;
+
+    if (editingId && originalImageUrl && originalImageUrl !== cleanImageUrl) {
+      void deleteStorageFileByUrl(originalImageUrl);
+    }
 
     const payload = {
       year: formData.year.trim() || '2025',
@@ -159,26 +188,31 @@ export const JourneyManagementView: React.FC = () => {
       subtitle: formData.subtitle.trim() || undefined,
       description: formData.description.trim() || undefined,
       bullets: cleanBullets.length > 0 ? cleanBullets : undefined,
+      imageUrl: cleanImageUrl,
       published: formData.published,
     };
 
     if (editingId) {
       updateJourneyItem(editingId, payload);
     } else {
-      addJourneyItem(payload);
+      addJourneyItem({
+        ...payload,
+        displayOrder: orderedJourney.length + 1,
+      });
     }
 
     setIsModalOpen(false);
   };
 
-  // Filtered and Sorted list (newest first or chronological)
-  const filteredList = journey.filter((item) => {
+  const filteredList = orderedJourney.filter((item) => {
+    const q = searchQuery.toLowerCase();
     const matchesQuery =
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.subtitle && item.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      !q ||
+      item.title.toLowerCase().includes(q) ||
+      (item.subtitle && item.subtitle.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
       item.year.includes(searchQuery) ||
-      item.date.toLowerCase().includes(searchQuery.toLowerCase());
+      item.date.toLowerCase().includes(q);
 
     const matchesYear = filterYear === 'all' || item.year === filterYear;
     const matchesStatus =
@@ -193,401 +227,421 @@ export const JourneyManagementView: React.FC = () => {
   const draftCount = journey.filter((j) => !j.published).length;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
-              Our Journey Timeline
-            </span>
-            <span className="text-xs text-[#857878] dark:text-[#B5A8A8]">• 2024–2026 Evolution</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0]">
-            The Journey of Aman Computer
-          </h1>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8]">
-            Manage owner-created milestones and achievements. 0 entries shows &ldquo;No Journey Information Available&rdquo;.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <CmsPageHeader
+        eyebrow="Our Journey Timeline · 2024–2027"
+        title="The Journey of Aman Computer"
+        description="Curate real milestones, center expansions, and optional milestone photographs synced directly to the public timeline."
+        actions={
+          <button
+            type="button"
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] font-semibold text-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Journey Milestone</span>
+          </button>
+        }
+      />
 
-        <button
-          onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1A1818] hover:bg-[#302A2A] dark:bg-[#E8E4E0] dark:hover:bg-white text-[#E8E4E0] dark:text-[#1A1818] font-semibold text-xs shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Journey Milestone</span>
-        </button>
-      </div>
-
-      {/* KPI Stats Cards */}
+      {/* KPI Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]">
-          <div className="text-[11px] font-mono text-[#857878] dark:text-[#B5A8A8] uppercase">Total Entries</div>
-          <div className="text-2xl font-bold text-[#1A1818] dark:text-[#E8E4E0] mt-1 tabular-nums">
+        <div className="p-4 rounded-2xl bg-[#141419] border border-white/[0.07]">
+          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#85838A]">
+            Total Entries
+          </div>
+          <div className="font-editorial text-3xl text-[#E8E5DF] mt-1 tabular-nums">
             {journey.length}
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]">
-          <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 uppercase">Live on Site</div>
-          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 tabular-nums">
+        <div className="p-4 rounded-2xl bg-[#141419] border border-white/[0.07]">
+          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-emerald-400">
+            Live on Site
+          </div>
+          <div className="font-editorial text-3xl text-emerald-400 mt-1 tabular-nums">
             {publishedCount}
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]">
-          <div className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400 uppercase">Draft (Hidden)</div>
-          <div className="text-2xl font-bold text-neutral-600 dark:text-neutral-300 mt-1 tabular-nums">
+        <div className="p-4 rounded-2xl bg-[#141419] border border-white/[0.07]">
+          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#85838A]">
+            Drafts (Hidden)
+          </div>
+          <div className="font-editorial text-3xl text-[#85838A] mt-1 tabular-nums">
             {draftCount}
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]">
-          <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 uppercase">Timeline Range</div>
-          <div className="text-xs font-bold text-[#1A1818] dark:text-[#E8E4E0] mt-2 font-mono">
-            Jan 2024 — Dec 2026
+        <div className="p-4 rounded-2xl bg-[#141419] border border-white/[0.07]">
+          <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[#C9A96E]">
+            Active Span
+          </div>
+          <div className="text-xs font-mono text-[#E8E5DF] mt-3">
+            {orderedJourney.length > 0
+              ? `${orderedJourney[0].date} — ${orderedJourney[orderedJourney.length - 1].date}`
+              : 'No milestones yet'}
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-[rgba(196,176,176,0.3)] dark:border-[rgba(196,176,176,0.12)]">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search milestones by title, date, or description..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-950 dark:focus:ring-white"
-          />
-        </div>
+      {/* Filters */}
+      <CmsSurfaceCard className="p-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#85838A]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search milestones by title, date, or narrative..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={filterYear}
-            onChange={(e) => setFilterYear(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Years</option>
-            <option value="2026">2026</option>
-            <option value="2025">2025</option>
-            <option value="2024">2024</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none cursor-pointer focus:border-[#C9A96E]/60"
+            >
+              <option value="all">All Years</option>
+              {YEARS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer"
-          >
-            <option value="all">All Status</option>
-            <option value="published">Live Only</option>
-            <option value="draft">Draft Only</option>
-          </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none cursor-pointer focus:border-[#C9A96E]/60"
+            >
+              <option value="all">All Status</option>
+              <option value="published">Live Only</option>
+              <option value="draft">Drafts Only</option>
+            </select>
+          </div>
         </div>
-      </div>
+      </CmsSurfaceCard>
 
       {/* Milestones List */}
       {journey.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-[rgba(242,238,235,0.7)] dark:bg-[rgba(196,176,176,0.06)] border border-dashed border-[rgba(196,176,176,0.5)] dark:border-[rgba(196,176,176,0.2)]">
-          <Calendar className="w-10 h-10 mx-auto text-neutral-400 mb-3" />
-          <h3 className="text-sm font-bold text-[#1A1818] dark:text-[#E8E4E0] mb-1">
+        <CmsSurfaceCard className="text-center py-12 border-dashed border-white/[0.12]">
+          <Calendar className="w-10 h-10 mx-auto text-[#C9A96E]/70 mb-3" />
+          <h3 className="font-editorial text-xl text-[#E8E5DF] mb-1">
             No Journey Information Available
           </h3>
-          <p className="text-xs text-[#857878] dark:text-[#B5A8A8] max-w-sm mx-auto mb-4">
-            Zero demo or preloaded records exist. Click below to add Aman Computer&apos;s first genuine milestone.
+          <p className="text-xs text-[#85838A] max-w-sm mx-auto mb-5 leading-relaxed">
+            Zero demo or preloaded records exist. Add Aman Computer&apos;s first authentic milestone to populate the public timeline.
           </p>
           <button
+            type="button"
             onClick={handleOpenAdd}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1A1818] dark:bg-[#E8E4E0] text-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add First Milestone</span>
           </button>
-        </div>
+        </CmsSurfaceCard>
       ) : filteredList.length === 0 ? (
-        <div className="p-8 text-center rounded-3xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
-          <p className="text-xs text-neutral-500">No milestones match your search filters.</p>
-        </div>
+        <CmsSurfaceCard className="text-center py-10">
+          <p className="text-xs text-[#85838A]">No milestones match your active filters.</p>
+        </CmsSurfaceCard>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredList.map((item, idx) => (
-            <div
-              key={item.id}
-              className={`p-5 rounded-3xl border transition-all ${
-                item.published
-                  ? 'bg-[rgba(242,238,235,0.8)] dark:bg-[rgba(196,176,176,0.06)] border-[rgba(196,176,176,0.35)] dark:border-[rgba(196,176,176,0.15)] shadow-xs'
-                  : 'bg-neutral-100/50 dark:bg-neutral-900/40 border-neutral-200 dark:border-neutral-800 opacity-60'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-[#1A1818] text-[#E8E4E0] dark:bg-[#E8E4E0] dark:text-[#1A1818]">
-                    {item.year}
-                  </span>
-                  <span className="text-xs font-mono font-medium text-neutral-600 dark:text-neutral-400">
-                    {item.date}
-                  </span>
+          {filteredList.map((item) => {
+            const globalIndex = orderedJourney.findIndex((x) => x.id === item.id);
+            return (
+              <div
+                key={item.id}
+                className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+                  item.published
+                    ? 'bg-[#141419] border-white/[0.08]'
+                    : 'bg-[#101014] border-dashed border-white/[0.06] opacity-65'
+                }`}
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-[#211B16] border border-[#C9A96E]/35 text-[#C9A96E]">
+                        {item.year}
+                      </span>
+                      <span className="text-xs font-mono text-[#85838A]">{item.date}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={globalIndex <= 0}
+                        onClick={() => moveMilestone(globalIndex, -1)}
+                        title="Move Earlier"
+                        className="p-1.5 rounded-lg border border-white/[0.08] text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.05] disabled:opacity-30 cursor-pointer"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={globalIndex >= orderedJourney.length - 1}
+                        onClick={() => moveMilestone(globalIndex, 1)}
+                        title="Move Later"
+                        className="p-1.5 rounded-lg border border-white/[0.08] text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.05] disabled:opacity-30 cursor-pointer"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleJourneyPublished(item.id)}
+                        title={item.published ? 'Hide from public timeline' : 'Publish to timeline'}
+                        className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                          item.published
+                            ? 'border-emerald-500/35 text-emerald-400 bg-emerald-500/10'
+                            : 'border-white/[0.08] text-[#85838A] bg-[#0A0A0E]'
+                        }`}
+                      >
+                        {item.published ? (
+                          <Eye className="w-3.5 h-3.5" />
+                        ) : (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(item)}
+                        title="Edit Milestone"
+                        className="p-1.5 rounded-lg border border-white/[0.08] text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.05] transition-colors cursor-pointer"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Delete milestone "${item.title}"?`)) {
+                            if (item.imageUrl) void deleteStorageFileByUrl(item.imageUrl);
+                            deleteJourneyItem(item.id);
+                          }
+                        }}
+                        title="Delete Milestone"
+                        className="p-1.5 rounded-lg border border-rose-500/25 hover:bg-rose-500/10 text-rose-400 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {item.imageUrl && (
+                    <div className="mb-3 rounded-xl overflow-hidden border border-white/[0.08] bg-[#0A0A0E] aspect-[16/7]">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  <h3 className="font-editorial text-xl text-[#E8E5DF] mb-1">
+                    {item.title}
+                  </h3>
+
+                  {item.subtitle && (
+                    <p className="text-xs font-medium text-[#DFC492] mb-2">{item.subtitle}</p>
+                  )}
+
+                  {item.description && (
+                    <p className="text-xs text-[#85838A] leading-relaxed mb-3">
+                      {item.description}
+                    </p>
+                  )}
+
+                  {item.bullets && item.bullets.length > 0 && (
+                    <ul className="space-y-1.5 pt-2.5 border-t border-white/[0.06]">
+                      {item.bullets.map((b, i) => (
+                        <li key={i} className="flex items-start gap-2 text-xs text-[#E8E5DF]/80">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E] shrink-0 mt-1.5" />
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => toggleJourneyPublished(item.id)}
-                    title={item.published ? 'Hide from public timeline' : 'Publish to timeline'}
-                    className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                      item.published
-                        ? 'border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
-                        : 'border-neutral-300 dark:border-neutral-700 text-neutral-500 bg-neutral-200/50 dark:bg-neutral-800'
-                    }`}
-                  >
-                    {item.published ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                  </button>
+      {/* Modal */}
+      <CmsModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={editingId ? 'Edit Journey Milestone' : 'Add Journey Milestone'}
+        subtitle="Configure timeline date, narrative, highlights, and optional milestone image"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">Year *</label>
+              <select
+                value={formData.year}
+                onChange={(e) => handleMonthOrYearChange(formData.month, e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-                  <button
-                    onClick={() => handleOpenEdit(item)}
-                    title="Edit Milestone"
-                    className="p-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors cursor-pointer"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                  </button>
+            <div>
+              <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">Month *</label>
+              <select
+                value={formData.month}
+                onChange={(e) => handleMonthOrYearChange(e.target.value, formData.year)}
+                className="w-full px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              >
+                {MONTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+            <div>
+              <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">
+                Date Label *
+              </label>
+              <input
+                type="text"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                placeholder="e.g. Jan 2025"
+                required
+                className="w-full px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">
+              Milestone Title *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g. Center Establishment & High-Speed Cyber Terminal"
+              required
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">
+              Subtitle / Hub (Optional)
+            </label>
+            <input
+              type="text"
+              value={formData.subtitle}
+              onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+              placeholder="e.g. Main Market Cyber Cafe & Digital Center"
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[#E8E5DF] mb-1.5">
+              Narrative Description
+            </label>
+            <textarea
+              rows={3}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Brief narrative of the milestone, expansion, or service capability..."
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+            />
+          </div>
+
+          <CmsMediaField
+            label="Milestone Photo (Optional)"
+            value={formData.imageUrl}
+            onChange={(url) => setFormData((prev) => ({ ...prev, imageUrl: url }))}
+            onRemove={(prevUrl) => {
+              if (prevUrl && prevUrl !== originalImageUrl) {
+                void deleteStorageFileByUrl(prevUrl);
+              }
+            }}
+            bucket="gallery-images"
+            folder="journey"
+            aspectClass="aspect-[16/7]"
+            emptyLabel="Optional milestone photograph"
+            helperText="Displayed cleanly beside this milestone on your public journey timeline."
+            onError={(msg) => showToast('Image Upload Failed', msg, 'error')}
+          />
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-[#E8E5DF]">
+                Milestone Highlights (Optional)
+              </label>
+              <button
+                type="button"
+                onClick={handleAddBullet}
+                className="text-[11px] font-medium text-[#C9A96E] hover:text-[#DFC492] cursor-pointer"
+              >
+                + Add Highlight
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {formData.bullets.map((bullet, bIdx) => (
+                <div key={bIdx} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={bullet}
+                    onChange={(e) => handleBulletChange(bIdx, e.target.value)}
+                    placeholder={`Highlight #${bIdx + 1}`}
+                    className="flex-1 px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+                  />
                   <button
-                    onClick={() => {
-                      if (confirm(`Delete milestone "${item.title}"?`)) {
-                        deleteJourneyItem(item.id);
-                      }
-                    }}
-                    title="Delete Milestone"
-                    className="p-1.5 rounded-lg border border-red-300/40 hover:bg-red-500/10 text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                    type="button"
+                    onClick={() => handleRemoveBullet(bIdx)}
+                    className="p-1.5 text-[#85838A] hover:text-rose-400 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-              </div>
-
-              <h3 className="text-base font-bold text-[#1A1818] dark:text-[#E8E4E0] mb-1">
-                {item.title}
-              </h3>
-
-              {item.subtitle && (
-                <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 mb-2">
-                  {item.subtitle}
-                </p>
-              )}
-
-              {item.description && (
-                <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed mb-3">
-                  {item.description}
-                </p>
-              )}
-
-              {item.bullets && item.bullets.length > 0 && (
-                <ul className="space-y-1.5 pt-2 border-t border-[rgba(196,176,176,0.2)] dark:border-[rgba(196,176,176,0.08)]">
-                  {item.bullets.map((b, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 dark:bg-neutral-200 shrink-0 mt-1" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Add / Edit Milestone Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-[#FAF8F5] dark:bg-[#1E1B1B] w-full max-w-xl rounded-3xl border border-neutral-300 dark:border-neutral-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-neutral-100">
-                  {editingId ? 'Edit Journey Milestone' : 'Add New Journey Milestone'}
-                </h3>
-                <p className="text-xs text-neutral-500">
-                  Specify date, title, optional subtitle, description, and bullet points.
-                </p>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
-              {/* Year and Month */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                    Year *
-                  </label>
-                  <select
-                    value={formData.year}
-                    onChange={(e) => handleMonthOrYearChange(formData.month, e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    {YEARS.map((y) => (
-                      <option key={y} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                    Month *
-                  </label>
-                  <select
-                    value={formData.month}
-                    onChange={(e) => handleMonthOrYearChange(e.target.value, formData.year)}
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  >
-                    {MONTHS.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                    Date Label *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    placeholder="e.g. Jan 2025"
-                    required
-                    className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Milestone Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Center Establishment & High-Speed Cyber Terminal"
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                />
-              </div>
-
-              {/* Subtitle */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Subtitle / Organization / Hub (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  placeholder="e.g. Main Market Cyber Cafe & CSC Center"
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Brief narrative of the milestone, expansion, or new capability introduced..."
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                />
-              </div>
-
-              {/* Bullet Points */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300">
-                    Milestone Highlights / Bullet Points (Optional)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleAddBullet}
-                    className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline cursor-pointer"
-                  >
-                    + Add Bullet
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  {formData.bullets.map((bullet, bIdx) => (
-                    <div key={bIdx} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={bullet}
-                        onChange={(e) => handleBulletChange(bIdx, e.target.value)}
-                        placeholder={`Highlight #${bIdx + 1}`}
-                        className="flex-1 px-3 py-1.5 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-xs text-neutral-900 dark:text-neutral-100 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveBullet(bIdx)}
-                        className="p-1.5 text-neutral-400 hover:text-red-500 cursor-pointer"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Published Toggle */}
-              <div className="pt-2 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100">
-                    Publish to Public Timeline
-                  </div>
-                  <div className="text-[11px] text-neutral-500">
-                    Unpublished entries stay saved in admin as drafts.
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formData.published}
-                  onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
-                  className="w-4 h-4 rounded text-neutral-950 focus:ring-0 cursor-pointer"
-                />
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-neutral-200 dark:border-neutral-800">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-neutral-300 dark:border-neutral-700 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#1A1818] dark:bg-[#E8E4E0] text-[#E8E4E0] dark:text-[#1A1818] text-xs font-semibold cursor-pointer shadow-xs"
-                >
-                  {editingId ? 'Save Milestone' : 'Add Milestone'}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+
+          <CmsToggle
+            checked={formData.published}
+            onChange={(next) => setFormData({ ...formData, published: next })}
+            label="Publish to Public Timeline"
+            description="Disable to keep this milestone saved privately as a draft."
+          />
+
+          <div className="pt-4 flex items-center justify-end gap-3 border-t border-white/[0.07]">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(false)}
+              className="px-4 py-2 rounded-xl border border-white/[0.1] text-xs font-medium text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold cursor-pointer"
+            >
+              {editingId ? 'Save Milestone' : 'Add Milestone'}
+            </button>
+          </div>
+        </form>
+      </CmsModal>
     </div>
   );
 };
