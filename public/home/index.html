@@ -169,8 +169,9 @@ body.ready .line>span{transform:none;opacity:1}
 .nav{display:none}
 @media (min-width:1200px){.nav{display:flex;gap:1.4rem;font-size:clamp(14.5px,1vw,16px);white-space:nowrap}.menu-btn{display:none}}
 
-/* small screens: clock on the left, menu on the right, the pull cord hangs between them */
-@media (max-width:1199.98px){.hdr nav{display:none}.hdr__right{flex:1;justify-content:space-between}}
+/* small screens: nav list hides and local-time clock anchors right */
+@media (max-width:1199.98px){.hdr nav{display:none}.hdr__right{flex:1;justify-content:flex-end}}
+@media (min-width:760px) and (max-width:1360px){.shell{padding-left:max(var(--gut-lg,2rem),92px)}}
 
 .nav button{display:block}
 .nav button>span{display:inline-flex;align-items:center;gap:.25rem;opacity:.8}
@@ -181,20 +182,10 @@ body.ready .line>span{transform:none;opacity:1}
 .clock__ds{display:none;font-weight:500}
 
 @media (max-width:767.98px){.clock{gap:.45rem;padding:.5rem .75rem;font-size:13px}.clock__date,.clock__sep{display:none}.clock .clock__time{min-width:0}}
-/* phones and tablets: menu on the left, local time on the right */
-@media (max-width:1199.98px){.menu-btn{order:-2}.admin-hdr-btn{order:-1}}
-.admin-hdr-btn{transition:background .25s,border-color .25s}
-.admin-hdr-btn:hover{background:rgba(16,185,129,.18)!important;border-color:rgba(16,185,129,.6)!important}
 .clock__lbl{color:rgba(var(--fg-rgb),.66)}
 .clock__time{min-width:3.75rem;font-weight:500;color:var(--foreground)}
 .clock__sep{color:rgba(var(--fg-rgb),.3)}
 .clock__date{font-weight:500}
-.menu-btn{transition:background .25s}
-.menu-btn:hover{background:var(--chip-bg-h)}
-.menu-btn>span{display:flex;align-items:center;gap:.5rem;padding:.55rem 1rem;font-size:clamp(13px,3.4vw,14px);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
-.menu-btn svg{font-size:16px}
-.menu-btn .word{display:none}
-@media (min-width:640px){.menu-btn .word{display:inline}}
 
 /* ---------- hero ---------- */
 .hero{position:relative;isolation:isolate;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);
@@ -774,27 +765,181 @@ html:not([data-mode="dark"]) .spill{mix-blend-mode:normal;background:linear-grad
 .slot-card b{font-size:.75rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:rgba(var(--fg-rgb),.4)}
 .slot-card span{font-size:1rem;font-weight:500;color:rgba(var(--fg-rgb),.7)}
 
-/* ---------- nav overlay (premium floating cinematic drawer) ---------- */
-.navm{position:fixed;inset:0;z-index:115;display:flex;justify-content:flex-end;align-items:stretch;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .35s cubic-bezier(0.16,1,0.3,1)}
-.navm.open{opacity:1;pointer-events:auto}
-.navm__drawer{display:flex;flex-direction:column;width:min(100vw - 24px, 390px);margin:12px;background:rgba(18,17,17,.96);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 25px 70px rgba(0,0,0,.75);color:#fff;overflow:hidden;transform:translateX(110%);transition:transform .35s cubic-bezier(0.16,1,0.3,1)}
-.navm.open .navm__drawer{transform:translateX(0)}
-.navm.closing .navm__drawer{transform:translateX(110%)}
-.navm__top{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08)}
-.navm__top .brand{font-weight:700;letter-spacing:.05em}
-.close-btn{display:inline-flex;align-items:center;gap:.5rem;border:1px solid rgba(255,255,255,.15);border-radius:var(--radius-control);padding:.4rem .85rem;font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.05em;color:rgba(255,255,255,.7);background:rgba(255,255,255,.05);cursor:pointer;transition:border-color .25s,color .25s,background .25s}
-.close-btn:hover{border-color:rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.1)}
-.close-btn svg{font-size:.875rem}
-.navm__nav{flex:1;display:flex;flex-direction:column;justify-content:center;padding:1rem 1.25rem;overflow-y:auto}
-.navm__nav ul{display:flex;flex-direction:column;gap:.35rem}
-.navm__item{display:flex;align-items:center;gap:1rem;width:100%;padding:.65rem .85rem;border-radius:14px;text-align:left;font-size:1.15rem;font-weight:600;letter-spacing:-.01em;transform:translateX(1rem);opacity:0;transition:all .35s ease-out;transition-delay:var(--d,0ms);cursor:pointer;background:transparent;border:none;color:inherit}
-.navm.open .navm__item{transform:none;opacity:1}
-.navm__item small{font-size:.8rem;font-weight:600;font-family:monospace;color:rgba(255,255,255,.35);transition:color .25s}
-.navm__item span{color:rgba(255,255,255,.8);transition:color .25s,transform .25s}
-.navm__item:hover{background:rgba(255,255,255,.06)}
-.navm__item:hover small{color:#10B981}
-.navm__item:hover span{color:#fff;transform:translateX(3px)}
-.navm__bot{display:flex;flex-direction:column;gap:.75rem}
+/* ---------- floating frosted-glass sidebar rail / drawer ---------- */
+#dockBackdrop{
+  position:fixed;inset:0;z-index:84;
+  background:rgba(26,24,24,.24);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  opacity:0;pointer-events:none;
+  transition:opacity .38s var(--e-line);
+}
+html[data-mode="dark"] #dockBackdrop{background:rgba(10,8,7,.56)}
+#dockBackdrop.show{opacity:1;pointer-events:auto}
+
+.dock{
+  --dock-ease:cubic-bezier(.215,.61,.355,1);
+  --dock-glass:linear-gradient(168deg,rgba(246,242,238,.82) 0%,rgba(234,228,223,.68) 100%);
+  --dock-line:rgba(196,176,176,.52);
+  --dock-shadow:inset 0 1px 0 rgba(255,255,255,.78),inset 0 -1px 0 rgba(196,176,176,.22),0 18px 44px -14px rgba(26,24,24,.18),0 4px 12px -4px rgba(107,92,92,.12);
+  --dock-tx:var(--foreground);
+  --dock-mut:rgba(26,24,24,.64);
+  --dock-mut2:rgba(26,24,24,.46);
+  --dock-hover:rgba(201,169,110,.16);
+  --dock-gold:#C9A96E;
+  --dock-gold-hi:#DEC38F;
+  --dock-gold-ink:#1A1818;
+  --dock-wa:#15803D;
+  --dock-wa-bg:rgba(22,163,74,.09);
+  --dock-wa-bg-h:rgba(22,163,74,.16);
+  --dock-wa-line:rgba(22,163,74,.28);
+  --dock-tip-bg:#1A1818;
+  --dock-tip-fg:#F3EEEC;
+
+  position:fixed;left:16px;top:50%;transform:translateY(-50%);z-index:86;
+  width:54px;padding:8px;border-radius:26px;
+  display:flex;flex-direction:column;gap:4px;
+  background:var(--dock-glass);border:1px solid var(--dock-line);
+  backdrop-filter:blur(22px) saturate(1.35);-webkit-backdrop-filter:blur(22px) saturate(1.35);
+  box-shadow:var(--dock-shadow);
+  color:var(--dock-tx);
+  max-height:calc(100svh - 32px);
+  opacity:0;pointer-events:none;
+  transition:width .42s var(--dock-ease),top .42s var(--dock-ease),bottom .42s var(--dock-ease),left .42s var(--dock-ease),transform .42s var(--dock-ease),border-radius .42s var(--dock-ease),padding .42s var(--dock-ease),opacity .45s var(--e-soft),background .3s ease,border-color .3s ease;
+}
+body.ready .dock{opacity:1;pointer-events:auto}
+.dock.away{opacity:0!important;pointer-events:none!important}
+html[data-mode="dark"] .dock{
+  --dock-glass:linear-gradient(168deg,rgba(40,36,36,.8) 0%,rgba(24,22,22,.72) 100%);
+  --dock-line:rgba(196,176,176,.2);
+  --dock-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 22px 52px rgba(0,0,0,.5);
+  --dock-mut:rgba(232,228,224,.64);
+  --dock-mut2:rgba(232,228,224,.44);
+  --dock-hover:rgba(201,169,110,.15);
+  --dock-wa:#34D399;
+  --dock-wa-bg:rgba(52,211,153,.11);
+  --dock-wa-bg-h:rgba(52,211,153,.18);
+  --dock-wa-line:rgba(52,211,153,.28);
+  --dock-tip-bg:#252121;
+  --dock-tip-fg:#F3EEEC;
+}
+
+.dock.open{
+  width:258px;
+  top:max(14px,env(safe-area-inset-top));
+  bottom:max(14px,env(safe-area-inset-bottom));
+  transform:none;border-radius:24px;padding:15px 12px;
+  align-items:stretch;overflow-y:auto;max-height:none;scrollbar-width:thin;
+}
+
+.dock svg.i{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.dock button,.dock a.dock-wa,.dock .dock-clock{position:relative;flex:none;transition:background .2s ease,color .2s ease,transform .2s ease,border-color .2s ease}
+.dock button:focus-visible,.dock a.dock-wa:focus-visible{outline:2px solid var(--dock-gold);outline-offset:2px}
+
+.dock .rail-btn{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:var(--dock-mut);background:transparent;border:0;cursor:pointer}
+.dock .rail-btn:hover{background:var(--dock-hover);color:var(--dock-tx)}
+.dock .rail-btn:active{transform:scale(.94)}
+.dock-sep{height:1px;background:rgba(var(--fg-rgb),.1);margin:3px 6px;flex:none}
+.dock.open .dock-sep{display:none}
+
+.dock .tip{
+  position:absolute;left:50px;top:50%;transform:translateY(-50%) translateX(-4px);
+  background:var(--dock-tip-bg);color:var(--dock-tip-fg);
+  border:1px solid rgba(196,176,176,.22);
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+  font-size:11.5px;font-weight:500;padding:5px 10px;border-radius:9px;
+  opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;white-space:nowrap;z-index:10;
+}
+@media (hover:hover) and (pointer:fine){
+  .dock:not(.open) button:hover .tip,
+  .dock:not(.open) .dock-wa:hover .tip,
+  .dock:not(.open) .dock-clock:hover .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+}
+.dock.open .tip{display:none}
+
+.dock .nav-btn{
+  width:38px;height:38px;border-radius:13px;display:grid;place-items:center;
+  color:var(--dock-mut);background:transparent;border:0;cursor:pointer;text-align:left;
+}
+.dock .nav-btn:hover{background:var(--dock-hover);color:var(--dock-tx)}
+.dock .nav-btn.active{
+  background:linear-gradient(135deg,var(--dock-gold-hi),var(--dock-gold));
+  color:var(--dock-gold-ink);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 6px 14px -4px rgba(184,147,76,.45);
+}
+.dock .nav-btn.active:hover{background:linear-gradient(135deg,var(--dock-gold-hi),var(--dock-gold));color:var(--dock-gold-ink)}
+.dock .nav-btn .lbl{display:none;font-size:13.5px;font-weight:550;white-space:nowrap;letter-spacing:-.01em}
+
+.dock-head{display:none;align-items:center;justify-content:space-between;padding:2px 4px 12px;border-bottom:1px solid rgba(var(--fg-rgb),.08);margin-bottom:8px;flex:none}
+.dock-head .db{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;letter-spacing:-.015em;color:var(--dock-tx)}
+.dock-head .db-mark{
+  width:24px;height:24px;border-radius:8px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--dock-gold-hi),var(--dock-gold));
+  color:var(--dock-gold-ink);font-size:12px;font-weight:800;flex:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+}
+.dock-x{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--dock-mut);background:rgba(var(--fg-rgb),.04);border:1px solid rgba(var(--fg-rgb),.1);cursor:pointer}
+.dock-x:hover{background:var(--dock-hover);color:var(--dock-tx);border-color:rgba(201,169,110,.4)}
+.dock-sec{display:none;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--dock-mut2);font-weight:650;padding:4px 10px 6px;flex:none}
+
+.dock:not(.open) .dock-head,.dock:not(.open) .dock-sec{display:none}
+.dock.open .dock-head{display:flex}
+.dock.open .dock-sec{display:block}
+.dock.open #dockOpen{display:none}
+
+#dockNav{display:flex;flex-direction:column;gap:3px}
+.dock.open .nav-btn{
+  width:100%;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:0 11px;
+}
+.dock.open .nav-btn .lbl{display:inline}
+
+.dock-foot{display:flex;flex-direction:column;gap:4px;margin-top:2px;flex:none}
+.dock.open .dock-foot{margin-top:auto;padding-top:12px;border-top:1px solid rgba(var(--fg-rgb),.08);gap:6px}
+
+.dock-wa{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:var(--dock-wa);text-decoration:none}
+.dock-wa:hover{background:var(--dock-wa-bg-h)}
+.dock-wa .wa-txt,.dock-wa .wa-arrow{display:none}
+.dock.open .dock-wa{
+  width:100%;height:auto;min-height:48px;border-radius:14px;
+  display:flex;align-items:center;gap:11px;padding:10px 12px;
+  background:var(--dock-wa-bg);border:1px solid var(--dock-wa-line);
+}
+.dock.open .dock-wa:hover{background:var(--dock-wa-bg-h)}
+.dock.open .dock-wa .wa-ic{width:19px;height:19px;flex:none}
+.dock.open .dock-wa .wa-txt{display:flex;flex-direction:column;gap:2px;flex:1;text-align:left;min-width:0}
+.dock.open .dock-wa .wa-txt b{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dock-wa);font-weight:700;line-height:1.1}
+.dock.open .dock-wa .wa-txt small{font-size:13.5px;color:var(--dock-tx);font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock.open .dock-wa .wa-arrow{display:block;width:15px;height:15px;color:var(--dock-wa);flex:none}
+
+.dock-clock{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;color:var(--dock-mut)}
+.dock-clock .clock-txt{display:none}
+.dock.open .dock-clock{
+  width:100%;height:auto;display:flex;align-items:center;gap:9px;padding:8px 10px 2px;
+  color:var(--dock-mut);font-variant-numeric:tabular-nums;
+}
+.dock.open .dock-clock svg{width:14px;height:14px;flex:none}
+.dock.open .dock-clock .clock-txt{display:inline;font-size:12px;font-weight:500;white-space:nowrap}
+
+@media (max-width:759.98px){
+  .dock:not(.open)>*:not(#dockOpen){display:none}
+  .dock:not(.open){
+    left:max(14px,env(safe-area-inset-left));
+    top:max(14px,env(safe-area-inset-top));
+    bottom:auto;transform:none;
+    width:46px;height:46px;padding:0;
+    align-items:center;justify-content:center;
+    border-radius:14px;
+  }
+  .dock:not(.open) .rail-btn{width:44px;height:44px;border-radius:13px}
+  .dock.open{
+    left:0;top:0;bottom:0;
+    width:min(86vw,320px);border-radius:0 24px 24px 0;
+    padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left));
+  }
+  .dock.open .nav-btn{height:44px;min-height:44px;font-size:14.5px}
+  .dock.open .nav-btn .lbl{font-size:14.5px}
+  .dock.open .dock-x{min-width:44px;min-height:44px}
+}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -837,6 +982,9 @@ body{margin:0}
 @media (pointer:coarse),(max-width:767.98px){.sf__cols ul{gap:0}.sf__cols button,.sf__cols a,.sf__bot button{min-height:44px;min-width:44px;display:inline-flex;align-items:center}}
 .sf__cols button,.sf__cols a{padding:0;border:0;background:none;color:rgba(var(--sf-rgb),.85);font:inherit;font-size:15px;font-weight:500;cursor:pointer;text-align:left;text-decoration:none;transition:color .2s}
 .sf__cols button:hover,.sf__cols a:hover{color:#fff}
+.sf__cols a.sf__admin-link{display:inline-flex;align-items:center;gap:.45rem;color:rgba(var(--sf-rgb),.68)}
+.sf__cols a.sf__admin-link:hover{color:#fff}
+.sf__cols a.sf__admin-link svg{width:14px;height:14px;flex:none;opacity:.82}
 .sf__biz{display:flex;flex-direction:column;gap:14px}
 .sf__biz-group{display:flex;flex-direction:column;gap:4px}
 .sf__biz-name{font-size:16px;font-weight:650;line-height:1.35;color:#fff}
@@ -935,23 +1083,15 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
         <li><button data-door="3"><span data-h="y 0 -2|o .8 1" data-hs="320 22" data-ht="button">Gallery</span></button></li>
         <li><button data-go="about"><span data-h="y 0 -2|o .8 1" data-hs="320 22" data-ht="button">Our Journey</span></button></li>
         <li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none;"><span data-h="y 0 -2|o .8 1" data-hs="320 22" data-ht="button">Contact & Location</span></a></li>
-        <li><a href="/admin" style="text-decoration:none;display:inline-flex;align-items:center;color:inherit;"><span data-h="y 0 -2|o .8 1" data-hs="320 22" data-ht="button" style="color:#10B981;font-weight:600;">Admin</span></a></li>
       </ul>
     </nav>
     <div class="hdr__right">
-      <a href="/admin" class="chip admin-hdr-btn" style="text-decoration:none;display:inline-flex;align-items:center;gap:.45rem;padding:.55rem .85rem;font-size:.8125rem;font-weight:600;letter-spacing:.04em;color:#10B981;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.08);min-height:44px" title="Aman Computer Admin Dashboard">
-        <span style="width:7px;height:7px;border-radius:9999px;background:#10B981;box-shadow:0 0 6px #10B981;flex-shrink:0;"></span>
-        <span>Admin</span>
-      </a>
       <div class="chip clock" aria-label="Local time">
         <span class="clock__lbl">Local time</span>
         <span class="clock__time tnum" data-time>9:41am</span>
         <span class="clock__sep" aria-hidden="true">•</span>
         <span class="clock__date" data-date>12 March, 2025</span><span class="clock__ds" data-dshort>12 Mar</span>
       </div>
-      <button class="chip menu-btn" id="menuBtn" style="min-height:44px;min-width:44px" aria-haspopup="dialog" aria-controls="navm" aria-label="Menu">
-        <span data-h="s 1 1.05" data-hs="320 18" data-ht=".menu-btn"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="word">Menu</span></span>
-      </button>
     </div>
   </div>
 </header>
@@ -1276,6 +1416,7 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
           <li><a href="./#about" data-go="about">Our Journey</a></li>
           <li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact>Contact &amp; Location</a></li>
           <li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact>WhatsApp Us</a></li>
+          <li><a href="/admin" class="sf__admin-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg><span>Admin Login</span></a></li>
         </ul>
       </div>
       <div class="sf__col--biz">
@@ -1407,37 +1548,103 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
 <div class="passage" id="passage" aria-hidden="true" hidden></div>
 <div class="wallv" id="wallv"></div>
 
-<!-- ============ NavMenu ============ -->
-<div class="navm" id="navm" role="dialog" aria-modal="true" aria-label="Menu" hidden>
-  <div class="navm__drawer">
-    <div class="shell navm__top">
-      <span class="brand" style="display:inline-flex;align-items:center;gap:.6rem;font-weight:700;letter-spacing:.06em;font-size:1.05rem;color:#fff;">
-        <span style="width:8px;height:8px;border-radius:9999px;background:#10B981;box-shadow:0 0 8px #10B981;display:inline-block;"></span>
-        <span id="drawerBrandName">AMAN COMPUTER</span>
-      </span>
-      <button class="close-btn" id="navClose" aria-label="Close menu"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l16 16M20 4 4 20"/></svg>ESC</button>
-    </div>
-    <nav class="shell navm__nav" aria-label="Menu"><ul id="navList"></ul></nav>
-    <div class="shell navm__bot" style="border-top:1px solid rgba(255,255,255,.08);padding:1rem 1.25rem;background:rgba(0,0,0,.35);">
-      <a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact data-wa-btn style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(0,0,0,.45));border:1px solid rgba(16,185,129,.35);border-radius:14px;color:#fff;text-decoration:none;transition:border-color .2s,background .2s;">
-        <div>
-          <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#10B981;font-weight:700;">
-            WhatsApp Us
-          </div>
-          <div id="drawerPhoneText" style="font-size:.95rem;font-weight:700;font-family:monospace;letter-spacing:.02em;margin-top:.2rem;">+91 85955 15718</div>
-        </div>
-        <span style="font-size:1.1rem;color:#10B981;">→</span>
-      </a>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;font-size:.7rem;color:rgba(255,255,255,.45);font-family:monospace;">
-        <span>Local time <span data-navtime></span></span>
-        <a href="/admin" id="navAdmin" style="display:inline-flex;align-items:center;gap:.35rem;color:rgba(255,255,255,.65);text-decoration:none;font-weight:600;">
-          <span style="width:6px;height:6px;border-radius:9999px;background:#10B981;display:inline-block;"></span>
-          Admin ⚙
-        </a>
-      </div>
+<!-- ============ Floating Glass Sidebar Navigation ============ -->
+<svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="ic-dock-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+    <symbol id="ic-dock-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="ic-dock-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol>
+    <symbol id="ic-dock-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="ic-dock-file" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M8.5 12h7M8.5 15.5h7M8.5 8.5h3"/></symbol>
+    <symbol id="ic-dock-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="M3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="ic-dock-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 3.5 3.5L17 11l3 3"/></symbol>
+    <symbol id="ic-dock-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m14.6 9.4-1.3 3.9-3.9 1.3 1.3-3.9z"/></symbol>
+    <symbol id="ic-dock-bank" viewBox="0 0 24 24"><path d="M4 21h16M5 21V10M9 21V10M15 21V10M19 21V10M3 10l9-5 9 5"/></symbol>
+    <symbol id="ic-dock-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.4 7-11.5A7 7 0 0 0 5 9.5C5 14.6 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></symbol>
+    <symbol id="ic-dock-wa" viewBox="0 0 24 24" stroke-width="0" fill="currentColor"><path d="M12 2.2a9.8 9.8 0 0 0-8.4 14.8L2.2 21.8l4.9-1.3A9.8 9.8 0 1 0 12 2.2zm0 1.7a8.1 8.1 0 1 1 0 16.2 8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8.1 8.1 0 0 1 12 3.9z"/><path d="M9.1 7.6c-.2-.5-.4-.5-.7-.5h-.5c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.6s1.2 3 1.3 3.2c.2.2 2.4 3.6 5.8 5 .8.3 1.5.5 2 .7.8.2 1.5.2 2.1.1.6-.1 2-.8 2.3-1.6.3-.8.3-1.5.2-1.6-.1-.2-.3-.2-.6-.4s-2-1-2.3-1.1c-.3-.1-.5-.2-.8.2-.2.3-.9 1.1-1.1 1.3-.2.2-.4.3-.7.1s-1.4-.5-2.6-1.6c-1-.9-1.6-2-1.8-2.3-.2-.3 0-.5.1-.7l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5-.1-.2-.6-1.6-.9-2.2z"/></symbol>
+    <symbol id="ic-dock-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="ic-dock-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></symbol>
+  </defs>
+</svg>
+
+<div id="dockBackdrop" aria-hidden="true"></div>
+
+<aside class="dock" id="dock" aria-label="Site navigation">
+  <button type="button" class="rail-btn" id="dockOpen" aria-label="Open navigation sidebar" aria-expanded="false" aria-controls="dock">
+    <svg class="i" aria-hidden="true"><use href="#ic-dock-menu"/></svg>
+    <span class="tip">Menu</span>
+  </button>
+
+  <div class="dock-head">
+    <span class="db"><span class="db-mark" aria-hidden="true">A</span><span id="drawerBrandName">Aman Computer</span></span>
+    <button type="button" class="dock-x" id="dockClose" aria-label="Close navigation sidebar">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-x"/></svg>
+    </button>
+  </div>
+
+  <div class="dock-sec">Navigate</div>
+  <div class="dock-sep" aria-hidden="true"></div>
+
+  <nav id="dockNav" aria-label="Primary sections">
+    <button type="button" class="nav-btn active" data-nav-idx="0" data-label="Home" aria-current="page">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-home"/></svg>
+      <span class="lbl">Home</span>
+      <span class="tip">Home</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="1" data-label="Latest Updates">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-bell"/></svg>
+      <span class="lbl">Latest Updates</span>
+      <span class="tip">Latest Updates</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="2" data-label="Documents Need">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-file"/></svg>
+      <span class="lbl">Documents Need</span>
+      <span class="tip">Documents Need</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="3" data-label="Our Services">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-layers"/></svg>
+      <span class="lbl">Our Services</span>
+      <span class="tip">Our Services</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="4" data-label="Gallery">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-image"/></svg>
+      <span class="lbl">Gallery</span>
+      <span class="tip">Gallery</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="5" data-label="Our Journey">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-compass"/></svg>
+      <span class="lbl">Our Journey</span>
+      <span class="tip">Our Journey</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="6" data-label="Government Schemes">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-bank"/></svg>
+      <span class="lbl">Government Schemes</span>
+      <span class="tip">Government Schemes</span>
+    </button>
+    <button type="button" class="nav-btn" data-nav-idx="7" data-label="Contact &amp; Location">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-pin"/></svg>
+      <span class="lbl">Contact &amp; Location</span>
+      <span class="tip">Contact &amp; Location</span>
+    </button>
+  </nav>
+
+  <div class="dock-sep" aria-hidden="true"></div>
+
+  <div class="dock-foot">
+    <a class="dock-wa" id="dockWa" href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact data-wa-btn aria-label="WhatsApp us at +91 85955 15718">
+      <svg class="i wa-ic" aria-hidden="true"><use href="#ic-dock-wa"/></svg>
+      <span class="tip" id="dockWaTip">WhatsApp us · +91 85955 15718</span>
+      <span class="wa-txt"><b>WHATSAPP US</b><small id="drawerPhoneText">+91 85955 15718</small></span>
+      <svg class="i wa-arrow" aria-hidden="true"><use href="#ic-dock-arrow"/></svg>
+    </a>
+
+    <div class="dock-clock" id="dockClock" aria-label="Local time">
+      <svg class="i" aria-hidden="true"><use href="#ic-dock-clock"/></svg>
+      <span class="tip" data-navtime>Local time · --:--</span>
+      <span class="clock-txt" data-navtime>Local time · --:--</span>
     </div>
   </div>
-</div>
+</aside>
 
 <!-- ============ Maintenance Overlay ============ -->
 <div class="aman-maint" id="amanMaintenance" role="dialog" aria-modal="true" aria-labelledby="maintTitle" hidden>
@@ -1533,82 +1740,178 @@ function bindHovers(scope = document){
 
 /* ---------- sticky header: gets a soft backing once the page scrolls ---------- */
 { const hdr = $('.hdr'); const upd = () => hdr.classList.toggle('stuck', scrollY > 24); addEventListener('scroll', upd, { passive: true }); upd(); }
-/* ---------- live clock ---------- */
+/* ---------- live clock (Asia/Kolkata) ---------- */
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function formatKolkataClock(now = new Date()){
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).formatToParts(now);
+    let h = '', m = '', ap = '';
+    parts.forEach(p => {
+      if (p.type === 'hour') h = p.value;
+      if (p.type === 'minute') m = p.value;
+      if (p.type === 'dayPeriod') ap = p.value.toLowerCase();
+    });
+    const istDateParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric'
+    }).formatToParts(now);
+    let day = now.getDate(), mo = now.getMonth(), yr = now.getFullYear();
+    istDateParts.forEach(p => {
+      if (p.type === 'day') day = +p.value;
+      if (p.type === 'month') mo = +p.value - 1;
+      if (p.type === 'year') yr = +p.value;
+    });
+    if (h && m && ap) {
+      return {
+        time: `${h}:${m}${ap}`,
+        date: `${day} ${MONTHS[mo]}, ${yr}`,
+        dshort: `${day} ${MONTHS[mo].slice(0, 3)}`
+      };
+    }
+  } catch (e) {}
+  const h = now.getHours();
+  return {
+    time: `${h % 12 || 12}:${String(now.getMinutes()).padStart(2,'0')}${h < 12 ? 'am' : 'pm'}`,
+    date: `${now.getDate()} ${MONTHS[now.getMonth()]}, ${now.getFullYear()}`,
+    dshort: `${now.getDate()} ${MONTHS[now.getMonth()].slice(0, 3)}`
+  };
+}
 function tickClock(){
-  const d = new Date(), h = d.getHours();
-  const time = `${h % 12 || 12}:${String(d.getMinutes()).padStart(2,'0')}${h < 12 ? 'am' : 'pm'}`;
-  const date = `${d.getDate()} ${MONTHS[d.getMonth()]}, ${d.getFullYear()}`;
+  const { time, date, dshort } = formatKolkataClock(new Date());
   document.querySelectorAll('[data-time]').forEach(e => e.textContent = time);
   document.querySelectorAll('[data-date]').forEach(e => e.textContent = date);
-  document.querySelectorAll('[data-dshort]').forEach(e => e.textContent = `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`);
-  document.querySelectorAll('[data-navtime]').forEach(e => e.textContent = ' — ' + time);
+  document.querySelectorAll('[data-dshort]').forEach(e => e.textContent = dshort);
+  document.querySelectorAll('[data-navtime]').forEach(e => e.textContent = `Local time · ${time}`);
 }
-tickClock(); setInterval(tickClock, 1000);
+tickClock(); setInterval(tickClock, 15000);
 
-/* ---------- overlays ---------- */
+/* ---------- floating glass sidebar & active tracking ---------- */
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
-function openLayer(el, onKey){
-  el.hidden = false; stopScroll();
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
-  el._key = e => {
-    if (e.key === 'Escape'){ onKey(); return; }
-    // keep Tab inside the open layer: without this the keyboard walks onto the page behind it
-    if (e.key !== 'Tab') return;
-    const f = [...el.querySelectorAll(FOCUSABLE)].filter(n => n.offsetWidth || n.offsetHeight || n.getClientRects().length);
+const dock = $('#dock'), dockBackdrop = $('#dockBackdrop');
+const dockOpenBtn = $('#dockOpen'), dockCloseBtn = $('#dockClose');
+const dockNavBtns = [...document.querySelectorAll('#dockNav .nav-btn')];
+const NAV = [
+  ['Home', 'home'],
+  ['Latest Updates', 0],
+  ['Documents Need', 1],
+  ['Our Services', 2],
+  ['Gallery', 3],
+  ['Our Journey', 'about'],
+  ['Government Schemes', 'schemes'],
+  ['Contact & Location', 'contact-footer']
+];
+
+let dockIsOpen = false;
+let dockLockHeld = false;
+let spyPauseUntil = 0;
+
+function setActiveNavIdx(idx){
+  dockNavBtns.forEach((btn, i) => {
+    const on = i === idx;
+    btn.classList.toggle('active', on);
+    if (on) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
+  });
+}
+
+function setDock(open, restoreFocus = false){
+  if (!dock || dockIsOpen === open) return;
+  dockIsOpen = open;
+  dock.classList.toggle('open', open);
+  dockBackdrop?.classList.toggle('show', open);
+  dockOpenBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
+    if (!dockLockHeld) { stopScroll(); dockLockHeld = true; }
+    dock.setAttribute('role', 'dialog');
+    dock.setAttribute('aria-modal', 'true');
+    setTimeout(() => dockCloseBtn?.focus(), 60);
+  } else {
+    if (dockLockHeld) { startScroll(); dockLockHeld = false; }
+    dock.removeAttribute('role');
+    dock.removeAttribute('aria-modal');
+    if (restoreFocus) setTimeout(() => dockOpenBtn?.focus(), 40);
+  }
+}
+
+dockOpenBtn?.addEventListener('click', () => setDock(true));
+dockCloseBtn?.addEventListener('click', () => setDock(false, true));
+dockBackdrop?.addEventListener('click', () => setDock(false, true));
+
+addEventListener('keydown', e => {
+  if (!dockIsOpen) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    setDock(false, true);
+    return;
+  }
+  if (e.key === 'Tab' && dock) {
+    const f = [...dock.querySelectorAll(FOCUSABLE)].filter(n => n.offsetWidth || n.offsetHeight || n.getClientRects().length);
     if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
-    if (!el.contains(document.activeElement)){ e.preventDefault(); first.focus(); return; }
-    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-  };
-  addEventListener('keydown', el._key);
-}
-function closeLayer(el, after){
-  if (el.hidden) return;
-  el.classList.remove('open'); el.classList.add('closing');
-  removeEventListener('keydown', el._key);
-  setTimeout(() => { el.hidden = true; el.classList.remove('closing'); startScroll(); after?.(); }, 460);
-}
-// nav menu (Aman Computer)
-const NAV = [
-  ['Home','home'],
-  ['Latest Updates',0],
-  ['Documents Need',1],
-  ['Our Services',2],
-  ['Gallery',3],
-  ['Our Journey','about'],
-  ['Government Schemes','schemes'],
-  ['Contact & Location','whatsapp']
-];
-const navm = $('#navm');
-$('#navList').innerHTML = NAV.map(([l, id], i) =>
-  `<li><button class="navm__item" style="--d:${i * 40 + 60}ms" data-i="${i}"><small>0${i + 1}</small><span>${l}</span></button></li>`).join('');
-const openNav = () => { openLayer(navm, closeNav); setTimeout(() => $('#navClose').focus(), 60); };
-const closeNav = (after) => closeLayer(navm, typeof after === 'function' ? after : () => $('#menuBtn').focus());
-$('#menuBtn').addEventListener('click', openNav);
-$('#navClose').addEventListener('click', closeNav);
-navm.addEventListener('click', e => { if (e.target === navm) closeNav(); });
-$('#navList').addEventListener('click', e => {
-  const b = e.target.closest('.navm__item'); if (!b) return;
-  const id = NAV[+b.dataset.i][1];
-  closeNav(() => {
-    if (id === 'whatsapp') {
-      openWhatsApp();
-    } else if (typeof id === 'string' && id.startsWith('http')) {
-      window.open(id, '_blank', 'noopener,noreferrer');
-    } else if (typeof id === 'string' && id.startsWith('/')) {
-      window.location.href = id;
-    } else if (typeof id === 'number') {
-      window.openDoor?.(id);
-    } else if (id) {
-      scrollToId(id);
-    } else {
-      window.open('https://wa.me/918595515718', '_blank', 'noopener,noreferrer');
+    if (!dock.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
+dockNavBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const idx = +btn.dataset.navIdx;
+    const entry = NAV[idx];
+    if (!entry) return;
+    const target = entry[1];
+    setActiveNavIdx(idx);
+    spyPauseUntil = performance.now() + 900;
+    if (dockIsOpen) setDock(false);
+
+    if (typeof target === 'number') {
+      window.openDoor?.(target);
+    } else if (typeof target === 'string') {
+      const nextHash = target === 'home' ? '' : '#' + target;
+      try {
+        history.replaceState(history.state, '', location.pathname + location.search + nextHash);
+      } catch (e) {}
+      scrollToId(target);
     }
   });
 });
-$('#navStart')?.addEventListener('click', () => closeNav(() => window.open('https://wa.me/918595515718', '_blank', 'noopener,noreferrer')));
+
+/* scroll-spy active section highlight */
+const SPY_SECTIONS = [
+  { id: 'home', idx: 0 },
+  { id: 'works', idx: 3 },
+  { id: 'schemes', idx: 6 },
+  { id: 'about', idx: 5 },
+  { id: 'contact-footer', idx: 7 }
+];
+function updateActiveSectionFromScroll(){
+  if (performance.now() < spyPauseUntil) return;
+  const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 40;
+  if (nearBottom) { setActiveNavIdx(7); return; }
+  const probeY = window.innerHeight * 0.38;
+  let matchedIdx = 0;
+  for (const s of SPY_SECTIONS) {
+    const el = document.getElementById(s.id);
+    if (!el || el.hidden) continue;
+    const r = el.getBoundingClientRect();
+    if (r.top <= probeY) matchedIdx = s.idx;
+  }
+  setActiveNavIdx(matchedIdx);
+}
+addEventListener('scroll', updateActiveSectionFromScroll, { passive: true });
+addEventListener('resize', updateActiveSectionFromScroll, { passive: true });
+if (location.hash) {
+  const h = location.hash.slice(1);
+  const found = SPY_SECTIONS.find(s => s.id === h);
+  if (found) setActiveNavIdx(found.idx);
+}
 
 let WHATSAPP_URL = 'https://wa.me/918595515718';
 window.__setAmanWhatsAppUrl = function(url){ if (url) WHATSAPP_URL = url; };
@@ -2436,7 +2739,7 @@ const toggleMode = () => setMode(getMode() === 'dark' ? 'light' : 'dark');
     const cx = (gapL + r.right) / 2, cy = r.top + gh * .5;
     const s = Math.min(60, Math.max(innerWidth / gw, innerHeight / gh) * 1.25);
     holdScroll(true);
-    $('#cord')?.classList.add('away'); $('.hdr')?.classList.add('away');
+    $('#cord')?.classList.add('away'); $('.hdr')?.classList.add('away'); $('#dock')?.classList.add('away');
     const ox = cx - gapL, oy = cy - r.top;
     const cover = Math.max(cx / ox, (innerWidth - cx) / (r.right - cx), cy / oy, (innerHeight - cy) / (r.bottom - cy)) * 1.08;
     const timing = { duration: reduced ? 1 : 1600, easing: 'cubic-bezier(.5,0,.75,1)', fill: 'forwards' };
@@ -2510,7 +2813,7 @@ const toggleMode = () => setMode(getMode() === 'dark' ? 'light' : 'dark');
           cancelAnimationFrame(walkRaf); sec.style.transform = ''; dark.hidden = true; shade.hidden = true;
           sec.classList.remove('through', 'lift'); sec.style.transformOrigin = '';
           d.s.set(0);
-          $('#cord')?.classList.remove('away'); $('.hdr')?.classList.remove('away');
+          $('#cord')?.classList.remove('away'); $('.hdr')?.classList.remove('away'); $('#dock')?.classList.remove('away');
           busy = false;
           holdScroll(false);
           toWall({ wall: 'reset' });
@@ -2535,7 +2838,7 @@ const toggleMode = () => setMode(getMode() === 'dark' ? 'light' : 'dark');
     if (pushed){ pushed = false; history.back(); } else leaveWall();
   });
   addEventListener('popstate', () => { if (inWall && !(history.state && history.state.wall)){ pushed = false; leaveWall(); } });
-  addEventListener('keydown', e => { if (e.key === 'Escape' && inWall && $('#navm').hidden){ if (pushed){ pushed = false; history.back(); } else leaveWall(); } });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && inWall && !$('#dock')?.classList.contains('open')){ if (pushed){ pushed = false; history.back(); } else leaveWall(); } });
   // keep the room's light/dark in step with the cord
   new MutationObserver(() => frames.forEach(f => { try { f?.contentWindow?.postMessage({ wall: "mode", mode: root.dataset.mode === "dark" ? "dark" : "light" }, location.origin === 'null' ? '*' : location.origin); } catch (e) {} }))
     .observe(root, { attributes: true, attributeFilter: ['data-mode'] });
@@ -2547,7 +2850,7 @@ const toggleMode = () => setMode(getMode() === 'dark' ? 'light' : 'dark');
     sec.classList.remove('through'); sec.style.transform = ''; sec.style.transformOrigin = ''; reveal(false);
     veil.classList.remove('on'); veil.hidden = true; veil.style.clipPath = ''; veil.innerHTML = '';
     wallv.classList.remove('on','live'); wallv.style.clipPath = '';
-    $('#cord')?.classList.remove('away'); $('.hdr')?.classList.remove('away');
+    $('#cord')?.classList.remove('away'); $('.hdr')?.classList.remove('away'); $('#dock')?.classList.remove('away');
     doorsState.forEach(d => d.s.set(0));
     if (busy){ busy = false; startScroll(); }
   });
@@ -3065,8 +3368,13 @@ try {
     window.__setAmanWhatsAppUrl?.(waHref);
     document.querySelectorAll('a[data-contact]').forEach(a => { a.href = waHref; });
     const dPhone = document.getElementById('drawerPhoneText');
-    if (dPhone && (profile.primaryPhone || profile.whatsappNumber)) {
-      dPhone.textContent = profile.primaryPhone || profile.whatsappNumber;
+    const phoneDisplayVal = profile.primaryPhone || profile.whatsappNumber;
+    if (dPhone && phoneDisplayVal) {
+      dPhone.textContent = phoneDisplayVal;
+    }
+    const dockWaTip = document.getElementById('dockWaTip');
+    if (dockWaTip && phoneDisplayVal) {
+      dockWaTip.textContent = 'WhatsApp us · ' + phoneDisplayVal;
     }
 
     // Brand settings
@@ -3074,7 +3382,7 @@ try {
     const shopName = brand.shopName || profile.businessName || 'Aman Computer';
     window.__amanShopName = shopName;
     const dbName = document.getElementById('drawerBrandName');
-    if (dbName) dbName.textContent = shopName.toUpperCase();
+    if (dbName) dbName.textContent = shopName;
     const ldName = document.getElementById('ldBrandName');
     if (ldName) ldName.textContent = shopName;
     const ldBadge = document.getElementById('ldBadge');

@@ -1,5 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { Menu, X, ArrowRight, Clock, MessageCircle, ExternalLink, Shield } from 'lucide-react';
+import {
+  Menu,
+  X,
+  ArrowRight,
+  Clock,
+  MessageCircle,
+  Home,
+  Bell,
+  FileText,
+  Layers,
+  Image as ImageIcon,
+  Compass,
+  Landmark,
+  MapPin,
+} from 'lucide-react';
 import { NavigationPage } from '../types';
 import PullCord from './PullCord';
 
@@ -11,115 +25,114 @@ interface NavbarProps {
   onHireClick: () => void;
 }
 
-interface NavItem {
-  num: string;
+interface SidebarNavItem {
+  id: string;
   label: string;
-  id: NavigationPage;
-  isExternal?: boolean;
-  externalUrl?: string;
+  page: NavigationPage;
+  sectionId?: string;
+  icon: typeof Home;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { num: '01', label: 'Home', id: 'home' },
-  { num: '02', label: 'Latest Updates', id: 'web-development' },
-  { num: '03', label: 'Documents Need', id: 'app-development' },
-  { num: '04', label: 'Our Services', id: 'ui-ux' },
-  { num: '05', label: 'Gallery', id: 'photography' },
-  { num: '06', label: 'Our Journey', id: 'my-story' },
-  { 
-    num: '07', 
-    label: 'Contact & Location', 
-    id: 'contact',
-    isExternal: true,
-    externalUrl: 'https://wa.me/918595515718'
-  },
+const SIDEBAR_ITEMS: SidebarNavItem[] = [
+  { id: 'home', label: 'Home', page: 'home', sectionId: 'home', icon: Home },
+  { id: 'updates', label: 'Latest Updates', page: 'web-development', icon: Bell },
+  { id: 'documents', label: 'Documents Need', page: 'app-development', icon: FileText },
+  { id: 'services', label: 'Our Services', page: 'ui-ux', icon: Layers },
+  { id: 'gallery', label: 'Gallery', page: 'photography', icon: ImageIcon },
+  { id: 'journey', label: 'Our Journey', page: 'my-story', icon: Compass },
+  { id: 'schemes', label: 'Government Schemes', page: 'home', sectionId: 'schemes', icon: Landmark },
+  { id: 'contact', label: 'Contact & Location', page: 'contact', sectionId: 'contact-footer', icon: MapPin },
 ];
 
 const WHATSAPP_URL = 'https://wa.me/918595515718';
+
+function formatKolkataTime(now = new Date()): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).formatToParts(now);
+    let h = '';
+    let m = '';
+    let ap = '';
+    parts.forEach((p) => {
+      if (p.type === 'hour') h = p.value;
+      if (p.type === 'minute') m = p.value;
+      if (p.type === 'dayPeriod') ap = p.value.toLowerCase();
+    });
+    if (h && m && ap) return `${h}:${m}${ap}`;
+  } catch {
+    // Fallback below
+  }
+  const h = now.getHours();
+  return `${h % 12 || 12}:${String(now.getMinutes()).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`;
+}
 
 export default function Navbar({
   currentPage,
   setCurrentPage,
   darkMode,
   setDarkMode,
-  onHireClick,
 }: NavbarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string>('home');
   const [scrolled, setScrolled] = useState(false);
-  const [localTime, setLocalTime] = useState('');
+  const [localTime, setLocalTime] = useState(() => formatKolkataTime());
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const openBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  // Scroll detection
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 15);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Live IST Clock
   useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setLocalTime(
-        new Intl.DateTimeFormat('en-US', {
-          timeZone: 'Asia/Kolkata',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        }).format(now)
-      );
-    };
+    const updateTime = () => setLocalTime(formatKolkataTime(new Date()));
     updateTime();
-    const interval = setInterval(updateTime, 1000);
+    const interval = setInterval(updateTime, 15000);
     return () => clearInterval(interval);
   }, []);
 
-  // Body scroll locking and Escape key handling
   useEffect(() => {
-    if (drawerOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+    if (!drawerOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
-      // Focus close button on open
-      setTimeout(() => {
-        closeBtnRef.current?.focus();
-      }, 80);
-
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setDrawerOpen(false);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-
-      return () => {
-        document.body.style.overflow = originalOverflow;
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
+    const focusTimer = setTimeout(() => closeBtnRef.current?.focus(), 60);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDrawerOpen(false);
+        openBtnRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [drawerOpen]);
 
-  const handleNavClick = (item: NavItem) => {
+  const handleNavClick = (item: SidebarNavItem) => {
+    setActiveId(item.id);
     setDrawerOpen(false);
-    if (item.isExternal && item.externalUrl) {
-      window.open(item.externalUrl, '_blank', 'noopener,noreferrer');
-      return;
+    if (item.sectionId) {
+      const el = document.getElementById(item.sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
     }
-    setCurrentPage(item.id);
+    setCurrentPage(item.page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    window.location.hash = item.id === 'home' ? '' : item.id;
-  };
-
-  const openWhatsApp = () => {
-    setDrawerOpen(false);
-    window.open(WHATSAPP_URL, '_blank', 'noopener,noreferrer');
+    window.location.hash = item.page === 'home' ? '' : item.page;
   };
 
   return (
     <>
-      {/* Top Navbar */}
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           scrolled
@@ -127,242 +140,212 @@ export default function Navbar({
             : 'bg-transparent border-b border-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
-          {/* Brand Wordmark */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pl-18 md:pl-22 xl:pl-6 h-20 flex items-center justify-between gap-4">
           <button
-            onClick={() => handleNavClick(NAV_ITEMS[0])}
+            onClick={() => handleNavClick(SIDEBAR_ITEMS[0])}
             aria-label="Aman Computer Home"
-            className="group flex items-center gap-2.5 text-base sm:text-lg font-display font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0] whitespace-nowrap shrink-0 hover:opacity-85 transition-opacity cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg py-1"
+            className="flex items-center gap-2.5 text-base sm:text-lg font-display font-bold tracking-tight text-[#1A1818] dark:text-[#E8E4E0] whitespace-nowrap shrink-0 hover:opacity-85 transition-opacity cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E] rounded-lg py-1"
           >
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="tracking-wider">AMAN COMPUTER</span>
+            <span className="tracking-wide">Aman Computer</span>
           </button>
 
-          {/* Desktop Center Navigation Links */}
-          <nav aria-label="Main Navigation" className="hidden xl:flex items-center gap-5 text-xs font-medium text-[#1A1818]/80 dark:text-[#E8E4E0]/80">
-            {NAV_ITEMS.map((item) => {
-              const isActive = currentPage === item.id;
+          <nav
+            aria-label="Main Navigation"
+            className="hidden xl:flex items-center gap-5 text-xs font-medium text-[#1A1818]/80 dark:text-[#E8E4E0]/80"
+          >
+            {SIDEBAR_ITEMS.map((item) => {
+              const isActive = activeId === item.id || (item.page !== 'home' && currentPage === item.page);
               return (
                 <button
-                  key={item.num}
+                  key={item.id}
                   onClick={() => handleNavClick(item)}
-                  className={`transition-colors whitespace-nowrap shrink-0 py-1 cursor-pointer hover:text-[#1A1818] dark:hover:text-white flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded ${
-                    isActive ? 'font-bold text-[#1A1818] dark:text-white underline underline-offset-8 decoration-2 decoration-emerald-500' : ''
+                  className={`transition-colors whitespace-nowrap shrink-0 py-1 cursor-pointer hover:text-[#1A1818] dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A96E] rounded ${
+                    isActive ? 'font-bold text-[#1A1818] dark:text-white underline underline-offset-8 decoration-2 decoration-[#C9A96E]' : ''
                   }`}
                 >
-                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">{item.num}</span>
-                  <span>{item.label}</span>
+                  {item.label}
                 </button>
               );
             })}
           </nav>
 
-          {/* Right Zone: Time chip, Pull Cord, Hire/WhatsApp CTA, Menu Drawer Trigger */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
-            {/* Local Time Chip */}
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/5 dark:bg-white/10 text-[11px] font-mono text-neutral-600 dark:text-neutral-300">
-              <Clock className="w-3 h-3 text-neutral-400" />
-              <span>IST {localTime}</span>
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-[0.875rem] border border-[#C4B0B0]/45 dark:border-[#C4B0B0]/20 bg-[#F2EEEB]/65 dark:bg-[#221F1F]/70 text-xs font-medium text-[#1A1818]/75 dark:text-[#E8E4E0]/75 whitespace-nowrap">
+              <Clock className="w-3.5 h-3.5 opacity-60" />
+              <span className="tabular-nums">Local time · {localTime}</span>
             </div>
 
-            {/* Pull Cord Light/Dark mode switcher */}
             <PullCord darkMode={darkMode} onToggle={() => setDarkMode((prev) => !prev)} />
-
-            {/* WhatsApp CTA Button */}
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 text-xs font-semibold rounded-full bg-[#1A1818] dark:bg-[#E8E4E0] text-[#E8E4E0] dark:text-[#1A1818] hover:opacity-90 transition-opacity shadow-xs cursor-pointer whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
-              <span>WhatsApp Us</span>
-            </a>
-
-            {/* Menu Trigger Button (Transforms hamburger to close icon) */}
-            <button
-              onClick={() => setDrawerOpen((prev) => !prev)}
-              aria-label={drawerOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
-              aria-expanded={drawerOpen}
-              aria-controls="cinematic-sidebar-drawer"
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/10 text-neutral-800 dark:text-neutral-200 hover:bg-black/10 dark:hover:bg-white/15 hover:border-black/20 dark:hover:border-white/30 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-            >
-              <div className="relative w-4 h-4 flex items-center justify-center">
-                <Menu
-                  className={`w-4 h-4 transition-all duration-300 transform ${
-                    drawerOpen ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100'
-                  }`}
-                />
-                <X
-                  className={`w-4 h-4 absolute transition-all duration-300 transform ${
-                    drawerOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'
-                  }`}
-                />
-              </div>
-              <span className="text-xs font-medium tracking-wide uppercase">Menu</span>
-            </button>
           </div>
         </div>
       </header>
 
-      {/* Backdrop Overlay */}
+      {/* Translucent Backdrop */}
       <div
-        onClick={() => setDrawerOpen(false)}
+        onClick={() => {
+          setDrawerOpen(false);
+          openBtnRef.current?.focus();
+        }}
         aria-hidden="true"
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-[#1A1818]/25 dark:bg-black/55 backdrop-blur-xs transition-opacity duration-350 ${
           drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
 
-      {/* Premium Cinematic Floating Sidebar Drawer */}
+      {/* Translucent Frosted-Glass Floating Rail & Expandable Sidebar */}
       <aside
-        id="cinematic-sidebar-drawer"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Navigation Menu"
-        className={`fixed top-3 right-3 bottom-3 w-[min(calc(100vw-24px),390px)] z-50 flex flex-col rounded-3xl bg-[#121111]/95 dark:bg-[#0C0B0B]/95 text-white backdrop-blur-2xl border border-white/12 shadow-[0_25px_70px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.06)] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] transform overflow-hidden ${
+        id="aman-glass-sidebar"
+        role={drawerOpen ? 'dialog' : undefined}
+        aria-modal={drawerOpen || undefined}
+        aria-label="Site navigation"
+        className={`fixed z-50 flex flex-col border border-[#C4B0B0]/50 dark:border-[#C4B0B0]/20 bg-gradient-to-b from-[#F6F2EE]/85 to-[#EAE4DF]/72 dark:from-[#282424]/82 dark:to-[#181616]/74 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_18px_44px_-14px_rgba(26,24,24,0.18)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_20px_50px_rgba(0,0,0,0.5)] text-[#1A1818] dark:text-[#E8E4E0] transition-all duration-400 ease-[cubic-bezier(0.215,0.61,0.355,1)] ${
           drawerOpen
-            ? 'translate-x-0 opacity-100 scale-100'
-            : 'translate-x-[110%] opacity-0 scale-95 pointer-events-none'
+            ? 'left-0 md:left-4 top-0 md:top-3.5 bottom-0 md:bottom-3.5 w-[min(86vw,320px)] md:w-[258px] rounded-r-3xl md:rounded-3xl p-4 overflow-y-auto'
+            : 'left-3.5 md:left-4 top-3.5 md:top-1/2 md:-translate-y-1/2 w-[46px] h-[46px] md:w-[54px] md:h-auto md:p-2 rounded-[14px] md:rounded-[26px] items-center justify-center md:justify-start gap-1'
         }`}
       >
-        {/* Subtle Ambient Glow Effect inside Drawer */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl"
-        />
-
-        {/* Minimal Brand Header */}
-        <div className="relative px-6 pt-6 pb-4 flex items-center justify-between border-b border-white/8 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <div>
-              <span className="font-display font-bold text-sm tracking-wider text-white">
-                AMAN COMPUTER
-              </span>
-              <span className="block text-[10px] text-white/40 tracking-wider uppercase font-mono">
-                Digital Center & Cyber Cafe
-              </span>
-            </div>
-          </div>
-
-          {/* Premium Close Button */}
+        {/* Expand trigger (collapsed) */}
+        {!drawerOpen && (
           <button
-            ref={closeBtnRef}
-            onClick={() => setDrawerOpen(false)}
-            aria-label="Close menu"
-            className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/12 bg-white/5 hover:bg-white/10 hover:border-white/25 text-white/70 hover:text-white transition-all text-xs font-mono tracking-wider cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            ref={openBtnRef}
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open navigation sidebar"
+            aria-expanded={false}
+            aria-controls="aman-glass-sidebar"
+            className="group relative w-11 h-11 md:w-9.5 md:h-9.5 rounded-[13px] grid place-items-center text-[#1A1818]/70 dark:text-[#E8E4E0]/70 hover:bg-[#C9A96E]/20 hover:text-[#1A1818] dark:hover:text-white transition-colors cursor-pointer"
           >
-            <span>ESC</span>
-            <X className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform duration-200" />
+            <Menu className="w-4.5 h-4.5" />
+            <span className="hidden md:block pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all bg-[#1A1818] text-[#F3EEEC] text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap shadow-md">
+              Menu
+            </span>
           </button>
-        </div>
+        )}
 
-        {/* Staggered Navigation List */}
+        {/* Expanded Header */}
+        {drawerOpen && (
+          <div className="flex items-center justify-between pb-3 mb-2 border-b border-[#1A1818]/10 dark:border-white/10 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#DEC38F] to-[#C9A96E] text-[#1A1818] text-xs font-extrabold grid place-items-center shadow-xs">
+                A
+              </span>
+              <span className="text-sm font-bold tracking-tight">Aman Computer</span>
+            </div>
+            <button
+              ref={closeBtnRef}
+              type="button"
+              onClick={() => {
+                setDrawerOpen(false);
+                openBtnRef.current?.focus();
+              }}
+              aria-label="Close navigation sidebar"
+              className="w-9 h-9 rounded-xl grid place-items-center border border-[#1A1818]/10 dark:border-white/12 bg-[#1A1818]/5 dark:bg-white/5 hover:bg-[#C9A96E]/20 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {drawerOpen && (
+          <div className="text-[11px] uppercase tracking-[0.09em] font-semibold text-[#1A1818]/45 dark:text-[#E8E4E0]/45 px-2.5 pt-1 pb-1.5">
+            Navigate
+          </div>
+        )}
+
+        {!drawerOpen && <div className="hidden md:block h-px w-6 bg-[#1A1818]/10 dark:bg-white/12 my-0.5" />}
+
+        {/* 8 Navigation Items */}
         <nav
-          aria-label="Sidebar Menu"
-          className="relative flex-1 px-4 py-4 overflow-y-auto overflow-x-hidden space-y-1 scrollbar-thin scrollbar-thumb-white/10"
+          aria-label="Sidebar sections"
+          className={`${drawerOpen ? 'flex flex-col gap-1' : 'hidden md:flex md:flex-col md:gap-1'}`}
         >
-          {NAV_ITEMS.map((item, index) => {
-            const isActive = currentPage === item.id;
-            const delayMs = drawerOpen ? index * 40 + 60 : 0;
-
+          {SIDEBAR_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeId === item.id || (item.page !== 'home' && currentPage === item.page);
             return (
               <button
-                key={item.num}
+                key={item.id}
+                type="button"
                 onClick={() => handleNavClick(item)}
-                style={{
-                  transitionDelay: `${delayMs}ms`,
-                }}
-                className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-left transition-all duration-300 cursor-pointer transform focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  drawerOpen ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
+                className={`group relative flex items-center transition-all cursor-pointer ${
+                  drawerOpen
+                    ? 'w-full min-h-11 px-3 rounded-xl gap-3 justify-start text-left'
+                    : 'w-9.5 h-9.5 rounded-[13px] justify-center'
                 } ${
                   isActive
-                    ? 'bg-white/10 text-white font-semibold border-l-2 border-emerald-400 pl-4 shadow-inner'
-                    : 'text-white/75 hover:text-white hover:bg-white/5 hover:translate-x-1'
+                    ? 'bg-gradient-to-br from-[#DEC38F] to-[#C9A96E] text-[#1A1818] font-semibold shadow-sm'
+                    : 'text-[#1A1818]/70 dark:text-[#E8E4E0]/70 hover:bg-[#C9A96E]/18 hover:text-[#1A1818] dark:hover:text-white'
                 }`}
               >
-                <div className="flex items-center gap-3.5">
-                  <span
-                    className={`text-xs font-mono tracking-wider transition-colors ${
-                      isActive
-                        ? 'text-emerald-400 font-bold'
-                        : 'text-white/35 group-hover:text-emerald-400'
-                    }`}
-                  >
-                    {item.num}
+                <Icon className="w-4.5 h-4.5 shrink-0" />
+                {drawerOpen && <span className="text-[13.5px] whitespace-nowrap">{item.label}</span>}
+                {!drawerOpen && (
+                  <span className="hidden md:block pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all bg-[#1A1818] text-[#F3EEEC] text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap shadow-md z-10">
+                    {item.label}
                   </span>
-                  <span className="text-base tracking-tight">{item.label}</span>
-                </div>
-
-                <div className="flex items-center">
-                  {item.isExternal ? (
-                    <ExternalLink className="w-3.5 h-3.5 text-white/30 group-hover:text-emerald-400 transition-colors" />
-                  ) : (
-                    <ArrowRight
-                      className={`w-4 h-4 transition-all duration-200 ${
-                        isActive
-                          ? 'text-emerald-400 translate-x-0 opacity-100'
-                          : 'text-white/20 -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-white'
-                      }`}
-                    />
-                  )}
-                </div>
+                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Bottom CTA & Footer Section */}
-        <div className="relative p-4 sm:p-5 border-t border-white/8 bg-black/30 shrink-0 space-y-3">
-          {/* WhatsApp Direct CTA Card */}
+        {!drawerOpen && <div className="hidden md:block h-px w-6 bg-[#1A1818]/10 dark:bg-white/12 my-0.5" />}
+
+        {/* Bottom WhatsApp + Live IST Clock */}
+        <div
+          className={`${
+            drawerOpen
+              ? 'mt-auto pt-3 border-t border-[#1A1818]/10 dark:border-white/10 flex flex-col gap-2'
+              : 'hidden md:flex md:flex-col md:gap-1'
+          }`}
+        >
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => setDrawerOpen(false)}
-            className="group block p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-emerald-900/30 to-black/40 border border-emerald-500/25 hover:border-emerald-400/50 hover:from-emerald-900/50 transition-all duration-300 shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
+            aria-label="WhatsApp us at +91 85955 15718"
+            className={`group relative flex items-center transition-colors ${
+              drawerOpen
+                ? 'w-full min-h-12 px-3 py-2.5 rounded-[14px] gap-3 bg-[#16A34A]/10 dark:bg-[#34D399]/12 border border-[#16A34A]/28 dark:border-[#34D399]/28 hover:bg-[#16A34A]/16'
+                : 'w-9.5 h-9.5 rounded-[13px] justify-center text-[#15803D] dark:text-[#34D399] hover:bg-[#16A34A]/14'
+            }`}
           >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 tracking-wide uppercase">
-                <MessageCircle className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span>WhatsApp Us</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-400/70 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                Direct Chat
+            <MessageCircle className="w-4.5 h-4.5 text-[#15803D] dark:text-[#34D399] shrink-0" />
+            {drawerOpen ? (
+              <>
+                <span className="flex flex-col flex-1 min-w-0 text-left">
+                  <span className="text-[10.5px] font-bold tracking-[0.08em] uppercase text-[#15803D] dark:text-[#34D399]">
+                    WHATSAPP US
+                  </span>
+                  <span className="text-[13.5px] font-semibold tabular-nums whitespace-nowrap truncate">
+                    +91 85955 15718
+                  </span>
+                </span>
+                <ArrowRight className="w-4 h-4 text-[#15803D] dark:text-[#34D399] shrink-0" />
+              </>
+            ) : (
+              <span className="hidden md:block pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all bg-[#1A1818] text-[#F3EEEC] text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap shadow-md z-10">
+                WhatsApp us · +91 85955 15718
               </span>
-            </div>
-            <div className="flex items-center justify-between text-white group-hover:text-emerald-300 transition-colors">
-              <span className="text-sm sm:text-base font-bold font-mono tracking-wide">
-                +91 85955 15718
-              </span>
-              <ArrowRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-1 transition-transform" />
-            </div>
+            )}
           </a>
 
-          {/* Minimal Bottom Info Row */}
-          <div className="flex items-center justify-between text-[11px] text-white/40 pt-1 font-mono">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3 text-white/30" />
-              <span>IST {localTime}</span>
-            </div>
-            <a
-              href="/admin"
-              className="hover:text-emerald-400 transition-colors flex items-center gap-1"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span>Admin Login</span>
-            </a>
+          <div
+            aria-label="Local time"
+            className={`group relative flex items-center ${
+              drawerOpen
+                ? 'px-2.5 pt-1 text-xs font-medium text-[#1A1818]/65 dark:text-[#E8E4E0]/65 gap-2 tabular-nums'
+                : 'w-9.5 h-9.5 rounded-[13px] justify-center text-[#1A1818]/65 dark:text-[#E8E4E0]/65'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            {drawerOpen ? (
+              <span className="whitespace-nowrap">Local time · {localTime}</span>
+            ) : (
+              <span className="hidden md:block pointer-events-none absolute left-12 top-1/2 -translate-y-1/2 -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all bg-[#1A1818] text-[#F3EEEC] text-[11px] font-medium px-2.5 py-1 rounded-lg whitespace-nowrap shadow-md z-10">
+                Local time · {localTime}
+              </span>
+            )}
           </div>
         </div>
       </aside>

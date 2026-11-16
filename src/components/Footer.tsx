@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowRight, LockKeyhole } from 'lucide-react';
 import { NavigationPage } from '../types';
 
 interface FooterProps {
@@ -159,6 +159,15 @@ export default function Footer({ onHireClick, onNavigate }: FooterProps) {
                   className="hover:underline cursor-pointer text-left inline-block"
                 >
                   WhatsApp Us
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/admin"
+                  className="hover:underline cursor-pointer text-left inline-flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400 hover:text-[#1A1818] dark:hover:text-[#E8E4E0] transition-colors"
+                >
+                  <LockKeyhole className="w-3.5 h-3.5 opacity-80 shrink-0" aria-hidden="true" />
+                  <span>Admin Login</span>
                 </a>
               </li>
             </ul>
