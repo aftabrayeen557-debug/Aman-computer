@@ -101,21 +101,21 @@ export const ServiceModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#24160a]/30 dark:bg-black/60 backdrop-blur-[5px]">
       <div
-        className="w-full max-w-xl max-h-[90vh] rounded-2xl bg-[#141419] border border-[#C9A96E]/25 shadow-2xl flex flex-col overflow-hidden"
+        className="w-full max-w-xl max-h-[90vh] rounded-[22px] studio-glass-popover flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 border-b border-white/[0.07] flex items-center justify-between">
+        <div className="p-5 border-b border-[var(--st-line)] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#211B16] border border-[#C9A96E]/30 flex items-center justify-center text-[#C9A96E]">
+            <div className="w-8 h-8 rounded-lg bg-[#C9A96E]/15 border border-[#C9A96E]/35 flex items-center justify-center text-[#C9A96E]">
               <Layers className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-medium text-[#E8E5DF]">
+              <h3 className="text-base font-medium text-[var(--st-tx)]">
                 {editingService ? 'Edit Aman Computer Service' : 'Add New Service'}
               </h3>
-              <p className="text-xs text-[#85838A]">
+              <p className="text-xs text-[var(--st-mut)]">
                 Configure offering details, pricing, and direct WhatsApp message template
               </p>
             </div>
@@ -126,7 +126,7 @@ export const ServiceModal: React.FC = () => {
               setServiceModalOpen(false);
               setEditingService(null);
             }}
-            className="p-1.5 rounded-lg hover:bg-white/[0.05] text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+            className="p-1.5 rounded-lg hover:bg-black/[0.06] dark:hover:bg-white/[0.08] text-[var(--st-mut)] hover:text-[var(--st-tx)] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -134,7 +134,7 @@ export const ServiceModal: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto flex-1 admin-studio-scroll">
           <div>
-            <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+            <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
               Service Title *
             </label>
             <input
@@ -143,19 +143,19 @@ export const ServiceModal: React.FC = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Online Job Forms & Exam Registrations"
-              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+              className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+              <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60"
+                className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs outline-none"
               >
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -166,7 +166,7 @@ export const ServiceModal: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+              <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
                 Turn Around Time (TAT)
               </label>
               <input
@@ -174,14 +174,14 @@ export const ServiceModal: React.FC = () => {
                 value={tat}
                 onChange={(e) => setTat(e.target.value)}
                 placeholder="e.g. 15 Mins / Same Day"
-                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+                className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+              <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
                 Price Starting At
               </label>
               <input
@@ -189,12 +189,12 @@ export const ServiceModal: React.FC = () => {
                 value={priceStartingAt}
                 onChange={(e) => setPriceStartingAt(e.target.value)}
                 placeholder="e.g. ₹50 / ₹2 per page"
-                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+                className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none"
               />
             </div>
 
             <div>
-              <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+              <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
                 Cover Image URL (Optional)
               </label>
               <input
@@ -202,13 +202,13 @@ export const ServiceModal: React.FC = () => {
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
                 placeholder="https://..."
-                className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60 font-mono"
+                className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+            <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
               Short Description (Card Summary)
             </label>
             <textarea
@@ -216,12 +216,12 @@ export const ServiceModal: React.FC = () => {
               value={shortDesc}
               onChange={(e) => setShortDesc(e.target.value)}
               placeholder="Crisp 1-2 line description for customer cards..."
-              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+              className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none"
             />
           </div>
 
           <div>
-            <label className="text-xs font-medium text-[#E8E5DF] block mb-1.5">
+            <label className="text-xs font-medium text-[var(--st-tx)] block mb-1.5">
               WhatsApp Pre-filled Customer Message
             </label>
             <input
@@ -229,12 +229,12 @@ export const ServiceModal: React.FC = () => {
               value={whatsappTemplate}
               onChange={(e) => setWhatsappTemplate(e.target.value)}
               placeholder="e.g. Hello Aman Computer, I need help applying for..."
-              className="w-full px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-xs text-[#E8E5DF] placeholder-[#85838A] outline-none focus:border-[#C9A96E]/60"
+              className="w-full px-3 py-2.5 rounded-xl studio-glass-input text-xs placeholder-[var(--st-mut)] outline-none"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-6 pt-1">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-[#E8E5DF]">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-[var(--st-tx)]">
               <input
                 type="checkbox"
                 checked={visible}
@@ -244,7 +244,7 @@ export const ServiceModal: React.FC = () => {
               <span>Visible on Website</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-[#E8E5DF]">
+            <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-[var(--st-tx)]">
               <input
                 type="checkbox"
                 checked={featured}
@@ -258,20 +258,20 @@ export const ServiceModal: React.FC = () => {
             </label>
           </div>
 
-          <div className="pt-3 border-t border-white/[0.07] flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-[var(--st-line)] flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => {
                 setServiceModalOpen(false);
                 setEditingService(null);
               }}
-              className="px-4 py-2 rounded-xl border border-white/[0.1] text-xs font-medium text-[#85838A] hover:text-[#E8E5DF] cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-[var(--st-line)] text-xs font-medium text-[var(--st-mut)] hover:text-[var(--st-tx)] cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#0A0A0E] text-xs font-semibold transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-[#C9A96E] hover:bg-[#DFC492] text-[#1c1208] text-xs font-semibold transition-colors cursor-pointer"
             >
               {editingService ? 'Save Service' : 'Add to Catalog'}
             </button>

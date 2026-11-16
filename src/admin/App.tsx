@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useAdmin } from './context/AdminContext';
 import { Sidebar } from './components/Sidebar';
@@ -127,7 +127,6 @@ const renderActiveView = (activeTab: AdminTab): React.ReactNode => {
 export const AdminApp: React.FC = () => {
   const {
     currentTab,
-    sidebarCollapsed,
     authViewMode,
     authStatus,
     authError,
@@ -135,11 +134,30 @@ export const AdminApp: React.FC = () => {
     isSupabaseActive,
   } = useAdmin();
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('aman_studio_glass_v1');
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (typeof parsed.blur === 'number') {
+        document.documentElement.style.setProperty('--st-blur', `${parsed.blur}px`);
+      }
+      if (typeof parsed.tint === 'number') {
+        document.documentElement.style.setProperty('--st-gl-alpha', (parsed.tint / 100).toFixed(3));
+      }
+      if (typeof parsed.depth === 'number') {
+        document.documentElement.style.setProperty('--st-depth', (parsed.depth / 100).toFixed(2));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
   if (authStatus === 'checking') {
     return (
-      <div className="min-h-screen w-full bg-[#0A0A0E] text-[#E8E5DF] flex flex-col items-center justify-center p-6 space-y-4">
+      <div className="admin-studio-theme min-h-screen w-full flex flex-col items-center justify-center p-6 space-y-4">
         <div className="w-9 h-9 rounded-full border-2 border-[#C9A96E]/25 border-t-[#C9A96E] animate-spin" />
-        <div className="text-xs font-mono tracking-widest uppercase text-[#85838A]">
+        <div className="text-xs font-mono tracking-widest uppercase text-[var(--st-mut)]">
           Opening Owner Control Center…
         </div>
       </div>
@@ -159,42 +177,36 @@ export const AdminApp: React.FC = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="admin-studio-theme min-h-screen bg-[#0A0A0E] text-[#E8E5DF] font-sans antialiased selection:bg-[#C9A96E]/25 selection:text-[#DFC492] overflow-x-hidden">
-        <div className="flex min-h-screen">
-          <Sidebar />
+      <div className="admin-studio-theme min-h-screen font-sans antialiased selection:bg-[#C9A96E]/25 selection:text-[var(--st-tx)] overflow-x-hidden">
+        <Sidebar />
 
-          <div
-            className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
-              sidebarCollapsed ? 'lg:pl-[76px]' : 'lg:pl-[264px]'
-            }`}
-          >
-            <TopBar />
+        <div className="min-h-screen flex flex-col min-w-0 pl-[64px] sm:pl-[86px] pr-2.5 sm:pr-6 pb-6">
+          <TopBar />
 
-            <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 min-w-0">
-              <StudioErrorBoundary resetKey={activeTab}>
-                <Suspense fallback={<StudioLoadingState />}>
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activeTab}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      {renderActiveView(activeTab)}
-                    </motion.div>
-                  </AnimatePresence>
-                </Suspense>
-              </StudioErrorBoundary>
-            </main>
+          <main className="mt-4 sm:mt-5 flex-1 min-w-0">
+            <StudioErrorBoundary resetKey={activeTab}>
+              <Suspense fallback={<StudioLoadingState />}>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.22, ease: [0.215, 0.61, 0.355, 1] }}
+                  >
+                    {renderActiveView(activeTab)}
+                  </motion.div>
+                </AnimatePresence>
+              </Suspense>
+            </StudioErrorBoundary>
+          </main>
 
-            <footer className="px-4 sm:px-6 lg:px-8 py-4 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono text-[#85838A]">
-              <span>Aman Computer — Owner Control Center · Account Protected</span>
-              <span>
-                {isSupabaseActive ? 'Online Data Sync Active' : 'Offline Workspace Mode'}
-              </span>
-            </footer>
-          </div>
+          <footer className="mt-3 px-4 py-3 rounded-2xl studio-glass-bar flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-mono text-[var(--st-mut)]">
+            <span>Aman Computer — Owner Control Center · Account Protected</span>
+            <span>
+              {isSupabaseActive ? 'Online Data Sync Active' : 'Offline Workspace Mode'}
+            </span>
+          </footer>
         </div>
 
         <GlobalSearchModal />
@@ -203,3 +215,4 @@ export const AdminApp: React.FC = () => {
     </MotionConfig>
   );
 };
+

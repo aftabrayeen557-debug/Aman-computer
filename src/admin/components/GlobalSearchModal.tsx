@@ -178,17 +178,17 @@ export const GlobalSearchModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/75 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-[#24160a]/30 dark:bg-black/60 backdrop-blur-[5px]"
       onClick={() => setSearchModalOpen(false)}
       role="dialog"
       aria-modal="true"
       aria-label="Workspace Search"
     >
       <div
-        className="w-full max-w-2xl rounded-2xl bg-[#101014] border border-[#C9A96E]/30 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col"
+        className="w-full max-w-2xl rounded-[22px] studio-glass-popover overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.08]">
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--st-line)]">
           <Search className="w-4 h-4 text-[#C9A96E] shrink-0" />
           <input
             autoFocus
@@ -201,12 +201,12 @@ export const GlobalSearchModal: React.FC = () => {
               }
             }}
             placeholder="Search sections, schemes, owner profile, services, enquiries, or customers…"
-            className="flex-1 bg-transparent border-none outline-none text-sm text-[#E8E5DF] placeholder-[#85838A]"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--st-tx)] placeholder-[var(--st-mut)]"
           />
           <button
             type="button"
             onClick={() => setSearchModalOpen(false)}
-            className="p-1.5 rounded-lg text-[#85838A] hover:text-[#E8E5DF] hover:bg-[#141419] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors cursor-pointer"
             aria-label="Close search modal"
           >
             <X className="w-4 h-4" />
@@ -215,8 +215,8 @@ export const GlobalSearchModal: React.FC = () => {
 
         <div className="max-h-96 overflow-y-auto admin-studio-scroll p-2 space-y-1">
           {results.length === 0 ? (
-            <div className="py-12 px-4 text-center text-xs text-[#85838A]">
-              No matching sections or records found for "{query}".
+            <div className="py-12 px-4 text-center text-xs text-[var(--st-mut)]">
+              No matching sections or records found for &ldquo;{query}&rdquo;.
             </div>
           ) : (
             results.map((item) => {
@@ -226,22 +226,22 @@ export const GlobalSearchModal: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={item.onSelect}
-                  className="w-full flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-[#16161B] border border-transparent hover:border-[#C9A96E]/25 text-left transition-colors group cursor-pointer"
+                  className="w-full flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] border border-transparent hover:border-[#C9A96E]/35 text-left transition-colors group cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-[#141419] border border-white/[0.07] flex items-center justify-center text-[#C9A96E] shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#C9A96E]/12 border border-[#C9A96E]/30 flex items-center justify-center text-[#C9A96E] shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[#E8E5DF] truncate">
+                        <span className="text-sm font-medium text-[var(--st-tx)] truncate">
                           {item.title}
                         </span>
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#85838A] shrink-0">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--st-mut)] shrink-0">
                           · {item.group}
                         </span>
                       </div>
-                      <p className="text-xs text-[#85838A] truncate mt-0.5">
+                      <p className="text-xs text-[var(--st-mut)] truncate mt-0.5">
                         {item.subtitle}
                       </p>
                     </div>
@@ -253,7 +253,7 @@ export const GlobalSearchModal: React.FC = () => {
           )}
         </div>
 
-        <div className="px-4 py-2.5 bg-[#0A0A0E]/80 border-t border-white/[0.07] flex items-center justify-between text-[11px] font-mono text-[#85838A]">
+        <div className="px-4 py-2.5 bg-black/[0.04] dark:bg-black/30 border-t border-[var(--st-line)] flex items-center justify-between text-[11px] font-mono text-[var(--st-mut)]">
           <span>ESC to dismiss</span>
           <span className="flex items-center gap-1.5">
             <span>Open top match</span>

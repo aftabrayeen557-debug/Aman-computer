@@ -43,7 +43,7 @@ const StudioFallbackVisual: React.FC = () => (
       />
       <polygon
         points="110,68 142,110 110,152 78,110"
-        fill="#141419"
+        className="fill-[#2a1b0e]/90 dark:fill-[#141419]"
         stroke="currentColor"
         strokeWidth="1.25"
       />

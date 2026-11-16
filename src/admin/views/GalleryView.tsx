@@ -232,7 +232,7 @@ export const GalleryView: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                   <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/70 text-[#E8E5DF] border border-white/15">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/70 backdrop-blur-xs text-[#f8efe0] border border-white/20">
                       {item.category}
                     </span>
                     {!item.visible && (
@@ -241,7 +241,7 @@ export const GalleryView: React.FC = () => {
                       </span>
                     )}
                     {item.featured && (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#C9A96E] text-[#0A0A0E] font-semibold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#C9A96E] text-[#1c1208] font-semibold flex items-center gap-1">
                         <Star className="w-2.5 h-2.5 fill-current" /> Spotlight
                       </span>
                     )}
@@ -251,7 +251,7 @@ export const GalleryView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setEditingItem(item)}
-                      className="p-1.5 rounded-lg bg-black/70 text-[#E8E5DF] hover:text-[#DFC492] cursor-pointer"
+                      className="p-1.5 rounded-lg bg-black/70 backdrop-blur-xs text-[#f8efe0] hover:text-[#f3dfb8] cursor-pointer"
                       title="Edit"
                     >
                       <Pencil className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ export const GalleryView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleGalleryFeatured(item.id)}
-                      className="p-1.5 rounded-lg bg-black/70 text-[#C9A96E] hover:text-[#DFC492] cursor-pointer"
+                      className="p-1.5 rounded-lg bg-black/70 backdrop-blur-xs text-[#f3dfb8] hover:text-white cursor-pointer"
                       title="Toggle Spotlight"
                     >
                       <Star className="w-3.5 h-3.5" />
@@ -267,13 +267,13 @@ export const GalleryView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => toggleGalleryVisibility(item.id)}
-                      className="p-1.5 rounded-lg bg-black/70 text-[#E8E5DF] cursor-pointer"
+                      className="p-1.5 rounded-lg bg-black/70 backdrop-blur-xs text-[#f8efe0] cursor-pointer"
                       title={item.visible ? 'Hide' : 'Show'}
                     >
                       {item.visible ? (
-                        <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                        <Eye className="w-3.5 h-3.5 text-emerald-200" />
                       ) : (
-                        <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                        <EyeOff className="w-3.5 h-3.5 text-amber-200" />
                       )}
                     </button>
                     <button
@@ -290,7 +290,7 @@ export const GalleryView: React.FC = () => {
                           deleteGalleryItem(item.id);
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-black/70 text-rose-400 hover:bg-rose-500/20 cursor-pointer"
+                      className="p-1.5 rounded-lg bg-black/70 backdrop-blur-xs text-rose-200 hover:bg-rose-500/30 cursor-pointer"
                       title="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

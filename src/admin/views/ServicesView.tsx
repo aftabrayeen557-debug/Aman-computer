@@ -250,7 +250,7 @@ export const ServicesView: React.FC = () => {
                 }`}
               >
                 <span>{cat === 'all' ? 'All Services' : cat}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/30">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/10 dark:bg-black/30">
                   {count}
                 </span>
               </button>
@@ -300,11 +300,11 @@ export const ServicesView: React.FC = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
                     <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/70 text-[#E8E5DF] border border-white/15">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[#f8efe0] border border-white/20">
                         {service.category}
                       </span>
                       {service.featured && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#C9A96E] text-[#0A0A0E] font-semibold flex items-center gap-1">
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#C9A96E] text-[#1c1208] font-semibold flex items-center gap-1">
                           <Sparkles className="w-3 h-3" />
                           Featured
                         </span>
@@ -312,15 +312,15 @@ export const ServicesView: React.FC = () => {
                     </div>
 
                     <div className="absolute bottom-3 right-3 text-right">
-                      <div className="text-[9px] font-mono text-[#85838A] uppercase">
+                      <div className="text-[9px] font-mono text-white/75 uppercase">
                         Starts at
                       </div>
-                      <div className="text-sm font-bold font-mono text-[#DFC492]">
+                      <div className="text-sm font-bold font-mono text-[#f3dfb8]">
                         {service.priceStartingAt}
                       </div>
                     </div>
 
-                    <div className="absolute bottom-3 left-3 w-9 h-9 rounded-xl bg-[#141419]/90 border border-[#C9A96E]/35 text-[#C9A96E] flex items-center justify-center">
+                    <div className="absolute bottom-3 left-3 w-9 h-9 rounded-xl bg-black/65 backdrop-blur-md border border-[#C9A96E]/45 text-[#f3dfb8] flex items-center justify-center">
                       <Icon className="w-4 h-4" />
                     </div>
                   </div>
@@ -362,7 +362,7 @@ export const ServicesView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-3.5 border-t border-white/[0.06] bg-[#141419]/60 flex items-center justify-between">
+                <div className="p-3.5 border-t border-[var(--st-line)] bg-black/[0.03] dark:bg-black/20 flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <button
                       type="button"

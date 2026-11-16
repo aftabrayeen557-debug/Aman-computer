@@ -12,23 +12,23 @@ export const ToastContainer: React.FC = () => {
       {toasts.map((toast) => {
         const icons = {
           success: <CheckCircle2 className="w-4 h-4 text-[#C9A96E] shrink-0 mt-0.5" />,
-          warning: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />,
-          info: <Info className="w-4 h-4 text-[#DFC492] shrink-0 mt-0.5" />,
-          error: <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />,
+          warning: <AlertTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" />,
+          info: <Info className="w-4 h-4 text-[#C9A96E] shrink-0 mt-0.5" />,
+          error: <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />,
         };
 
         return (
           <div
             key={toast.id}
-            className="pointer-events-auto p-4 rounded-xl bg-[#16161B]/95 border border-[#C9A96E]/30 shadow-[0_12px_36px_-10px_rgba(0,0,0,0.8)] backdrop-blur-md flex items-start gap-3"
+            className="pointer-events-auto p-4 rounded-2xl studio-glass-popover flex items-start gap-3"
           >
             {icons[toast.type]}
             <div className="flex-1 min-w-0 pr-1">
-              <div className="text-xs font-semibold text-[#E8E5DF] tracking-tight">
+              <div className="text-xs font-semibold text-[var(--st-tx)] tracking-tight">
                 {toast.title}
               </div>
               {toast.message && (
-                <div className="text-xs text-[#85838A] mt-0.5 leading-relaxed">
+                <div className="text-xs text-[var(--st-mut)] mt-0.5 leading-relaxed">
                   {toast.message}
                 </div>
               )}
@@ -36,7 +36,7 @@ export const ToastContainer: React.FC = () => {
             <button
               type="button"
               onClick={() => removeToast(toast.id)}
-              className="text-[#85838A] hover:text-[#E8E5DF] p-1 rounded-md transition-colors cursor-pointer"
+              className="text-[var(--st-mut)] hover:text-[var(--st-tx)] p-1 rounded-md transition-colors cursor-pointer"
               aria-label="Dismiss notification"
             >
               <X className="w-3.5 h-3.5" />

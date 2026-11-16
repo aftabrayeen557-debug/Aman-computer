@@ -396,21 +396,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('aman_admin_dark');
-      if (saved !== null) return saved === 'true';
-      return true;
+      const savedV2 = localStorage.getItem('aman_admin_theme_v2');
+      if (savedV2 !== null) return savedV2 === 'dark';
+      return false;
     }
-    return true;
+    return false;
   });
 
   useEffect(() => {
     if (darkMode) {
       document.documentElement.setAttribute('data-mode', 'dark');
       document.documentElement.classList.add('dark');
+      localStorage.setItem('aman_admin_theme_v2', 'dark');
       localStorage.setItem('aman_admin_dark', 'true');
     } else {
       document.documentElement.removeAttribute('data-mode');
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('aman_admin_theme_v2', 'light');
       localStorage.setItem('aman_admin_dark', 'false');
     }
   }, [darkMode]);

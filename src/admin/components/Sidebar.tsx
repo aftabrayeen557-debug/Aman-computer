@@ -1,11 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
+  FileCheck2,
+  FolderGit2,
+  Globe,
+  Image as ImageIcon,
+  Landmark,
+  Layers,
+  LayoutDashboard,
   Lock,
+  Menu,
+  MessageSquareText,
+  Newspaper,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  UserCheck,
   X,
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
@@ -25,23 +37,46 @@ const DEFAULT_EXPANDED: Record<string, boolean> = {
   'website-content-group': false,
 };
 
+interface RailShortcut {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  tab?: AdminTab;
+  matchTabs?: AdminTab[];
+  action?: 'search';
+  badgeCount?: number;
+}
+
 export const Sidebar: React.FC = () => {
   const {
     currentTab,
     setCurrentTab,
-    sidebarCollapsed,
-    setSidebarCollapsed,
     mobileMenuOpen,
     setMobileMenuOpen,
+    setSearchModalOpen,
     unreadNotificationCount,
     enquiries,
     logout,
   } = useAdmin();
 
+  const [dockExpanded, setDockExpanded] = useState(false);
+  const isOpen = dockExpanded || mobileMenuOpen;
+
+  const closeSidebar = () => {
+    setDockExpanded(false);
+    setMobileMenuOpen(false);
+  };
+
+  const openSidebar = () => {
+    setDockExpanded(true);
+    setMobileMenuOpen(true);
+  };
+
   const activeTab = resolveStudioTab(currentTab);
-  const pendingEnquiryCount = enquiries.filter(
-    (item) => item.status === 'new' || item.status === 'pending'
-  ).length;
+  const pendingEnquiryCount = useMemo(
+    () => enquiries.filter((item) => item.status === 'new' || item.status === 'pending').length,
+    [enquiries]
+  );
 
   const [expandedParents, setExpandedParents] = useState<Record<string, boolean>>(() => {
     try {
@@ -72,17 +107,27 @@ export const Sidebar: React.FC = () => {
     }
   }, [activeTab]);
 
-  // Close mobile navigation drawer on Escape key
+  // Escape key closes expanded overlay drawer
   useEffect(() => {
-    if (!mobileMenuOpen) return;
+    if (!isOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setMobileMenuOpen(false);
+        closeSidebar();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen, setMobileMenuOpen]);
+  }, [isOpen]);
+
+  // Lock background page interaction/scrolling while expanded overlay drawer is active
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   const toggleParent = (id: string) => {
     setExpandedParents((prev) => {
@@ -98,21 +143,118 @@ export const Sidebar: React.FC = () => {
 
   const handleSelectTab = (tab: AdminTab) => {
     setCurrentTab(tab);
-    setMobileMenuOpen(false);
+    closeSidebar();
   };
 
+  const railShortcuts: RailShortcut[] = useMemo(
+    () => [
+      {
+        id: 'rail-overview',
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        tab: 'overview',
+      },
+      {
+        id: 'rail-search',
+        label: 'Search Workspace',
+        icon: Search,
+        action: 'search',
+      },
+      {
+        id: 'rail-enquiries',
+        label: 'Customer Enquiries',
+        icon: MessageSquareText,
+        tab: 'enquiries',
+        matchTabs: ['enquiries', 'customers'],
+        badgeCount: pendingEnquiryCount,
+      },
+      {
+        id: 'rail-schemes',
+        label: 'Government Schemes',
+        icon: Landmark,
+        tab: 'government-schemes',
+      },
+      {
+        id: 'rail-services',
+        label: 'Our Services',
+        icon: Layers,
+        tab: 'services',
+      },
+      {
+        id: 'rail-hero',
+        label: 'Hero Section',
+        icon: Sparkles,
+        tab: 'hero-headline',
+        matchTabs: ['hero-headline', 'hero-showcase', 'hero-portrait', 'brand-settings'],
+      },
+      {
+        id: 'rail-updates',
+        label: 'Latest Updates',
+        icon: Newspaper,
+        tab: 'latest-updates',
+      },
+      {
+        id: 'rail-docs',
+        label: 'Documents Needed',
+        icon: FileCheck2,
+        tab: 'doc-requirements',
+      },
+      {
+        id: 'rail-gallery',
+        label: 'Gallery & Journey',
+        icon: ImageIcon,
+        tab: 'gallery',
+        matchTabs: ['gallery', 'journey'],
+      },
+      {
+        id: 'rail-media',
+        label: 'Media Library',
+        icon: FolderGit2,
+        tab: 'media',
+      },
+      {
+        id: 'rail-profile',
+        label: 'Owner Profile',
+        icon: UserCheck,
+        tab: 'owner-profile',
+        matchTabs: ['owner-profile', 'business-profile'],
+      },
+    ],
+    [pendingEnquiryCount]
+  );
+
+  const railSystemShortcuts: RailShortcut[] = useMemo(
+    () => [
+      {
+        id: 'rail-settings',
+        label: 'Website Settings',
+        icon: Globe,
+        tab: 'website-settings',
+        matchTabs: ['website-settings', 'seo-manager', 'content-about', 'content-contact', 'faqs', 'content-footer'],
+      },
+      {
+        id: 'rail-security',
+        label: 'Security & Activity',
+        icon: ShieldCheck,
+        tab: 'activity-logs',
+        badgeCount: unreadNotificationCount,
+      },
+    ],
+    [unreadNotificationCount]
+  );
+
   const renderBadge = (tab?: AdminTab) => {
-    if (!tab || sidebarCollapsed) return null;
+    if (!tab) return null;
     if (tab === 'activity-logs' && unreadNotificationCount > 0) {
       return (
-        <span className="text-[10px] font-mono font-semibold text-[#C9A96E] tabular-nums px-1.5 py-0.5 rounded bg-[#C9A96E]/10">
+        <span className="text-[10px] font-mono font-semibold text-[#C9A96E] tabular-nums px-1.5 py-0.5 rounded bg-[#C9A96E]/15">
           {unreadNotificationCount}
         </span>
       );
     }
     if (tab === 'enquiries' && pendingEnquiryCount > 0) {
       return (
-        <span className="text-[10px] font-mono font-semibold text-[#C9A96E] tabular-nums px-1.5 py-0.5 rounded bg-[#C9A96E]/10">
+        <span className="text-[10px] font-mono font-semibold text-[#C9A96E] tabular-nums px-1.5 py-0.5 rounded bg-[#C9A96E]/15">
           {pendingEnquiryCount}
         </span>
       );
@@ -129,14 +271,13 @@ export const Sidebar: React.FC = () => {
         key={item.id}
         type="button"
         onClick={() => item.tab && handleSelectTab(item.tab)}
-        title={sidebarCollapsed ? item.label : undefined}
         aria-current={isActive ? 'page' : undefined}
-        className={`relative w-full flex items-center gap-3 rounded-lg text-[13px] transition-all cursor-pointer ${
-          nested && !sidebarCollapsed ? 'pl-8 pr-2.5 py-1.5' : 'px-2.5 py-2'
+        className={`relative w-full flex items-center gap-2.5 rounded-xl text-[12.5px] transition-all cursor-pointer active:scale-[0.98] ${
+          nested ? 'pl-8 pr-2.5 py-2' : 'px-2.5 py-2'
         } ${
           isActive
-            ? 'bg-[#211B16] text-[#E8E5DF] border border-[#C9A96E]/35 font-medium'
-            : 'text-[#85838A] border border-transparent hover:text-[#E8E5DF] hover:bg-white/[0.03]'
+            ? 'bg-[#20150b] text-[#f6ecdc] dark:bg-[#211B16] dark:text-[#f1e7d6] border border-[#C9A96E]/45 font-medium shadow-xs'
+            : 'text-[var(--st-mut)] border border-transparent hover:text-[var(--st-tx)] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]'
         }`}
       >
         {isActive && (
@@ -149,223 +290,310 @@ export const Sidebar: React.FC = () => {
         )}
         <Icon
           className={`w-4 h-4 shrink-0 transition-colors ${
-            isActive ? 'text-[#C9A96E]' : 'text-[#85838A]'
+            isActive ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
           }`}
         />
-        {!sidebarCollapsed && (
-          <span className="flex-1 truncate text-left">{item.label}</span>
-        )}
+        <span className="flex-1 truncate text-left">{item.label}</span>
         {renderBadge(item.tab)}
+      </button>
+    );
+  };
+
+  const renderRailButton = (shortcut: RailShortcut) => {
+    const Icon = shortcut.icon;
+    const isActive = shortcut.tab
+      ? shortcut.matchTabs
+        ? shortcut.matchTabs.includes(activeTab)
+        : activeTab === shortcut.tab
+      : false;
+
+    return (
+      <button
+        key={shortcut.id}
+        type="button"
+        onClick={() => {
+          if (shortcut.action === 'search') {
+            setSearchModalOpen(true);
+            return;
+          }
+          if (shortcut.tab) {
+            handleSelectTab(shortcut.tab);
+          }
+        }}
+        aria-label={shortcut.label}
+        aria-current={isActive ? 'page' : undefined}
+        className={`group relative w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-[13px] grid place-items-center transition-all duration-200 cursor-pointer active:scale-90 shrink-0 ${
+          isActive
+            ? 'bg-[#20150b] text-[#f6ecdc] dark:bg-[#f1e8da] dark:text-[#20150b] shadow-[0_6px_16px_rgba(0,0,0,0.28)]'
+            : 'text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.1]'
+        }`}
+      >
+        <Icon className="w-[15px] h-[15px]" />
+        {shortcut.badgeCount && shortcut.badgeCount > 0 ? (
+          <span
+            aria-hidden="true"
+            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#C9A96E] ring-2 ring-[#f8efe0] dark:ring-[#101014]"
+          />
+        ) : null}
+        <span
+          role="tooltip"
+          className="hidden sm:block pointer-events-none absolute left-[50px] z-50 px-2.5 py-1 rounded-[9px] bg-[#24180d] text-[#f8efe0] border border-[#C9A96E]/35 text-[10.5px] font-medium whitespace-nowrap shadow-lg opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0 transition-all duration-150"
+        >
+          {shortcut.label}
+        </span>
       </button>
     );
   };
 
   return (
     <>
-      {/* Mobile Drawer Overlay */}
+      {/* Semi-transparent Blurred Overlay Backdrop when Sidebar is Expanded */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {isOpen && (
           <motion.div
+            id="dockBackdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-black/75 backdrop-blur-xs lg:hidden"
-            onClick={() => setMobileMenuOpen(false)}
+            transition={{ duration: 0.24, ease: [0.215, 0.61, 0.355, 1] }}
+            className="fixed inset-0 z-40 bg-[#24160a]/28 dark:bg-black/55 backdrop-blur-[4px]"
+            onClick={closeSidebar}
             aria-hidden="true"
           />
         )}
       </AnimatePresence>
 
-      {/* Luxury Editorial Sidebar Container */}
+      {/* Collapsed Slim Floating Icon Rail (Always Fixed Left) */}
       <aside
-        aria-label="Owner Control Navigation"
-        className={`fixed top-0 bottom-0 left-0 z-50 bg-[#101014] border-r border-white/[0.07] flex flex-col transition-all duration-300 ease-out ${
-          sidebarCollapsed ? 'w-[76px]' : 'w-[264px]'
-        } ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        aria-label="Quick Floating Navigation Rail"
+        aria-hidden={isOpen}
+        className={`fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-50 w-[50px] sm:w-[54px] max-h-[calc(100dvh-20px)] flex flex-col items-center gap-1 p-1.5 sm:p-2 rounded-[26px] studio-glass-bar overflow-y-auto scrollbar-none transition-all duration-300 ${
+          isOpen ? 'opacity-0 pointer-events-none scale-95' : 'opacity-100 scale-100'
         }`}
       >
-        {/* Brand Header */}
-        <div className="h-16 px-4 border-b border-white/[0.07] flex items-center justify-between shrink-0">
-          <button
-            type="button"
-            onClick={() => handleSelectTab('overview')}
-            className="flex items-center gap-3 min-w-0 text-left group cursor-pointer"
+        <button
+          id="dockOpen"
+          type="button"
+          onClick={openSidebar}
+          aria-label="Expand full navigation menu"
+          aria-expanded={isOpen}
+          className="group relative w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-[13px] grid place-items-center text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] transition-all cursor-pointer active:scale-90 shrink-0"
+        >
+          <Menu className="w-4 h-4" />
+          <span
+            role="tooltip"
+            className="hidden sm:block pointer-events-none absolute left-[50px] z-50 px-2.5 py-1 rounded-[9px] bg-[#24180d] text-[#f8efe0] border border-[#C9A96E]/35 text-[10.5px] font-medium whitespace-nowrap shadow-lg opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150"
           >
-            <div className="w-9 h-9 rounded-lg bg-[#141419] border border-[#C9A96E]/45 text-[#C9A96E] flex items-center justify-center font-editorial text-lg font-medium shrink-0 group-hover:border-[#C9A96E]/80 transition-colors">
-              A
-            </div>
-            {!sidebarCollapsed && (
-              <div className="min-w-0">
-                <div className="font-editorial text-[17px] leading-none text-[#E8E5DF] tracking-tight truncate uppercase">
-                  Aman Computer
-                </div>
-                <div className="text-[9.5px] font-mono uppercase tracking-[0.18em] text-[#85838A] mt-1 truncate">
-                  Owner Control Center
-                </div>
-              </div>
-            )}
-          </button>
+            Expand Navigation
+          </span>
+        </button>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="hidden lg:flex w-7 h-7 rounded-md items-center justify-center text-[#85838A] hover:text-[#E8E5DF] hover:bg-[#141419] transition-colors cursor-pointer"
-              title={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-              aria-label={sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
-            >
-              {sidebarCollapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <ChevronLeft className="w-4 h-4" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden w-7 h-7 rounded-md flex items-center justify-center text-[#85838A] hover:text-[#E8E5DF] hover:bg-[#141419] transition-colors cursor-pointer"
-              aria-label="Close navigation drawer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="w-7 h-px bg-[var(--st-line)] my-1 shrink-0" />
+
+        <div className="flex flex-col items-center gap-1">
+          {railShortcuts.map((shortcut) => renderRailButton(shortcut))}
         </div>
 
-        {/* Scrollable Navigation Groups */}
-        <nav className="flex-1 overflow-y-auto admin-studio-scroll px-3 py-4 space-y-5">
-          {STUDIO_NAV_GROUPS.map((group) => (
-            <div key={group.groupTitle} className="space-y-1.5">
-              {!sidebarCollapsed ? (
-                <div className="px-2.5 pb-0.5 text-[10px] font-mono uppercase tracking-[0.18em] text-[#85838A]/80">
-                  {group.groupTitle}
-                </div>
-              ) : (
-                <div className="h-px bg-white/[0.06] my-2 mx-1.5" />
-              )}
+        <div className="w-7 h-px bg-[var(--st-line)] my-1 shrink-0" />
 
-              <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const hasChildren = Boolean(item.children && item.children.length > 0);
-                  if (!hasChildren) {
-                    return renderLeafButton(item, false);
-                  }
-
-                  const Icon = item.icon;
-                  const children = item.children || [];
-                  const hasActiveChild = children.some((child) => child.tab === activeTab);
-                  const isExpanded = Boolean(expandedParents[item.id]);
-
-                  // When sidebar is collapsed, clicking an accordion parent jumps directly to its first child
-                  if (sidebarCollapsed) {
-                    const firstChildTab = children[0]?.tab || 'overview';
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleSelectTab(firstChildTab)}
-                        title={item.label}
-                        className={`relative w-full flex items-center justify-center px-2.5 py-2 rounded-lg transition-all cursor-pointer ${
-                          hasActiveChild
-                            ? 'bg-[#211B16] text-[#E8E5DF] border border-[#C9A96E]/35'
-                            : 'text-[#85838A] border border-transparent hover:text-[#E8E5DF] hover:bg-white/[0.03]'
-                        }`}
-                      >
-                        {hasActiveChild && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-[#C9A96E]"
-                          />
-                        )}
-                        <Icon
-                          className={`w-4 h-4 shrink-0 ${
-                            hasActiveChild ? 'text-[#C9A96E]' : 'text-[#85838A]'
-                          }`}
-                        />
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <div key={item.id} className="space-y-0.5">
-                      <button
-                        type="button"
-                        onClick={() => toggleParent(item.id)}
-                        aria-expanded={isExpanded}
-                        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
-                          hasActiveChild
-                            ? 'text-[#E8E5DF] font-medium bg-white/[0.03]'
-                            : 'text-[#85838A] hover:text-[#E8E5DF] hover:bg-white/[0.025]'
-                        }`}
-                      >
-                        <Icon
-                          className={`w-4 h-4 shrink-0 transition-colors ${
-                            hasActiveChild ? 'text-[#C9A96E]' : 'text-[#85838A]'
-                          }`}
-                        />
-                        <span className="flex-1 truncate text-left">{item.label}</span>
-                        <motion.span
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                          className="shrink-0 text-[#85838A]"
-                        >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </motion.span>
-                      </button>
-
-                      <AnimatePresence initial={false}>
-                        {isExpanded && (
-                          <motion.div
-                            key={`${item.id}-panel`}
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                            className="overflow-hidden"
-                          >
-                            <div className="relative space-y-0.5 pt-0.5 pb-1">
-                              <span
-                                aria-hidden="true"
-                                className="absolute left-4 top-1 bottom-2 w-px bg-white/[0.07]"
-                              />
-                              {children.map((child) => renderLeafButton(child, true))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Fixed Bottom Studio Actions */}
-        <div className="p-3 border-t border-white/[0.07] bg-[#0A0A0E]/80 shrink-0 space-y-2">
-          <a
-            href="/"
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-white/[0.08] bg-[#141419] text-xs font-medium text-[#E8E5DF] hover:border-[#C9A96E]/45 hover:text-[#DFC492] transition-colors"
-            title="Open Public Website"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-[#C9A96E] shrink-0" />
-            {!sidebarCollapsed && <span>Public Website</span>}
-          </a>
-
-          <button
-            type="button"
-            onClick={() => {
-              void logout();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-[#C9A96E]/30 bg-[#211B16] text-xs font-medium text-[#E8E5DF] hover:border-[#C9A96E]/60 hover:bg-[#2A221B] transition-colors cursor-pointer"
-            title="Sign Out & Lock Workspace"
-          >
-            <Lock className="w-3.5 h-3.5 text-[#C9A96E] shrink-0" />
-            {!sidebarCollapsed && <span>Sign Out &amp; Lock</span>}
-          </button>
+        <div className="flex flex-col items-center gap-1">
+          {railSystemShortcuts.map((shortcut) => renderRailButton(shortcut))}
         </div>
+
+        <div className="w-7 h-px bg-[var(--st-line)] my-1 shrink-0" />
+
+        <a
+          href="/"
+          aria-label="Open Public Website"
+          className="group relative w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-[13px] grid place-items-center text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] transition-all active:scale-90 shrink-0"
+        >
+          <ExternalLink className="w-[15px] h-[15px]" />
+          <span
+            role="tooltip"
+            className="hidden sm:block pointer-events-none absolute left-[50px] z-50 px-2.5 py-1 rounded-[9px] bg-[#24180d] text-[#f8efe0] border border-[#C9A96E]/35 text-[10.5px] font-medium whitespace-nowrap shadow-lg opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150"
+          >
+            Public Website
+          </span>
+        </a>
+
+        <button
+          type="button"
+          onClick={() => {
+            void logout();
+          }}
+          aria-label="Sign Out and Lock Workspace"
+          className="group relative w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-[13px] grid place-items-center text-rose-600 dark:text-[#e8918a] hover:bg-rose-500/12 transition-all cursor-pointer active:scale-90 shrink-0"
+        >
+          <Lock className="w-[15px] h-[15px]" />
+          <span
+            role="tooltip"
+            className="hidden sm:block pointer-events-none absolute left-[50px] z-50 px-2.5 py-1 rounded-[9px] bg-[#24180d] text-[#f8efe0] border border-[#C9A96E]/35 text-[10.5px] font-medium whitespace-nowrap shadow-lg opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-150"
+          >
+            Sign Out &amp; Lock
+          </span>
+        </button>
       </aside>
+
+      {/* Expanded Floating Overlay Sidebar Drawer */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Owner Control Navigation"
+            initial={{ opacity: 0, x: -16, scale: 0.98 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: -14, scale: 0.98 }}
+            transition={{ duration: 0.26, ease: [0.215, 0.61, 0.355, 1] }}
+            className="fixed left-2.5 sm:left-4 top-[max(12px,env(safe-area-inset-top))] bottom-[max(12px,env(safe-area-inset-bottom))] z-50 w-[min(256px,calc(100vw-20px))] sm:w-[244px] rounded-[22px] studio-glass-popover flex flex-col overflow-hidden"
+          >
+            {/* Header */}
+            <div className="px-3.5 py-3 border-b border-[var(--st-line)] flex items-center justify-between gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => handleSelectTab('overview')}
+                className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
+              >
+                <span
+                  aria-hidden="true"
+                  className="w-2 h-2 rounded-full bg-[#C9A96E] shadow-[0_0_0_4px_rgba(201,169,110,0.2)] shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold tracking-tight text-[var(--st-tx)] truncate">
+                    Aman Computer
+                  </div>
+                  <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--st-mut)] truncate">
+                    Quick Navigation
+                  </div>
+                </div>
+              </button>
+
+              <button
+                id="dockClose"
+                type="button"
+                onClick={closeSidebar}
+                aria-label="Close navigation menu"
+                className="w-7 h-7 rounded-[9px] grid place-items-center text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.1] transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Full 6-Group / 23-Route Hierarchy */}
+            <nav className="flex-1 overflow-y-auto admin-studio-scroll px-2.5 py-3 space-y-4">
+              {STUDIO_NAV_GROUPS.map((group) => (
+                <div key={group.groupTitle} className="space-y-1">
+                  <div className="px-2.5 pb-0.5 text-[9.5px] font-mono font-semibold uppercase tracking-[0.16em] text-[var(--st-mut2)]">
+                    {group.groupTitle}
+                  </div>
+
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const hasChildren = Boolean(item.children && item.children.length > 0);
+                      if (!hasChildren) {
+                        return renderLeafButton(item, false);
+                      }
+
+                      const Icon = item.icon;
+                      const children = item.children || [];
+                      const hasActiveChild = children.some((child) => child.tab === activeTab);
+                      const isExpanded = Boolean(expandedParents[item.id]);
+
+                      return (
+                        <div key={item.id} className="space-y-0.5">
+                          <button
+                            type="button"
+                            onClick={() => toggleParent(item.id)}
+                            aria-expanded={isExpanded}
+                            className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12.5px] transition-colors cursor-pointer ${
+                              hasActiveChild
+                                ? 'text-[var(--st-tx)] font-medium bg-black/[0.04] dark:bg-white/[0.05]'
+                                : 'text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'
+                            }`}
+                          >
+                            <Icon
+                              className={`w-4 h-4 shrink-0 transition-colors ${
+                                hasActiveChild ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
+                              }`}
+                            />
+                            <span className="flex-1 truncate text-left">{item.label}</span>
+                            <motion.span
+                              animate={{ rotate: isExpanded ? 180 : 0 }}
+                              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                              className="shrink-0 text-[var(--st-mut)]"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </motion.span>
+                          </button>
+
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <motion.div
+                                key={`${item.id}-panel`}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="relative space-y-0.5 pt-0.5 pb-1">
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute left-4 top-1 bottom-2 w-px bg-[var(--st-line)]"
+                                  />
+                                  {children.map((child) => renderLeafButton(child, true))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </nav>
+
+            {/* Fixed Bottom Shortcuts & Sign Out */}
+            <div className="p-2.5 border-t border-[var(--st-line)] space-y-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  closeSidebar();
+                  setSearchModalOpen(true);
+                }}
+                className="w-full flex items-center justify-between gap-2 py-2 px-3 rounded-xl border border-[var(--st-line)] bg-black/[0.03] dark:bg-white/[0.04] text-xs font-medium text-[var(--st-tx)] hover:border-[#C9A96E]/50 transition-colors cursor-pointer"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Search className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  <span>Quick Search</span>
+                </span>
+                <kbd className="text-[10px] font-mono text-[var(--st-mut)]">⌘K</kbd>
+              </button>
+
+              <a
+                href="/"
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl border border-[var(--st-line)] bg-black/[0.03] dark:bg-white/[0.04] text-xs font-medium text-[var(--st-tx)] hover:border-[#C9A96E]/50 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-[#C9A96E] shrink-0" />
+                <span>Public Website</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => {
+                  closeSidebar();
+                  void logout();
+                }}
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl border border-rose-500/25 bg-rose-500/10 text-xs font-medium text-rose-700 dark:text-[#e8918a] hover:bg-rose-500/18 transition-colors cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 shrink-0" />
+                <span>Sign Out &amp; Lock</span>
+              </button>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </>
   );
 };
