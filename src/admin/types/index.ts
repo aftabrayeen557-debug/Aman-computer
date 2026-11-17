@@ -311,6 +311,7 @@ export interface WebsiteSectionContent {
     badge: string;
     headline: string;
     subheadline: string;
+    description?: string;
     ctaPrimaryText: string;
     ctaPrimaryLink: string;
     ctaSecondaryText: string;

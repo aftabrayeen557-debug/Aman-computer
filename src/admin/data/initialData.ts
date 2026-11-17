@@ -633,8 +633,10 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
 export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
   hero: {
     badge: 'CYBER CAFE & DIGITAL CENTER',
-    headline: 'Welcome to Aman Computer.',
-    subheadline: 'Your one-stop center for',
+    headline: 'Your Trusted Digital Partner',
+    subheadline: 'Fast, Reliable & Professional Digital Services.',
+    description:
+      'From online applications and PAN services to Aadhaar assistance, photo studio and printing — all your digital needs, under one roof.',
     ctaPrimaryText: 'WhatsApp Us',
     ctaPrimaryLink: 'https://wa.me/918595515718',
     ctaSecondaryText: 'Explore Services',
@@ -1039,8 +1041,8 @@ export const INITIAL_MEDIA_ASSETS: MediaAsset[] = [
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   { id: 'ntf-1', title: 'New Urgent Enquiry Received', description: 'Rahul Verma submitted request for SSC CGL 2026 form (Server rush warning).', timestamp: '10 Mins Ago', read: false, level: 'alert', linkToTab: 'enquiries' },
   { id: 'ntf-2', title: 'Printer Toner Status Alert', description: 'Canon imageRUNNER Black Toner at 18%. Replacement cartridge staged.', timestamp: '45 Mins Ago', read: false, level: 'warning', linkToTab: 'overview' },
-  { id: 'ntf-3', title: 'Physical PAN Card Batch Arrived', description: 'Speed post delivery received for 8 applicant PAN cards.', timestamp: '2 Hours Ago', read: true, level: 'success', linkToTab: 'receipts' },
-  { id: 'ntf-4', title: 'Daily Database Backup', description: 'Customer records & counter receipts snapshot verified.', timestamp: '1 Day Ago', read: true, level: 'info', linkToTab: 'backup-restore' },
+  { id: 'ntf-3', title: 'Physical PAN Card Batch Arrived', description: 'Speed post delivery received for 8 applicant PAN cards.', timestamp: '2 Hours Ago', read: true, level: 'success', linkToTab: 'enquiries' },
+  { id: 'ntf-4', title: 'Daily Database Backup', description: 'Customer records & counter activity snapshot verified.', timestamp: '1 Day Ago', read: true, level: 'info', linkToTab: 'overview' },
 ];
 
 export const INITIAL_STAFF: StaffMember[] = [

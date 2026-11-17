@@ -46,7 +46,17 @@ import {
   mapGalleryRow,
   mapJourneyRow,
   mapGovernmentSchemeRow,
+  validateWebsiteContentBeforeSave,
+  dbSaveWebsiteContent,
 } from '../src/admin/services/supabaseService.ts';
+import {
+  HERO_CONTENT_LIMITS,
+  HERO_MOBILE_LINE_LIMITS,
+  HERO_DEFAULT_COPY,
+  normalizeHeroText,
+  validateHeroContent,
+  isLegacyOversizedHero,
+} from '../src/admin/services/heroValidationService.ts';
 import {
   STUDIO_NAV_GROUPS,
   ALL_STUDIO_NAV_ITEMS,
@@ -2417,3 +2427,248 @@ test('Live Supabase connectivity check (conditional on environment credentials)'
   const conn = await testSupabaseConnection();
   assert.equal(conn.ok, true, `Supabase connection failed: ${conn.error}`);
 });
+
+test('Hero content limits, exact copy defaults, whitespace trimming without silent truncation, and strict boundary validation', async () => {
+  assert.deepEqual(HERO_CONTENT_LIMITS, {
+    headline: 45,
+    subheadline: 65,
+    description: 180,
+  });
+  assert.deepEqual(HERO_MOBILE_LINE_LIMITS, {
+    headline: 3,
+    subheadline: 2,
+    description: 4,
+  });
+
+  // Refined official copy matches defaults and stays safely within character limits
+  assert.equal(HERO_DEFAULT_COPY.headline, 'Your Trusted Digital Partner');
+  assert.equal(HERO_DEFAULT_COPY.subheadline, 'Fast, Reliable & Professional Digital Services.');
+  assert.equal(
+    HERO_DEFAULT_COPY.description,
+    'From online applications and PAN services to Aadhaar assistance, photo studio and printing — all your digital needs, under one roof.'
+  );
+  assert.equal(INITIAL_WEBSITE_CONTENT.hero.headline, HERO_DEFAULT_COPY.headline);
+  assert.equal(INITIAL_WEBSITE_CONTENT.hero.subheadline, HERO_DEFAULT_COPY.subheadline);
+  assert.equal(INITIAL_WEBSITE_CONTENT.hero.description, HERO_DEFAULT_COPY.description);
+
+  assert.equal(normalizeHeroText('  Your \n\t  Trusted   Partner  '), 'Your Trusted Partner');
+
+  const defaultCheck = validateHeroContent(INITIAL_WEBSITE_CONTENT.hero);
+  assert.equal(defaultCheck.valid, true);
+  assert.deepEqual(defaultCheck.errors, {});
+  assert.equal(isLegacyOversizedHero(INITIAL_WEBSITE_CONTENT.hero), false);
+
+  // Exact upper boundaries (45, 65, 180) must pass
+  const exactMaxResult = validateHeroContent({
+    headline: 'A'.repeat(45),
+    subheadline: 'B'.repeat(65),
+    description: 'C'.repeat(180),
+  });
+  assert.equal(exactMaxResult.valid, true);
+  assert.equal(exactMaxResult.sanitized.headline.length, 45);
+  assert.equal(exactMaxResult.sanitized.subheadline.length, 65);
+  assert.equal(exactMaxResult.sanitized.description?.length, 180);
+
+  // Leading/trailing and repeated spaces collapse cleanly without silent truncation
+  const paddedWithinLimit = validateHeroContent({
+    headline: '   Your   Trusted   Digital   Partner  ',
+    subheadline: '  Fast, Reliable &   Professional Digital Services. ',
+    description: '  Fast   help   for   PAN,   Aadhaar   and   printing.  ',
+  });
+  assert.equal(paddedWithinLimit.valid, true);
+  assert.equal(paddedWithinLimit.sanitized.headline, 'Your Trusted Digital Partner');
+  assert.equal(paddedWithinLimit.sanitized.subheadline, 'Fast, Reliable & Professional Digital Services.');
+  assert.equal(paddedWithinLimit.sanitized.description, 'Fast help for PAN, Aadhaar and printing.');
+
+  // Exceeding bounds (46, 66, 181) MUST fail validation and NEVER silently truncate
+  const overHead = 'X'.repeat(46);
+  const overSub = 'Y'.repeat(66);
+  const overDesc = 'Z'.repeat(181);
+  const overResult = validateHeroContent({
+    headline: overHead,
+    subheadline: overSub,
+    description: overDesc,
+  });
+  assert.equal(overResult.valid, false);
+  assert.ok(overResult.errors.headline?.includes('45'));
+  assert.ok(overResult.errors.subheadline?.includes('65'));
+  assert.ok(overResult.errors.description?.includes('180'));
+  assert.equal(overResult.sanitized.headline.length, 46, 'Must not silently truncate headline');
+  assert.equal(overResult.sanitized.subheadline.length, 66, 'Must not silently truncate subheadline');
+  assert.equal(overResult.sanitized.description?.length, 181, 'Must not silently truncate description');
+
+  // Whitespace-only / empty values must fail required validation
+  const emptyResult = validateHeroContent({
+    headline: '    ',
+    subheadline: '\n\t',
+    description: '',
+  });
+  assert.equal(emptyResult.valid, false);
+  assert.ok(emptyResult.errors.headline);
+  assert.ok(emptyResult.errors.subheadline);
+  assert.ok(emptyResult.errors.description);
+
+  // Legacy oversized copy detection
+  assert.equal(
+    isLegacyOversizedHero({
+      headline: 'Welcome to Aman Computer.',
+      subheadline: 'Your one-stop center for CSC, PAN, Aadhaar & Studio.',
+      description: 'Aman Computer is your local neighborhood digital partner.',
+    }),
+    true
+  );
+
+  // Backend save pre-check & dbSaveWebsiteContent rejection + unrelated section preservation
+  const invalidPayload = {
+    ...INITIAL_WEBSITE_CONTENT,
+    hero: {
+      ...INITIAL_WEBSITE_CONTENT.hero,
+      headline: 'H'.repeat(46),
+    },
+  };
+  const preFail = validateWebsiteContentBeforeSave(invalidPayload);
+  assert.equal(preFail.ok, false);
+  assert.ok(preFail.error?.includes('45'));
+
+  const dbSaveRejected = await dbSaveWebsiteContent(invalidPayload);
+  assert.equal(dbSaveRejected.ok, false);
+  assert.ok(dbSaveRejected.error?.includes('45'));
+
+  // Saving unrelated sections with skipHeroValidation preserves existing data cleanly
+  const unrelatedSaveCheck = validateWebsiteContentBeforeSave(invalidPayload, { skipHeroValidation: true });
+  assert.equal(unrelatedSaveCheck.ok, true);
+  assert.equal(unrelatedSaveCheck.sanitizedContent.about.heading, INITIAL_WEBSITE_CONTENT.about.heading);
+  assert.equal(unrelatedSaveCheck.sanitizedContent.brandSettings?.shopName, INITIAL_WEBSITE_CONTENT.brandSettings?.shopName);
+  assert.equal(unrelatedSaveCheck.sanitizedContent.seoSettings?.pageTitle, INITIAL_WEBSITE_CONTENT.seoSettings?.pageTitle);
+});
+
+test('Public hero HTML, synced home mirror, Admin HeroManagerView, and SQL trigger meet responsive typography & limits', () => {
+  const indexHtml = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
+  const homeHtml = fs.readFileSync(path.join(ROOT_DIR, 'public/home/index.html'), 'utf8');
+  assert.equal(indexHtml, homeHtml, 'index.html and public/home/index.html must remain byte-for-byte synchronized');
+
+  // Refined copy and semantic structure in public HTML
+  assert.ok(indexHtml.includes('id="heroHeadline"'));
+  assert.ok(indexHtml.includes('id="heroSubheadline"'));
+  assert.ok(indexHtml.includes('id="heroDescription"'));
+  assert.ok(indexHtml.includes('Your Trusted Digital Partner'));
+  assert.ok(indexHtml.includes('Fast, Reliable &amp; Professional Digital Services.') || indexHtml.includes('Fast, Reliable & Professional Digital Services.'));
+  assert.ok(indexHtml.includes('From online applications and PAN services to Aadhaar assistance, photo studio and printing'));
+
+  // Responsive clamp() tokens and breakpoints
+  assert.ok(indexHtml.includes('--hero-fs-main'));
+  assert.ok(indexHtml.includes('--hero-fs-sub'));
+  assert.ok(indexHtml.includes('--hero-fs-desc'));
+  assert.ok(indexHtml.includes('clamp('));
+  assert.ok(indexHtml.includes('hero--no-fig'));
+
+  // No oversized legacy headline stub left in index.html markup
+  assert.equal(indexHtml.includes('Your Trust, Our Service — Fast, Honest & 100% Reliable Digital Services.'), false);
+
+  // Admin HeroManagerView includes character limits, preview viewport switcher, and line warnings
+  const heroAdminSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/views/HeroManagerView.tsx'), 'utf8');
+  assert.ok(heroAdminSrc.includes('HERO_CONTENT_LIMITS'));
+  assert.ok(heroAdminSrc.includes('HERO_MOBILE_LINE_LIMITS'));
+  assert.ok(heroAdminSrc.includes('validateHeroContent'));
+  assert.ok(heroAdminSrc.includes('Mobile (390px)') || heroAdminSrc.includes('390px'));
+  assert.ok(heroAdminSrc.includes('Tablet (768px)') || heroAdminSrc.includes('768px'));
+  assert.ok(heroAdminSrc.includes('Desktop'));
+
+  // SQL backend trigger migration preserves existing schema & RLS and enforces exact 45/65/180 limits
+  const heroTriggerSql = fs.readFileSync(
+    path.join(ROOT_DIR, 'supabase/migrations/20261117000000_validate_hero_content_limits.sql'),
+    'utf8'
+  );
+  assert.ok(heroTriggerSql.includes('CREATE OR REPLACE FUNCTION public.validate_website_content_hero()'));
+  assert.ok(heroTriggerSql.includes('char_length(v_headline) = 0 OR char_length(v_headline) > 45'));
+  assert.ok(heroTriggerSql.includes('char_length(v_subheadline) = 0 OR char_length(v_subheadline) > 65'));
+  assert.ok(heroTriggerSql.includes('char_length(v_description) = 0 OR char_length(v_description) > 180'));
+  assert.equal(/DROP TABLE/i.test(heroTriggerSql), false);
+  assert.equal(/DROP POLICY/i.test(heroTriggerSql), false);
+});
+
+test('Aman Computer repository consolidation: zero Rishi portfolio remnants, clean routes/SEO/docs, XSS URL hardening & truthful persistence', () => {
+  // Removed portfolio directories & orphan entrypoints must not exist
+  const removedPaths = [
+    'index.react.html',
+    'src/main.tsx',
+    'src/App.tsx',
+    'src/components',
+    'src/data',
+    'src/types',
+    'src/assets',
+    'public/photographer',
+    'public/ability-card',
+    'public/card',
+    'public/assets',
+  ];
+  for (const rel of removedPaths) {
+    assert.equal(fs.existsSync(path.join(ROOT_DIR, rel)), false, `${rel} should be removed`);
+  }
+
+  // Required consolidated files & metadata
+  const metadata = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'metadata.json'), 'utf8'));
+  assert.match(metadata.name, /Aman Computer/i);
+  assert.equal(/Rishi Thakor/i.test(JSON.stringify(metadata)), false);
+
+  const pkg = JSON.parse(fs.readFileSync(path.join(ROOT_DIR, 'package.json'), 'utf8'));
+  assert.equal(pkg.name, 'aman-computer-portal');
+  assert.equal(Boolean(pkg.dependencies?.express), false);
+  assert.equal(Boolean(pkg.dependencies?.dotenv), false);
+  assert.equal(Boolean(pkg.dependencies?.['@google/genai']), false);
+
+  const licensesTxt = fs.readFileSync(path.join(ROOT_DIR, 'public/legal/licenses.txt'), 'utf8');
+  assert.match(licensesTxt, /\(c\) Aman Computer/i);
+  assert.equal(/Rishi Thakor/i.test(licensesTxt), false);
+  assert.equal(/ThreeUI/i.test(licensesTxt), false);
+  assert.match(licensesTxt, /three\.js/i);
+  assert.match(licensesTxt, /Lenis/i);
+  assert.match(licensesTxt, /Onest/i);
+
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'public/404.html')), true);
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'README.md')), true);
+  const sitemapXml = fs.readFileSync(path.join(ROOT_DIR, 'public/sitemap.xml'), 'utf8');
+  assert.match(sitemapXml, /<loc>https:\/\//);
+  assert.equal(/photographer|ability-card/i.test(sitemapXml), false);
+  const robotsTxt = fs.readFileSync(path.join(ROOT_DIR, 'public/robots.txt'), 'utf8');
+  assert.match(robotsTxt, /Disallow:\s*\/admin/);
+
+  // Zero legacy rishi-mode / rt_dark_mode keys in HTML pages
+  const htmlFilesToCheck = [
+    'index.html',
+    'public/home/index.html',
+    'public/web-developer/index.html',
+    'public/app-developer/index.html',
+    'public/ui-ux-designer/index.html',
+    'public/graphic-designer/index.html',
+    'public/legal/index.html',
+    'public/privacy-policy/index.html',
+    'public/terms-and-conditions/index.html',
+  ];
+  for (const rel of htmlFilesToCheck) {
+    const html = fs.readFileSync(path.join(ROOT_DIR, rel), 'utf8');
+    assert.equal(html.includes('rishi-mode'), false, `${rel} must not contain rishi-mode`);
+    assert.equal(html.includes('rt_dark_mode'), false, `${rel} must not contain rt_dark_mode`);
+  }
+
+  // XSS URL validation & storefront enquiry wiring
+  const indexHtml = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
+  assert.ok(indexHtml.includes('safeHttpUrl('));
+  assert.ok(indexHtml.includes('id="publicEnquiryForm"'));
+  assert.ok(indexHtml.includes('window.__submitAmanEnquiry'));
+
+  const door0Html = fs.readFileSync(path.join(ROOT_DIR, 'public/web-developer/index.html'), 'utf8');
+  const door3Html = fs.readFileSync(path.join(ROOT_DIR, 'public/graphic-designer/index.html'), 'utf8');
+  assert.ok(door0Html.includes('safeHttpUrl('));
+  assert.ok(door3Html.includes('safeHttpUrl('));
+
+  // Public sync & AdminContext truthful persistence checks
+  const publicSyncTs = fs.readFileSync(path.join(ROOT_DIR, 'src/lib/publicSync.ts'), 'utf8');
+  assert.ok(publicSyncTs.includes('sanitizePublicUrl'));
+  assert.ok(publicSyncTs.includes('__submitAmanEnquiry'));
+
+  const adminCtxTs = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/context/AdminContext.tsx'), 'utf8');
+  assert.ok(adminCtxTs.includes('dbSaveWebsiteContent(nextContent, { skipHeroValidation: true })'));
+  assert.ok(adminCtxTs.includes('Promise<boolean>'));
+});
+

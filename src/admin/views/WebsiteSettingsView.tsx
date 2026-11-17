@@ -38,9 +38,9 @@ export const WebsiteSettingsView: React.FC = () => {
     }
   }, [websiteContent.websiteSettings]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateWebsiteContent('websiteSettings', {
+    await updateWebsiteContent('websiteSettings', {
       ...draft,
       maintenanceMessage: draft.maintenanceMessage.trim(),
       announcementText: draft.announcementText.trim(),

@@ -34,15 +34,18 @@ export const WebsiteContentView: React.FC<{
     setFooterForm(websiteContent.footer);
   }, [websiteContent]);
 
-  const handleSaveCurrentSection = () => {
-    if (activeSection === 'about') updateWebsiteContent('about', aboutForm);
-    else if (activeSection === 'whyUs') updateWebsiteContent('whyChooseUs', whyUsForm);
-    else if (activeSection === 'howItWorks') updateWebsiteContent('howItWorks', howItWorksForm);
-    else if (activeSection === 'contact') updateWebsiteContent('contact', contactForm);
-    else if (activeSection === 'footer') updateWebsiteContent('footer', footerForm);
+  const handleSaveCurrentSection = async () => {
+    let ok = false;
+    if (activeSection === 'about') ok = await updateWebsiteContent('about', aboutForm);
+    else if (activeSection === 'whyUs') ok = await updateWebsiteContent('whyChooseUs', whyUsForm);
+    else if (activeSection === 'howItWorks') ok = await updateWebsiteContent('howItWorks', howItWorksForm);
+    else if (activeSection === 'contact') ok = await updateWebsiteContent('contact', contactForm);
+    else if (activeSection === 'footer') ok = await updateWebsiteContent('footer', footerForm);
 
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2500);
+    if (ok) {
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    }
   };
 
   const tabs: Array<{ id: ContentSectionKey; label: string }> = [

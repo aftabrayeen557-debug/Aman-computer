@@ -33,9 +33,9 @@ export const BrandSettingsView: React.FC = () => {
     }
   }, [websiteContent.brandSettings]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateWebsiteContent('brandSettings', {
+    await updateWebsiteContent('brandSettings', {
       ...draft,
       shopName: draft.shopName.trim() || 'Aman Computer',
       tagline: draft.tagline.trim(),

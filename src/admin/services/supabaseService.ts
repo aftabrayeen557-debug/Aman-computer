@@ -19,6 +19,7 @@ import {
   TerminalSettings,
   GovernmentSchemeItem,
 } from '../types';
+import { validateHeroContent } from './heroValidationService';
 
 export interface DbWriteResult {
   ok: boolean;
@@ -563,13 +564,54 @@ export const dbGetWebsiteContent = async (): Promise<WebsiteSectionContent | nul
   return data.content as WebsiteSectionContent;
 };
 
-export const dbSaveWebsiteContent = async (content: WebsiteSectionContent): Promise<DbWriteResult> => {
+export const validateWebsiteContentBeforeSave = (
+  content: WebsiteSectionContent,
+  options?: { skipHeroValidation?: boolean }
+): { ok: boolean; error?: string; sanitizedContent: WebsiteSectionContent } => {
+  if (!content || typeof content !== 'object') {
+    return {
+      ok: false,
+      error: 'Website content payload must be a valid object.',
+      sanitizedContent: content,
+    };
+  }
+  if (!options?.skipHeroValidation && content.hero) {
+    const heroCheck = validateHeroContent(content.hero);
+    if (!heroCheck.valid) {
+      const firstError =
+        Object.values(heroCheck.errors)[0] ||
+        'Hero content exceeds allowed character limits or is missing required fields.';
+      return {
+        ok: false,
+        error: firstError,
+        sanitizedContent: content,
+      };
+    }
+    return {
+      ok: true,
+      sanitizedContent: {
+        ...content,
+        hero: heroCheck.sanitized,
+      },
+    };
+  }
+  return { ok: true, sanitizedContent: content };
+};
+
+export const dbSaveWebsiteContent = async (
+  content: WebsiteSectionContent,
+  options?: { skipHeroValidation?: boolean }
+): Promise<DbWriteResult> => {
+  const preCheck = validateWebsiteContentBeforeSave(content, options);
+  if (!preCheck.ok) {
+    return errResult({ message: preCheck.error });
+  }
   const client = getClient();
   if (!client) return errResult({ message: 'Supabase not configured' });
   const { error } = await client.from('website_content').upsert({
     id: 'global_content',
     section_key: 'global',
-    content,
+    content: preCheck.sanitizedContent,
     updated_at: new Date().toISOString(),
   });
   return error ? errResult(error) : okResult();

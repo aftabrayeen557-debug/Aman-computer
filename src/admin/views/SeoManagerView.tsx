@@ -33,9 +33,9 @@ export const SeoManagerView: React.FC = () => {
     }
   }, [websiteContent.seoSettings]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateWebsiteContent('seoSettings', {
+    await updateWebsiteContent('seoSettings', {
       pageTitle: draft.pageTitle.trim() || defaults.pageTitle,
       metaDescription: draft.metaDescription.trim(),
       keywords: draft.keywords.trim(),

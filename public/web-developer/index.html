@@ -9,7 +9,7 @@
 
 <meta name="description" content="Official employment notifications, exam admit cards, government scheme deadlines, and entrance results at Aman Computer Cyber Cafe &amp; Digital Center." />
 <meta name="theme-color" content="#1A1818" />
-<script>if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add('embed');try{var _m=localStorage.getItem('aman-mode')||localStorage.getItem('rishi-mode');if(_m==='dark')document.documentElement.dataset.mode='dark'}catch(e){}</script>
+<script>if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add('embed');try{if(localStorage.getItem('aman-mode')==='dark')document.documentElement.dataset.mode='dark'}catch(e){}</script>
 <style>
 :root{--bg:#E8E4E0;--fg:#1A1818;--fg-rgb:26,24,24;--card:#F3F0EC;--card-line:rgba(26,24,24,.08);--accent:#6B4F4F;--room:#FBFAF8;
   --shadow:0 -1px 0 rgba(255,255,255,.6) inset,0 30px 60px -30px rgba(26,24,24,.35),0 -12px 40px -24px rgba(26,24,24,.25);
@@ -402,9 +402,20 @@ if (publishedUpdates.length === 0) {
     }
     const tagsHtml = tags.join('');
 
+    const safeHttpUrl = u => {
+      const s = String(u || '').trim();
+      if (!s) return '';
+      if (s.startsWith('/') || s.startsWith('./') || s.startsWith('../')) return s;
+      try {
+        const parsed = new URL(s, location.origin);
+        return (parsed.protocol === 'http:' || parsed.protocol === 'https:') ? parsed.href : '';
+      } catch (e) { return ''; }
+    };
     const st = u.status || 'Active';
     const stSlug = 'status-' + String(st).toLowerCase().replace(/\s+/g, '-');
-    const hasImage = Boolean(u.posterImage && u.posterImage.trim());
+    const safePoster = safeHttpUrl(u.posterImage);
+    const safeOfficial = safeHttpUrl(u.officialLink);
+    const hasImage = Boolean(safePoster);
 
     return `
     <article class="card${i % 2 ? ' flip' : ''}" style="--i:${i}" aria-labelledby="p${i}">
@@ -420,11 +431,11 @@ if (publishedUpdates.length === 0) {
           ${u.sourceWebsite ? `<p class="sub">${esc(u.sourceWebsite)}</p>` : ''}
           ${u.shortDescription ? `<p class="desc">${esc(u.shortDescription)}</p>` : ''}
           ${tagsHtml ? `<ul class="tags">${tagsHtml}</ul>` : ''}
-          ${u.officialLink ? `<a class="live" href="${esc(u.officialLink)}" target="_blank" rel="noopener noreferrer">Official Notification ${ARROW}</a>` : ''}
+          ${safeOfficial ? `<a class="live" href="${esc(safeOfficial)}" target="_blank" rel="noopener noreferrer">Official Notification ${ARROW}</a>` : ''}
         </div>
         <div class="stage" aria-hidden="true">
           <div class="mon"><div class="mon__body"><div class="mon__screen">
-            ${hasImage ? `<img class="page" src="${esc(u.posterImage.trim())}" alt="${esc(u.title)}" decoding="async" loading="${i < 2 ? 'eager' : 'lazy'}">` : ''}
+            ${hasImage ? `<img class="page" src="${esc(safePoster)}" alt="${esc(u.title)}" decoding="async" loading="${i < 2 ? 'eager' : 'lazy'}">` : ''}
           </div></div><div class="mon__neck"></div><div class="mon__foot"></div></div>
         </div>
       </div>
@@ -727,7 +738,11 @@ if (!reduced){ addEventListener('scroll', () => { if (!ticking){ ticking = true;
         const rawWa = String(p.whatsappNumber || p.primaryPhone || '918595515718').replace(/\D/g, '');
         const waDigits = rawWa.length === 10 ? '91' + rawWa : (rawWa || '918595515718');
         const href = 'https://wa.me/' + waDigits;
-        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => { a.href = href; });
+        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => {
+          const curHref = a.getAttribute('href') || '';
+          const qIdx = curHref.indexOf('?');
+          a.href = qIdx >= 0 ? href + curHref.slice(qIdx) : href;
+        });
       }
       const webRaw = localStorage.getItem('aman_website_content');
       if (webRaw) {

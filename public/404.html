@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Not Found — Aman Computer</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192">
+  <style>
+    @font-face {
+      font-family: "Onest";
+      src: url("/fonts/onest-latin.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #E8E4E0;
+      --ink: #272727;
+      --muted: rgba(39, 39, 39, 0.56);
+      --line: rgba(39, 39, 39, 0.14);
+      --accent: #3d7552;
+    }
+
+    html.dark {
+      --bg: #1A1818;
+      --ink: #E8E4E0;
+      --muted: rgba(232, 228, 224, 0.56);
+      --line: rgba(232, 228, 224, 0.14);
+      --accent: #4ec87a;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px clamp(20px, 5vw, 64px);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header, footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .brand {
+      color: var(--ink);
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    main {
+      max-width: 680px;
+      margin: auto 0;
+      padding: 48px 0;
+    }
+
+    .code {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--muted);
+      max-width: 52ch;
+      margin-bottom: 28px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--bg);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .quick-doors {
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      font-size: 13px;
+    }
+
+    .quick-doors a {
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    .quick-doors a:hover {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+  </style>
+  <script>
+    if (localStorage.getItem("aman-mode") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <a href="/" class="brand">Aman Computer</a>
+    <span>Varanasi, Uttar Pradesh</span>
+  </header>
+
+  <main>
+    <span class="code">Error 404</span>
+    <h1>This page is not available.</h1>
+    <p>
+      The link may have moved or no longer exists. Return to Aman Computer to explore digital services, government forms, PAN &amp; Aadhaar support, printing, and travel bookings.
+    </p>
+    <div class="actions">
+      <a href="/" class="btn-primary">Back to Home</a>
+      <a href="/web-developer/" class="btn-secondary">Latest Updates &amp; Forms</a>
+    </div>
+    <nav class="quick-doors" aria-label="Service Doors">
+      <a href="/web-developer/">Online Forms &amp; Govt Jobs</a>
+      <a href="/app-developer/">PAN, Aadhaar &amp; ID Services</a>
+      <a href="/ui-ux-designer/">Print, Scan &amp; Photo Studio</a>
+      <a href="/graphic-designer/">Train, Flight &amp; Travel</a>
+      <a href="/legal/">Legal</a>
+    </nav>
+  </main>
+
+  <footer>
+    <span>&copy; <span id="yr"></span> Aman Computer</span>
+    <a href="/admin" style="color:inherit;text-decoration:none;">Admin Login</a>
+  </footer>
+  <script>
+    document.getElementById("yr").textContent = String(new Date().getFullYear());
+  </script>
+</body>
+</html>

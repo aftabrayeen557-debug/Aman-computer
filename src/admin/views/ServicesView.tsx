@@ -117,9 +117,9 @@ export const ServicesView: React.FC = () => {
     '918595515718'
   ).replace(/[^0-9]/g, '');
 
-  const handleSaveDoorsMeta = (e: React.FormEvent) => {
+  const handleSaveDoorsMeta = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateWebsiteContent('doorsConfig', doorsDraft);
+    await updateWebsiteContent('doorsConfig', doorsDraft);
   };
 
   return (

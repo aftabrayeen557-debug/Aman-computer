@@ -110,6 +110,7 @@ import {
   dbUpsertGovernmentScheme,
   dbDeleteGovernmentScheme,
 } from '../services/supabaseService';
+import { validateHeroContent } from '../services/heroValidationService';
 
 export type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated' | 'unauthorized';
 export type DbSyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'not-configured';
@@ -219,7 +220,7 @@ interface AdminContextType {
 
   // 2. Website Content: Sections (Hero, Showcase, Portrait, Brand, Doors, Settings, SEO) & Owner Profile
   websiteContent: WebsiteSectionContent;
-  updateWebsiteContent: (section: keyof WebsiteSectionContent, data: any) => void;
+  updateWebsiteContent: (section: keyof WebsiteSectionContent, data: any) => Promise<boolean>;
   ownerProfile: OwnerProfile;
   ownerProfileStatus: 'ready' | 'loading' | 'saving' | 'error';
   ownerProfileError: string | null;
@@ -1700,7 +1701,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 
     const saved = await persistWrite(
-      () => dbSaveWebsiteContent(nextContent),
+      () => dbSaveWebsiteContent(nextContent, { skipHeroValidation: true }),
       'Profile Updated',
       'Your changes have been saved successfully.'
     );
@@ -1716,11 +1717,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return true;
   };
 
-  const updateWebsiteContent = (section: keyof WebsiteSectionContent, data: any) => {
+  const updateWebsiteContent = async (
+    section: keyof WebsiteSectionContent,
+    data: any
+  ): Promise<boolean> => {
+    const previousContent = websiteContent;
     const existingSection = websiteContent[section];
-    const nextValue = Array.isArray(data)
+    let nextValue = Array.isArray(data)
       ? data
       : { ...(existingSection && typeof existingSection === 'object' ? existingSection : {}), ...data };
+
+    if (section === 'hero') {
+      const validation = validateHeroContent(nextValue);
+      if (!validation.valid) {
+        const firstError =
+          Object.values(validation.errors)[0] ||
+          'Hero content contains invalid or oversized text.';
+        showToast('Validation Error', firstError, 'error');
+        return false;
+      }
+      nextValue = validation.sanitized;
+    }
+
     const next: WebsiteSectionContent = {
       ...INITIAL_WEBSITE_CONTENT,
       ...websiteContent,
@@ -1728,11 +1746,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
     setWebsiteContent(next);
     addActivityLog('CONTENT_UPDATE', 'Website Content', `Updated ${String(section)}`);
-    void persistWrite(
-      () => dbSaveWebsiteContent(next),
+    const saved = await persistWrite(
+      () => dbSaveWebsiteContent(next, { skipHeroValidation: section !== 'hero' }),
       'Changes Saved',
       'Your website updates are saved and live.'
     );
+    if (!saved) {
+      setWebsiteContent(previousContent);
+      return false;
+    }
+    return true;
   };
 
   // 10. FAQs CRUD

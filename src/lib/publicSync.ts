@@ -100,6 +100,26 @@ const emitPublicEvent = (name: string, detail: unknown) => {
   }
 };
 
+export const sanitizePublicUrl = (
+  rawUrl: string | undefined | null,
+  allowRelative = true
+): string => {
+  const val = String(rawUrl || '').trim();
+  if (!val) return '';
+  if (allowRelative && val.startsWith('/') && !val.startsWith('//')) {
+    return val;
+  }
+  try {
+    const parsed = new URL(val);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.href;
+    }
+  } catch {
+    return '';
+  }
+  return '';
+};
+
 /**
  * Applies live SEO, Favicon, Brand & Maintenance settings to static HTML shells when loaded.
  */
@@ -141,16 +161,29 @@ export const applyPublicWebsiteMetadata = (): void => {
       kw.setAttribute('content', seo.keywords);
     }
 
-    if (seo?.ogImageUrl) {
-      const ogImg = document.querySelector('meta[property="og:image"]');
-      const twImg = document.querySelector('meta[name="twitter:image"]');
-      if (ogImg) ogImg.setAttribute('content', seo.ogImageUrl);
-      if (twImg) twImg.setAttribute('content', seo.ogImageUrl);
+    const safeCanonicalUrl = sanitizePublicUrl(seo?.canonicalUrl, false);
+    if (isHomePage && safeCanonicalUrl) {
+      let canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.setAttribute('href', safeCanonicalUrl);
     }
 
-    if (brand?.faviconUrl) {
+    const safeOgImageUrl = sanitizePublicUrl(seo?.ogImageUrl, true);
+    if (safeOgImageUrl) {
+      const ogImg = document.querySelector('meta[property="og:image"]');
+      const twImg = document.querySelector('meta[name="twitter:image"]');
+      if (ogImg) ogImg.setAttribute('content', safeOgImageUrl);
+      if (twImg) twImg.setAttribute('content', safeOgImageUrl);
+    }
+
+    const safeFaviconUrl = sanitizePublicUrl(brand?.faviconUrl, true);
+    if (safeFaviconUrl) {
       const icons = document.querySelectorAll('link[rel*="icon"]');
-      icons.forEach((link) => link.setAttribute('href', brand.faviconUrl));
+      icons.forEach((link) => link.setAttribute('href', safeFaviconUrl));
     }
 
     if (brand?.shopName) {
@@ -337,5 +370,7 @@ export const submitPublicEnquiry = async (
 };
 
 if (typeof window !== 'undefined') {
+  (window as any).__submitAmanEnquiry = submitPublicEnquiry;
+  (window as any).__applyPublicWebsiteMetadata = applyPublicWebsiteMetadata;
   void syncPublicWebsiteFromSupabase();
 }

@@ -17,9 +17,7 @@ export default defineConfig(() => {
             'app-developer',
             'ui-ux-designer',
             'graphic-designer',
-            'photographer',
             'legal',
-            'ability-card',
             'privacy-policy',
             'terms-and-conditions',
           ];
@@ -60,6 +58,31 @@ export default defineConfig(() => {
                 return next();
               }
             }
+            if (
+              req.method === 'GET' &&
+              urlPath !== '/' &&
+              !urlPath.startsWith('/@') &&
+              !urlPath.startsWith('/src/') &&
+              !urlPath.startsWith('/node_modules/') &&
+              !urlPath.startsWith('/assets/')
+            ) {
+              const publicCandidate = path.join(__dirname, 'public', urlPath);
+              const rootCandidate = path.join(__dirname, urlPath);
+              const publicIndex = path.join(publicCandidate, 'index.html');
+              const exists =
+                (fs.existsSync(publicCandidate) && fs.statSync(publicCandidate).isFile()) ||
+                (fs.existsSync(rootCandidate) && fs.statSync(rootCandidate).isFile()) ||
+                (fs.existsSync(publicIndex) && fs.statSync(publicIndex).isFile());
+              if (!exists && (!path.extname(urlPath) || urlPath.endsWith('.html'))) {
+                const notFoundFile = path.join(__dirname, 'public', '404.html');
+                if (fs.existsSync(notFoundFile)) {
+                  res.statusCode = 404;
+                  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                  fs.createReadStream(notFoundFile).pipe(res);
+                  return;
+                }
+              }
+            }
             next();
           });
         },
@@ -85,6 +108,31 @@ export default defineConfig(() => {
               );
               if (updated !== html) {
                 fs.writeFileSync(target, updated, 'utf8');
+              }
+            }
+          }
+
+          // Mirror built admin entrypoint to /admin/index.html and /login/index.html for static hosts
+          const adminDist = path.join(distDir, 'admin.html');
+          if (fs.existsSync(adminDist)) {
+            for (const sub of ['admin', 'login']) {
+              const subDir = path.join(distDir, sub);
+              fs.mkdirSync(subDir, { recursive: true });
+              fs.copyFileSync(adminDist, path.join(subDir, 'index.html'));
+            }
+          }
+
+          // Apply canonical APP_URL origin if configured at build time
+          const appUrl = (process.env.APP_URL || '').trim().replace(/\/+$/, '');
+          if (appUrl && /^https?:\/\//i.test(appUrl)) {
+            for (const seoFile of ['sitemap.xml', 'robots.txt']) {
+              const filePath = path.join(distDir, seoFile);
+              if (fs.existsSync(filePath)) {
+                const text = fs.readFileSync(filePath, 'utf8');
+                const updated = text.replace(/https:\/\/aman-computer\.example/g, appUrl);
+                if (updated !== text) {
+                  fs.writeFileSync(filePath, updated, 'utf8');
+                }
               }
             }
           }
