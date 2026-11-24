@@ -38,6 +38,14 @@ import {
   MAX_DOC_SIZE,
 } from '../src/admin/services/storageService.ts';
 import {
+  validateFileDeep,
+  validateFilesBatch,
+  inspectFilenameSecurity,
+  detectMagicBytes,
+  buildSafeStorageObjectPath,
+  isSafeAssetUrl,
+} from '../src/admin/services/fileSecurityService.ts';
+import {
   toIsoTimestamp,
   mapCustomerRow,
   mapServiceRow,
@@ -643,8 +651,13 @@ test('Edge Function verify-admin and config.toml enforce single-admin allowlist 
 });
 
 test('Firebase Spark-only single-admin provisioning script enforces exact UID & email allowlist, supports verify/revoke, and excludes paid Firebase services', () => {
-  // 1. Ensure no paid Firebase Cloud Functions / Identity Platform artifacts remain
-  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'firebase.json')), false, 'firebase.json must not exist in Spark-only architecture');
+  // 1. Ensure no paid Firebase Cloud Functions / Identity Platform artifacts remain (Hosting-only firebase.json is Spark-free)
+  const firebaseJsonPath = path.join(ROOT_DIR, 'firebase.json');
+  if (fs.existsSync(firebaseJsonPath)) {
+    const firebaseCfg = JSON.parse(fs.readFileSync(firebaseJsonPath, 'utf8'));
+    assert.equal('functions' in firebaseCfg, false, 'firebase.json must not configure Cloud Functions in Spark-only architecture');
+    assert.ok('hosting' in firebaseCfg, 'firebase.json must only configure static Hosting rewrites');
+  }
   assert.equal(fs.existsSync(path.join(ROOT_DIR, 'functions')), false, 'functions/ directory must not exist in Spark-only architecture');
 
   // 2. Adds role='authenticated' cleanly on fresh claims without setting admin: true
@@ -2671,4 +2684,151 @@ test('Aman Computer repository consolidation: zero Rishi portfolio remnants, cle
   assert.ok(adminCtxTs.includes('dbSaveWebsiteContent(nextContent, { skipHeroValidation: true })'));
   assert.ok(adminCtxTs.includes('Promise<boolean>'));
 });
+
+test('Contextual drag-and-drop deep security validation rejects spoofed MIME types, executables, double extensions, and enforces per-field rules', async () => {
+  const validJpgBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+  const validPngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+  const validWebpBytes = new Uint8Array([
+    0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+  ]);
+  const validPdfBytes = new TextEncoder().encode('%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF');
+  const mzExeBytes = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00]);
+
+  const makeTestFile = (bytes: Uint8Array, name: string, type: string, sizeOverride?: number): File => {
+    const ab: ArrayBuffer = bytes.slice().buffer;
+    const file = new File([ab], name, { type });
+    if (typeof sizeOverride === 'number') {
+      Object.defineProperty(file, 'size', { value: sizeOverride });
+    }
+    return file;
+  };
+
+  // 1-4: Valid JPG, JPEG, PNG, WebP
+  assert.equal((await validateFileDeep(makeTestFile(validJpgBytes, 'photo.jpg', 'image/jpeg'), { category: 'image' })).valid, true);
+  assert.equal((await validateFileDeep(makeTestFile(validJpgBytes, 'photo.jpeg', 'image/jpeg'), { category: 'image' })).valid, true);
+  assert.equal((await validateFileDeep(makeTestFile(validPngBytes, 'logo.png', 'image/png'), { category: 'brand-logo' })).valid, true);
+  assert.equal((await validateFileDeep(makeTestFile(validWebpBytes, 'banner.webp', 'image/webp'), { category: 'image' })).valid, true);
+
+  // 5: Valid PDF in document fields
+  assert.equal((await validateFileDeep(makeTestFile(validPdfBytes, 'form49a.pdf', 'application/pdf'), { category: 'document' })).valid, true);
+  assert.equal(
+    (
+      await validateFileDeep(makeTestFile(validPdfBytes, 'affidavit.pdf', 'application/pdf'), {
+        category: 'media-library-dynamic',
+        dynamicSubcategory: 'document-template',
+      })
+    ).valid,
+    true
+  );
+
+  // 6: Invalid PDF dropped into image / logo field
+  const pdfInImage = await validateFileDeep(makeTestFile(validPdfBytes, 'doc.pdf', 'application/pdf'), { category: 'image' });
+  assert.equal(pdfInImage.valid, false);
+  assert.match(pdfInImage.rejectionReason || '', /PDF files are not supported/i);
+
+  // 7: Invalid JPG dropped into PDF/document-only field
+  const jpgInDoc = await validateFileDeep(makeTestFile(validJpgBytes, 'scan.jpg', 'image/jpeg'), {
+    category: 'media-library-dynamic',
+    dynamicSubcategory: 'document-template',
+  });
+  assert.equal(jpgInDoc.valid, false);
+  assert.match(jpgInDoc.rejectionReason || '', /image files are not supported/i);
+
+  // 8: EXE, APK, JS, HTML, PHP rejected
+  for (const [name, mime, payload] of [
+    ['installer.exe', 'application/x-msdownload', mzExeBytes],
+    ['app.apk', 'application/vnd.android.package-archive', new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00])],
+    ['payload.js', 'application/javascript', new TextEncoder().encode('alert(1)')],
+    ['evil.html', 'text/html', new TextEncoder().encode('<html><script>alert(1)</script></html>')],
+    ['shell.php', 'application/x-httpd-php', new TextEncoder().encode('<?php system($_GET["c"]); ?>')],
+  ] as const) {
+    const res = await validateFileDeep(makeTestFile(payload, name, mime), { category: 'document' });
+    assert.equal(res.valid, false, `${name} must be rejected`);
+    assert.match(res.rejectionReason || '', /prohibited|not supported/i);
+  }
+
+  // 9: Oversized files rejected (favicon max 2 MB, image max 5 MB, doc max 10 MB)
+  const hugeFavicon = await validateFileDeep(
+    makeTestFile(validPngBytes, 'fav.png', 'image/png', 2 * 1024 * 1024 + 1),
+    { category: 'favicon' }
+  );
+  assert.equal(hugeFavicon.valid, false);
+  assert.match(hugeFavicon.rejectionReason || '', /2 MB/i);
+
+  const hugeImage = await validateFileDeep(
+    makeTestFile(validPngBytes, 'big.png', 'image/png', 5 * 1024 * 1024 + 1),
+    { category: 'image' }
+  );
+  assert.equal(hugeImage.valid, false);
+  assert.match(hugeImage.rejectionReason || '', /5 MB/i);
+
+  // 10: Spoofed MIME & signature mismatch (e.g. EXE or PDF renamed to fake.jpg with image/jpeg MIME)
+  const spoofedExeAsJpg = await validateFileDeep(makeTestFile(mzExeBytes, 'avatar.jpg', 'image/jpeg'), { category: 'image' });
+  assert.equal(spoofedExeAsJpg.valid, false);
+  assert.match(spoofedExeAsJpg.rejectionReason || '', /executable binary header/i);
+
+  const spoofedPdfAsJpg = await validateFileDeep(makeTestFile(validPdfBytes, 'fake.jpg', 'image/jpeg'), { category: 'image' });
+  assert.equal(spoofedPdfAsJpg.valid, false);
+  assert.match(spoofedPdfAsJpg.rejectionReason || '', /PDF files are not supported/i);
+
+  const spoofedHtmlAsPng = await validateFileDeep(
+    makeTestFile(new TextEncoder().encode('<!doctype html><script>alert(1)</script>'), 'trick.png', 'image/png'),
+    { category: 'image' }
+  );
+  assert.equal(spoofedHtmlAsPng.valid, false);
+  assert.match(spoofedHtmlAsPng.rejectionReason || '', /active HTML|signature|declared/i);
+
+  // 11: Empty / corrupted 0-byte and truncated PDF
+  assert.equal((await validateFileDeep(makeTestFile(new Uint8Array(0), 'empty.png', 'image/png'), { category: 'image' })).valid, false);
+  assert.equal((await validateFileDeep(makeTestFile(new TextEncoder().encode('%PDF-1.4'), 'short.pdf', 'application/pdf'), { category: 'document' })).valid, false);
+
+  // Double extension & path traversal security checks
+  assert.equal(inspectFilenameSecurity('invoice.exe.pdf').safe, false);
+  assert.equal(inspectFilenameSecurity('photo.php.png').safe, false);
+  assert.equal(inspectFilenameSecurity('../../etc/passwd.png').safe, false);
+  assert.equal(detectMagicBytes(mzExeBytes).type, 'exe');
+
+  // 12: Multi-file batch validation (mixed valid + invalid, duplicates, max count)
+  const batch = await validateFilesBatch(
+    [
+      makeTestFile(validJpgBytes, 'good1.jpg', 'image/jpeg'),
+      makeTestFile(validPdfBytes, 'bad1.pdf', 'application/pdf'),
+      makeTestFile(validJpgBytes, 'good1.jpg', 'image/jpeg'),
+      makeTestFile(validPngBytes, 'good2.png', 'image/png'),
+    ],
+    { category: 'image' },
+    { maxFiles: 2 }
+  );
+  assert.equal(batch.validFiles.length, 2);
+  assert.equal(batch.rejectedFiles.length, 2);
+  assert.ok(batch.countExceededError);
+  assert.match(batch.rejectedFiles[0].reason, /PDF/i);
+  assert.match(batch.rejectedFiles[1].reason, /Duplicate/i);
+
+  // Safe storage object keys & safe URL preview guards
+  const objPath = buildSafeStorageObjectPath('../../../evil file name?.png', 'gallery');
+  assert.equal(objPath.includes('..'), false);
+  assert.ok(objPath.startsWith('gallery/'));
+  assert.equal(isSafeAssetUrl('javascript:alert(1)'), false);
+  assert.equal(isSafeAssetUrl('data:text/html,<script>alert(1)</script>'), false);
+  assert.equal(isSafeAssetUrl('data:image/svg+xml,<svg onload=alert(1)/>'), false);
+  assert.equal(isSafeAssetUrl('/assets/aistudio/logo.svg'), true);
+  assert.equal(isSafeAssetUrl('https://demo.supabase.co/storage/v1/object/public/gallery-images/p.webp'), true);
+
+  // Strict drop-zone boundary guard: ContextualDropZone must NOT register window/document drag/drop listeners
+  const dropZoneSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/components/ContextualDropZone.tsx'), 'utf8');
+  assert.equal(dropZoneSrc.includes('window.addEventListener'), false, 'Must not register global window upload handlers');
+  assert.equal(dropZoneSrc.includes('document.addEventListener'), false, 'Must not register global document upload handlers');
+  assert.ok(dropZoneSrc.includes('data-upload-zone='));
+
+  // BrandSettingsView, MediaLibraryView, and OwnerProfileView contextual configurations
+  const brandSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/views/BrandSettingsView.tsx'), 'utf8');
+  assert.ok(brandSrc.includes('category="brand-logo"'));
+  assert.ok(brandSrc.includes('category="favicon"'));
+
+  const mediaSrc = fs.readFileSync(path.join(ROOT_DIR, 'src/admin/views/MediaLibraryView.tsx'), 'utf8');
+  assert.ok(mediaSrc.includes('<ContextualDropZone'));
+  assert.ok(mediaSrc.includes("category: 'media-library-dynamic'"));
+});
+
 

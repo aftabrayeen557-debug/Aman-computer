@@ -365,7 +365,7 @@ export const JourneyManagementView: React.FC = () => {
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-md font-mono text-xs font-bold bg-[#211B16] border border-[#C9A96E]/35 text-[#C9A96E]">
+                      <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold tabular-nums bg-[#211B16] border border-[#C9A96E]/35 text-[#C9A96E]">
                         {item.year}
                       </span>
                       <span className="text-xs font-mono text-[#85838A]">{item.date}</span>

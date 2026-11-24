@@ -252,7 +252,7 @@ export const EnquiriesView: React.FC = () => {
                             <option value="completed">COMPLETED</option>
                           </select>
                           {enq.urgency === 'urgent' && (
-                            <span className="text-[9px] font-mono font-bold text-rose-400">
+                            <span className="text-[9px] font-mono font-semibold text-rose-400">
                               URGENT
                             </span>
                           )}

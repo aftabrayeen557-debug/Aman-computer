@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ShieldCheck, Award, QrCode } from 'lucide-react';
+import { BRAND_LOGO_COMPACT } from '../../lib/brandAssets';
 
 export const HolographicBadgeCard: React.FC = () => {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -73,10 +74,14 @@ export const HolographicBadgeCard: React.FC = () => {
 
         {/* Card Header */}
         <div className="relative z-10 flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C4B0B0] to-[#6B5C5C] flex items-center justify-center text-[#1A1818] font-bold text-xs shadow-inner">
-              AC
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={BRAND_LOGO_COMPACT}
+              alt="Aman Computer"
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-full object-contain shrink-0 drop-shadow-[0_2px_8px_rgba(56,189,248,0.28)]"
+            />
             <div>
               <div className="text-xs font-bold tracking-tight text-white uppercase">Aman Computer</div>
               <div className="text-[10px] text-[#B5A8A8] tracking-widest font-mono">DIGITAL CENTER • EST. 2014</div>

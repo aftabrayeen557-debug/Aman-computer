@@ -2,9 +2,102 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
+import {collectBuildEnvReport} from './scripts/verify-build-env.mjs';
 
-export default defineConfig(() => {
+const SUBDIRS = [
+  'web-developer',
+  'app-developer',
+  'ui-ux-designer',
+  'graphic-designer',
+  'legal',
+  'privacy-policy',
+  'terms-and-conditions',
+];
+
+function createRouteMiddleware(rootBaseDir: string, isPreview: boolean) {
+  return (req: any, res: any, next: () => void) => {
+    const urlPath = req.url ? req.url.split('?')[0] : '';
+
+    if (!isPreview && urlPath.startsWith('/vendor/')) {
+      const filePath = path.join(rootBaseDir, 'public', urlPath);
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        fs.createReadStream(filePath).pipe(res);
+        return;
+      }
+    }
+
+    if (req.method === 'POST') {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html');
+      res.end('OK');
+      return;
+    }
+
+    if (
+      urlPath === '/admin' ||
+      urlPath === '/admin/' ||
+      urlPath.startsWith('/admin/') ||
+      urlPath === '/login' ||
+      urlPath === '/login/' ||
+      urlPath.startsWith('/login/')
+    ) {
+      req.url = '/admin.html';
+      return next();
+    }
+
+    if (urlPath === '/home' || urlPath === '/home/') {
+      req.url = '/';
+      return next();
+    }
+
+    for (const dir of SUBDIRS) {
+      if (urlPath === `/${dir}` || urlPath === `/${dir}/`) {
+        req.url = `/${dir}/index.html`;
+        return next();
+      }
+    }
+
+    if (
+      req.method === 'GET' &&
+      urlPath !== '/' &&
+      !urlPath.startsWith('/@') &&
+      !urlPath.startsWith('/src/') &&
+      !urlPath.startsWith('/node_modules/') &&
+      !urlPath.startsWith('/assets/')
+    ) {
+      const staticRoot = isPreview ? rootBaseDir : path.join(rootBaseDir, 'public');
+      const staticCandidate = path.join(staticRoot, urlPath);
+      const rootCandidate = path.join(rootBaseDir, urlPath);
+      const staticIndex = path.join(staticCandidate, 'index.html');
+      const exists =
+        (fs.existsSync(staticCandidate) && fs.statSync(staticCandidate).isFile()) ||
+        (fs.existsSync(rootCandidate) && fs.statSync(rootCandidate).isFile()) ||
+        (fs.existsSync(staticIndex) && fs.statSync(staticIndex).isFile());
+
+      if (!exists && (!path.extname(urlPath) || urlPath.endsWith('.html'))) {
+        const notFoundFile = isPreview
+          ? path.join(rootBaseDir, '404.html')
+          : path.join(rootBaseDir, 'public', '404.html');
+        if (fs.existsSync(notFoundFile)) {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          fs.createReadStream(notFoundFile).pipe(res);
+          return;
+        }
+      }
+    }
+
+    next();
+  };
+}
+
+export default defineConfig(({mode}) => {
+  const loadedEnv = loadEnv(mode, __dirname, '');
+  const mergedEnv = {...loadedEnv, ...process.env};
+
   return {
     plugins: [
       react(),
@@ -12,79 +105,10 @@ export default defineConfig(() => {
       {
         name: 'route-rewrites',
         configureServer(server) {
-          const subdirs = [
-            'web-developer',
-            'app-developer',
-            'ui-ux-designer',
-            'graphic-designer',
-            'legal',
-            'privacy-policy',
-            'terms-and-conditions',
-          ];
-          server.middlewares.use((req, res, next) => {
-            const urlPath = req.url ? req.url.split('?')[0] : '';
-            if (urlPath.startsWith('/vendor/')) {
-              const filePath = path.join(__dirname, 'public', urlPath);
-              if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-                fs.createReadStream(filePath).pipe(res);
-                return;
-              }
-            }
-            if (req.method === 'POST') {
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'text/html');
-              res.end('OK');
-              return;
-            }
-            if (
-              urlPath === '/admin' ||
-              urlPath === '/admin/' ||
-              urlPath.startsWith('/admin/') ||
-              urlPath === '/login' ||
-              urlPath === '/login/'
-            ) {
-              req.url = '/admin.html';
-              return next();
-            }
-            if (urlPath === '/home' || urlPath === '/home/') {
-              req.url = '/';
-              return next();
-            }
-            for (const dir of subdirs) {
-              if (urlPath === `/${dir}` || urlPath === `/${dir}/`) {
-                req.url = `/${dir}/index.html`;
-                return next();
-              }
-            }
-            if (
-              req.method === 'GET' &&
-              urlPath !== '/' &&
-              !urlPath.startsWith('/@') &&
-              !urlPath.startsWith('/src/') &&
-              !urlPath.startsWith('/node_modules/') &&
-              !urlPath.startsWith('/assets/')
-            ) {
-              const publicCandidate = path.join(__dirname, 'public', urlPath);
-              const rootCandidate = path.join(__dirname, urlPath);
-              const publicIndex = path.join(publicCandidate, 'index.html');
-              const exists =
-                (fs.existsSync(publicCandidate) && fs.statSync(publicCandidate).isFile()) ||
-                (fs.existsSync(rootCandidate) && fs.statSync(rootCandidate).isFile()) ||
-                (fs.existsSync(publicIndex) && fs.statSync(publicIndex).isFile());
-              if (!exists && (!path.extname(urlPath) || urlPath.endsWith('.html'))) {
-                const notFoundFile = path.join(__dirname, 'public', '404.html');
-                if (fs.existsSync(notFoundFile)) {
-                  res.statusCode = 404;
-                  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                  fs.createReadStream(notFoundFile).pipe(res);
-                  return;
-                }
-              }
-            }
-            next();
-          });
+          server.middlewares.use(createRouteMiddleware(__dirname, false));
+        },
+        configurePreviewServer(server) {
+          server.middlewares.use(createRouteMiddleware(path.resolve(__dirname, 'dist'), true));
         },
       },
       {
@@ -112,18 +136,19 @@ export default defineConfig(() => {
             }
           }
 
-          // Mirror built admin entrypoint to /admin/index.html and /login/index.html for static hosts
+          // Mirror built admin entrypoint to /login.html, /admin/index.html, and /login/index.html
           const adminDist = path.join(distDir, 'admin.html');
           if (fs.existsSync(adminDist)) {
+            fs.copyFileSync(adminDist, path.join(distDir, 'login.html'));
             for (const sub of ['admin', 'login']) {
               const subDir = path.join(distDir, sub);
-              fs.mkdirSync(subDir, { recursive: true });
+              fs.mkdirSync(subDir, {recursive: true});
               fs.copyFileSync(adminDist, path.join(subDir, 'index.html'));
             }
           }
 
           // Apply canonical APP_URL origin if configured at build time
-          const appUrl = (process.env.APP_URL || '').trim().replace(/\/+$/, '');
+          const appUrl = (mergedEnv.APP_URL || '').trim().replace(/\/+$/, '');
           if (appUrl && /^https?:\/\//i.test(appUrl)) {
             for (const seoFile of ['sitemap.xml', 'robots.txt']) {
               const filePath = path.join(distDir, seoFile);
@@ -135,6 +160,17 @@ export default defineConfig(() => {
                 }
               }
             }
+          }
+
+          // Safe build-time env validation (reports [SET]/[MISSING] only, never values)
+          const envReport = collectBuildEnvReport(__dirname, mergedEnv);
+          if (!envReport.allConfigured) {
+            const missing = [...envReport.missingVite, ...envReport.missingSeo].join(', ');
+            const msg = `[aman-computer] Build completed with missing production env vars: ${missing}`;
+            if (process.env.STRICT_BUILD_ENV === '1') {
+              throw new Error(msg);
+            }
+            console.warn(msg);
           }
         },
       },

@@ -633,10 +633,8 @@ export const INITIAL_ENQUIRIES: Enquiry[] = [
 export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
   hero: {
     badge: 'CYBER CAFE & DIGITAL CENTER',
-    headline: 'Your Trusted Digital Partner',
-    subheadline: 'Fast, Reliable & Professional Digital Services.',
-    description:
-      'From online applications and PAN services to Aadhaar assistance, photo studio and printing — all your digital needs, under one roof.',
+    headline: 'Welcome to Aman Computer.',
+    subheadline: 'Your one-stop center for',
     ctaPrimaryText: 'WhatsApp Us',
     ctaPrimaryLink: 'https://wa.me/918595515718',
     ctaSecondaryText: 'Explore Services',
@@ -673,8 +671,8 @@ export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
     shopName: 'Aman Computer',
     tagline: 'Cyber Cafe & Digital Center — Your Trust, Our Service.',
     headerBadgeText: 'Authorised Digital Seva Center',
-    logoUrl: '/icon-192.png',
-    faviconUrl: '/favicon.ico',
+    logoUrl: '/assets/aistudio/logo.svg',
+    faviconUrl: '/assets/aistudio/logo.svg',
     accentColor: '#C9A96E',
     footerBrandWordmark: 'Aman Computer',
   },
@@ -750,7 +748,7 @@ export const INITIAL_WEBSITE_CONTENT: WebsiteSectionContent = {
       'Authorized digital seva, online government forms, PAN & Aadhaar facilitation, AEPS banking, ticket booking, and commercial printing at Aman Computer, Varanasi.',
     keywords:
       'Aman Computer, Cyber Cafe Varanasi, Digital Seva Kendra, PAN Card Center, Aadhaar Update, Online Exam Forms, CSC Center',
-    ogImageUrl: '/og.jpg',
+    ogImageUrl: '/og.jpg?v=20261123',
     canonicalUrl: '',
   },
   about: {
@@ -1032,8 +1030,8 @@ export const INITIAL_BUSINESS_PROFILE: BusinessProfile = {
 };
 
 export const INITIAL_MEDIA_ASSETS: MediaAsset[] = [
-  { id: 'med-1', name: 'Aman_Computer_Logo_Master.png', fileType: 'image', fileSize: '240 KB', url: '/icon-192.png', uploadedDate: '2026-10-01', category: 'logo' },
-  { id: 'med-2', name: 'Center_Hero_Banner.webp', fileType: 'image', fileSize: '1.2 MB', url: '/og.jpg', uploadedDate: '2026-10-05', category: 'banner' },
+  { id: 'med-1', name: 'Aman_Computer_Logo.svg', fileType: 'image', fileSize: '1.93 MB', url: '/assets/aistudio/logo.svg', uploadedDate: '2026-10-01', category: 'logo' },
+  { id: 'med-2', name: 'Center_Social_Preview_OG.jpg', fileType: 'image', fileSize: '114 KB', url: '/og.jpg?v=20261123', uploadedDate: '2026-10-05', category: 'banner' },
   { id: 'med-3', name: 'Self_Declaration_Affidavit_Format.pdf', fileType: 'pdf', fileSize: '180 KB', url: '#', uploadedDate: '2026-10-12', category: 'document-template' },
   { id: 'med-4', name: 'Standard_Rent_Agreement_Draft.doc', fileType: 'doc', fileSize: '95 KB', url: '#', uploadedDate: '2026-10-15', category: 'document-template' },
 ];
@@ -1041,8 +1039,8 @@ export const INITIAL_MEDIA_ASSETS: MediaAsset[] = [
 export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   { id: 'ntf-1', title: 'New Urgent Enquiry Received', description: 'Rahul Verma submitted request for SSC CGL 2026 form (Server rush warning).', timestamp: '10 Mins Ago', read: false, level: 'alert', linkToTab: 'enquiries' },
   { id: 'ntf-2', title: 'Printer Toner Status Alert', description: 'Canon imageRUNNER Black Toner at 18%. Replacement cartridge staged.', timestamp: '45 Mins Ago', read: false, level: 'warning', linkToTab: 'overview' },
-  { id: 'ntf-3', title: 'Physical PAN Card Batch Arrived', description: 'Speed post delivery received for 8 applicant PAN cards.', timestamp: '2 Hours Ago', read: true, level: 'success', linkToTab: 'enquiries' },
-  { id: 'ntf-4', title: 'Daily Database Backup', description: 'Customer records & counter activity snapshot verified.', timestamp: '1 Day Ago', read: true, level: 'info', linkToTab: 'overview' },
+  { id: 'ntf-3', title: 'Physical PAN Card Batch Arrived', description: 'Speed post delivery received for 8 applicant PAN cards.', timestamp: '2 Hours Ago', read: true, level: 'success', linkToTab: 'receipts' },
+  { id: 'ntf-4', title: 'Daily Database Backup', description: 'Customer records & counter receipts snapshot verified.', timestamp: '1 Day Ago', read: true, level: 'info', linkToTab: 'backup-restore' },
 ];
 
 export const INITIAL_STAFF: StaffMember[] = [

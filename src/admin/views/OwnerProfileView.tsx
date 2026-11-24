@@ -40,9 +40,10 @@ import {
   deleteStorageFileByUrl,
   formatFileSize,
   uploadFileToStorage,
-  validateUploadFile,
+  UploadOptions,
 } from '../services/storageService';
 import { StudioLoadingState } from '../components/StateViews';
+import { ContextualDropZone } from '../components/ContextualDropZone';
 
 const cloneOwnerProfile = (profile: OwnerProfile): OwnerProfile => ({
   ...profile,
@@ -78,12 +79,9 @@ export const OwnerProfileView: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [previewMode, setPreviewMode] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadDragging, setUploadDragging] = useState(false);
   const [avatarLoadError, setAvatarLoadError] = useState(false);
   const [previewAvatarLoadError, setPreviewAvatarLoadError] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const syncedSerializedRef = useRef<string>(JSON.stringify(ownerProfile));
 
   const savedSerialized = useMemo(() => JSON.stringify(ownerProfile), [ownerProfile]);
@@ -202,35 +200,28 @@ export const OwnerProfileView: React.FC = () => {
     });
   };
 
-  const handleImageFileSelected = async (file: File | undefined | null) => {
-    if (!file) return;
-    setUploadError(null);
-
-    const validation = validateUploadFile(file, 'image');
-    if (!validation.valid) {
-      setUploadError(validation.error || 'Unsupported portrait file.');
-      showToast('Portrait Upload Rejected', validation.error || 'Unsupported file.', 'warning');
-      return;
-    }
-
+  const handleOwnerPortraitUpload = async (file: File, options?: UploadOptions) => {
     setImageUploading(true);
     try {
       const previousUrl = draft.profileImage;
-      const result = await uploadFileToStorage('media-library', file, 'owner-profile', 'image');
+      const result = options
+        ? await uploadFileToStorage('media-library', file, 'owner-profile', 'image', options)
+        : await uploadFileToStorage('media-library', file, 'owner-profile', 'image');
+
       if (!result.success || !result.url) {
-        const msg =
-          result.error ||
-          'Unable to upload portrait photo. Check storage permissions or provide a direct HTTPS image URL.';
-        setUploadError(msg);
-        showToast('Portrait Upload Failed', msg, 'error');
-        return;
+        if (!result.aborted) {
+          const msg =
+            result.error ||
+            'Unable to upload portrait photo. Check storage permissions or provide a direct HTTPS image URL.';
+          showToast('Portrait Upload Failed', msg, 'error');
+        }
+        return result;
       }
 
       if (previousUrl && previousUrl !== ownerProfile.profileImage && previousUrl !== result.url) {
         void deleteStorageFileByUrl(previousUrl);
       }
 
-      setDraft((prev) => ({ ...prev, profileImage: result.url! }));
       clearFieldError('profileImage');
       setAvatarLoadError(false);
 
@@ -247,18 +238,15 @@ export const OwnerProfileView: React.FC = () => {
         'Image uploaded to media storage. Select "Save Profile" to apply this change.',
         'success'
       );
+      return result;
     } finally {
       setImageUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
   const handleRemoveImage = () => {
     const prev = draft.profileImage;
     handleFieldChange('profileImage', '');
-    setUploadError(null);
     if (prev && prev !== ownerProfile.profileImage) {
       void deleteStorageFileByUrl(prev);
     }
@@ -267,7 +255,6 @@ export const OwnerProfileView: React.FC = () => {
   const handleCancel = () => {
     setDraft(cloneOwnerProfile(ownerProfile));
     setFieldErrors({});
-    setUploadError(null);
     setPreviewMode(false);
     showToast('Edits Discarded', 'Reverted staged edits to last saved owner profile.', 'info');
   };
@@ -791,71 +778,26 @@ export const OwnerProfileView: React.FC = () => {
               )}
             </div>
 
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setUploadDragging(true);
+            <ContextualDropZone
+              label="Portrait Photo"
+              fieldId="owner-profile-portrait"
+              value={draft.profileImage}
+              onChange={(url) => {
+                handleFieldChange('profileImage', url);
+                setAvatarLoadError(false);
               }}
-              onDragLeave={() => setUploadDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setUploadDragging(false);
-                void handleImageFileSelected(e.dataTransfer.files?.[0]);
+              onRemove={(prev) => {
+                if (prev && prev !== ownerProfile.profileImage) {
+                  void deleteStorageFileByUrl(prev);
+                }
               }}
-              className={`rounded-xl border border-dashed p-4 transition-colors text-center ${
-                uploadDragging
-                  ? 'border-[#C9A96E] bg-[#211B16]'
-                  : 'border-white/[0.12] bg-[#0A0A0E]'
-              }`}
-            >
-              <div className="w-24 h-24 mx-auto rounded-2xl border border-[#C9A96E]/35 bg-[#141419] flex items-center justify-center overflow-hidden mb-3">
-                {draft.profileImage && !avatarLoadError ? (
-                  <img
-                    src={draft.profileImage}
-                    alt="Owner portrait preview"
-                    onError={() => setAvatarLoadError(true)}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="font-editorial text-2xl text-[#C9A96E]">
-                    {draftInitials}
-                  </span>
-                )}
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => void handleImageFileSelected(e.target.files?.[0])}
-              />
-
-              <button
-                type="button"
-                disabled={imageUploading}
-                onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#211B16] border border-[#C9A96E]/35 hover:border-[#C9A96E] text-xs font-medium text-[#E8E5DF] transition-colors disabled:opacity-50 cursor-pointer"
-              >
-                {imageUploading ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A96E]" />
-                ) : (
-                  <Upload className="w-3.5 h-3.5 text-[#C9A96E]" />
-                )}
-                <span>{imageUploading ? 'Uploading Portrait…' : 'Upload Portrait Photo'}</span>
-              </button>
-
-              <p className="text-[11px] text-[#85838A] mt-2">
-                Drag &amp; drop or choose JPG, PNG, WEBP (max 5 MB).
-              </p>
-            </div>
-
-            {uploadError && (
-              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200 flex items-start gap-2">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                <span>{uploadError}</span>
-              </div>
-            )}
+              config={{ category: 'image' }}
+              onUploadFile={handleOwnerPortraitUpload}
+              emptyLabel="Upload official portrait photo"
+              aspectClass="aspect-square max-w-[220px] mx-auto"
+              fitClass="object-cover"
+              allowUrlInput={false}
+            />
 
             <div className="space-y-1.5">
               <label

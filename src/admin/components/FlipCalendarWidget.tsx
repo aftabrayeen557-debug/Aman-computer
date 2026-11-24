@@ -39,13 +39,13 @@ export const FlipCalendarWidget: React.FC = () => {
         </div>
 
         {/* Calendar Top Header */}
-        <div className="bg-[#1A1818] dark:bg-[#E8E4E0] text-[#E8E4E0] dark:text-[#1A1818] text-[9px] font-bold tracking-widest text-center py-0.5 pt-1 uppercase">
+        <div className="bg-[#1A1818] dark:bg-[#E8E4E0] text-[#E8E4E0] dark:text-[#1A1818] text-[9px] font-semibold tracking-widest text-center py-0.5 pt-1 uppercase">
           {monthName}
         </div>
 
         {/* Date Number with Middle Split Line */}
-        <div className="relative flex-1 flex flex-col items-center justify-center font-bold text-[#1A1818] dark:text-[#E8E4E0]">
-          <span className="text-xl font-mono leading-none tracking-tight">
+        <div className="relative flex-1 flex flex-col items-center justify-center font-semibold text-[#1A1818] dark:text-[#E8E4E0]">
+          <span className="text-xl font-semibold tabular-nums leading-none tracking-tight">
             {dateNum < 10 ? `0${dateNum}` : dateNum}
           </span>
           <span className="text-[8px] font-semibold tracking-wider text-[#857878] dark:text-[#B5A8A8] uppercase">

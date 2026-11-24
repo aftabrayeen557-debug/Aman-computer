@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Image as ImageIcon, Loader2, Trash2, Upload, X } from 'lucide-react';
-import { StorageBucketName, uploadFileToStorage } from '../services/storageService';
+import { StorageBucketName, uploadFileToStorage, UploadOptions } from '../services/storageService';
+import { ContextualDropZone } from './ContextualDropZone';
 
 export const CmsPageHeader: React.FC<{
   eyebrow: string;
@@ -97,9 +98,11 @@ export const CmsMediaField: React.FC<{
   onRemove?: (previousUrl: string) => void;
   bucket?: StorageBucketName;
   folder?: string;
+  category?: 'image' | 'brand-logo' | 'favicon' | 'document';
   helperText?: string;
   emptyLabel?: string;
   aspectClass?: string;
+  fitClass?: string;
   onError?: (message: string) => void;
 }> = ({
   label,
@@ -108,113 +111,60 @@ export const CmsMediaField: React.FC<{
   onRemove,
   bucket = 'media-library',
   folder = 'cms-assets',
+  category,
   helperText,
-  emptyLabel = 'No image uploaded yet',
+  emptyLabel = 'No file uploaded yet',
   aspectClass = 'aspect-video',
+  fitClass = 'object-cover',
   onError,
 }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const resolvedCategory =
+    category ||
+    (label.toLowerCase().includes('favicon')
+      ? 'favicon'
+      : label.toLowerCase().includes('logo')
+      ? 'brand-logo'
+      : bucket === 'customer-documents'
+      ? 'document'
+      : 'image');
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-
-    setUploading(true);
+  const handleUploadFile = async (file: File, options?: UploadOptions) => {
     try {
-      const previousUrl = value;
-      const result = await uploadFileToStorage(bucket, file, folder, 'image');
+      const storageCategory = resolvedCategory === 'document' ? 'document' : 'image';
+      const result = await uploadFileToStorage(bucket, file, folder, storageCategory, {
+        ...options,
+        deepConfig: { category: resolvedCategory },
+      });
       if (!result.success || !result.url) {
         onError?.(result.error || 'Unable to upload file.');
-        return;
       }
-      if (previousUrl && previousUrl !== result.url) {
-        onRemove?.(previousUrl);
-      }
-      onChange(result.url);
-    } catch (err) {
+      return result;
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unable to upload file.';
       onError?.(msg);
-    } finally {
-      setUploading(false);
+      return { success: false, error: msg };
     }
   };
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-medium text-[var(--st-tx)]">{label}</label>
-        {value && (
-          <button
-            type="button"
-            onClick={() => {
-              const prev = value;
-              onChange('');
-              onRemove?.(prev);
-            }}
-            className="inline-flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            <Trash2 className="w-3 h-3" />
-            <span>Remove</span>
-          </button>
-        )}
-      </div>
-
-      <div
-        className={`relative rounded-xl studio-glass-soft overflow-hidden flex items-center justify-center ${aspectClass}`}
-      >
-        {value ? (
-          <img
-            src={value}
-            alt={label}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center gap-2 p-6 text-center text-[var(--st-mut)]">
-            <ImageIcon className="w-6 h-6 text-[#C9A96E]/70" />
-            <span className="text-xs">{emptyLabel}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/svg+xml"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <button
-          type="button"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-          className="studio-btn-secondary inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium cursor-pointer disabled:opacity-50"
-        >
-          {uploading ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A96E]" />
-          ) : (
-            <Upload className="w-3.5 h-3.5 text-[#C9A96E]" />
-          )}
-          <span>{uploading ? 'Uploading…' : value ? 'Replace Image' : 'Upload Image'}</span>
-        </button>
-
-        <input
-          type="url"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Or paste an image URL (https://...)"
-          className="flex-1 px-3 py-2 rounded-xl studio-glass-input text-xs font-mono placeholder-[var(--st-mut)] outline-none"
-        />
-      </div>
-
-      {helperText && (
-        <p className="text-[11px] text-[var(--st-mut)] leading-relaxed">{helperText}</p>
-      )}
-    </div>
+    <ContextualDropZone
+      label={label}
+      value={value}
+      onChange={onChange}
+      onRemove={onRemove}
+      config={{
+        category: resolvedCategory,
+      }}
+      onUploadFile={handleUploadFile}
+      helperText={helperText}
+      emptyLabel={emptyLabel}
+      aspectClass={aspectClass}
+      fitClass={fitClass}
+      allowUrlInput={true}
+    />
   );
 };
+
 
 export const CmsModal: React.FC<{
   open: boolean;

@@ -315,7 +315,7 @@ export const ServicesView: React.FC = () => {
                       <div className="text-[9px] font-mono text-white/75 uppercase">
                         Starts at
                       </div>
-                      <div className="text-sm font-bold font-mono text-[#f3dfb8]">
+                      <div className="text-sm font-semibold tabular-nums text-[#f3dfb8]">
                         {service.priceStartingAt}
                       </div>
                     </div>

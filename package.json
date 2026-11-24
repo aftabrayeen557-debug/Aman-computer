@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx --test tests/backend.test.ts"
+    "test": "tsx --test tests/backend.test.ts",
+    "build:check": "node scripts/verify-build-env.mjs --strict"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

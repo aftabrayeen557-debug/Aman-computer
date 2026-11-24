@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
 import { sendAdminPasswordReset, signInAdmin } from '../services/authService';
 import { isFirebaseConfigured } from '../../lib/firebase';
+import { BRAND_LOGO_MAIN } from '../../lib/brandAssets';
 
 interface MarbleLoginProps {
   onSuccess?: () => void;
@@ -881,9 +882,18 @@ void main() {
       {/* Marble Login Container */}
       <div ref={rootRef} className="mc">
         <div className="mc-box">
-          {/* Top Brand Tagline */}
-          <div className="text-[11px] font-mono tracking-widest text-[#A9D6FF] font-bold uppercase mb-2 px-3 py-1 rounded-full bg-[rgba(169,214,255,0.1)] border border-[rgba(169,214,255,0.2)]">
-            AMAN COMPUTER
+          {/* Official Brand Emblem */}
+          <div className="mb-3 flex flex-col items-center gap-2">
+            <img
+              src={BRAND_LOGO_MAIN}
+              alt="Aman Computer"
+              width={88}
+              height={88}
+              className="w-20 h-20 sm:w-[88px] sm:h-[88px] object-contain rounded-full drop-shadow-[0_6px_22px_rgba(56,189,248,0.28)] select-none"
+            />
+            <div className="text-[11px] font-mono tracking-widest text-[#A9D6FF] font-bold uppercase px-3 py-1 rounded-full bg-[rgba(169,214,255,0.1)] border border-[rgba(169,214,255,0.2)]">
+              AMAN COMPUTER
+            </div>
           </div>
 
           {/* SVG Animated Padlock */}

@@ -7,6 +7,13 @@ import {
   mapJourneyRow,
   mapGovernmentSchemeRow,
 } from '../admin/services/supabaseService';
+import {
+  BRAND_LOGO_SVG,
+  normalizeBrandLogoUrl,
+  normalizeFaviconUrl,
+  normalizeOgImageUrl,
+  sanitizeWebsiteBrandAndSeo,
+} from './brandAssets';
 
 export interface PublicEnquiryPayload {
   customerName: string;
@@ -100,35 +107,21 @@ const emitPublicEvent = (name: string, detail: unknown) => {
   }
 };
 
-export const sanitizePublicUrl = (
-  rawUrl: string | undefined | null,
-  allowRelative = true
-): string => {
-  const val = String(rawUrl || '').trim();
-  if (!val) return '';
-  if (allowRelative && val.startsWith('/') && !val.startsWith('//')) {
-    return val;
-  }
-  try {
-    const parsed = new URL(val);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-      return parsed.href;
-    }
-  } catch {
-    return '';
-  }
-  return '';
-};
-
 /**
  * Applies live SEO, Favicon, Brand & Maintenance settings to static HTML shells when loaded.
+ * Also self-heals stale legacy brand/favicon URLs cached in localStorage.
  */
 export const applyPublicWebsiteMetadata = (): void => {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   try {
     const rawContent = window.localStorage.getItem('aman_website_content');
     if (!rawContent) return;
-    const content = JSON.parse(rawContent);
+    const parsed = JSON.parse(rawContent);
+    const content = sanitizeWebsiteBrandAndSeo(parsed);
+    if (safeCachePublicJson('aman_website_content', content)) {
+      emitPublicEvent('aman_website_content_changed', content);
+    }
+
     const seo = content?.seoSettings;
     const brand = content?.brandSettings;
     const path = window.location.pathname || '/';
@@ -161,29 +154,41 @@ export const applyPublicWebsiteMetadata = (): void => {
       kw.setAttribute('content', seo.keywords);
     }
 
-    const safeCanonicalUrl = sanitizePublicUrl(seo?.canonicalUrl, false);
-    if (isHomePage && safeCanonicalUrl) {
-      let canonicalLink = document.querySelector('link[rel="canonical"]');
-      if (!canonicalLink) {
-        canonicalLink = document.createElement('link');
-        canonicalLink.setAttribute('rel', 'canonical');
-        document.head.appendChild(canonicalLink);
-      }
-      canonicalLink.setAttribute('href', safeCanonicalUrl);
-    }
-
-    const safeOgImageUrl = sanitizePublicUrl(seo?.ogImageUrl, true);
-    if (safeOgImageUrl) {
+    const ogImgVal = normalizeOgImageUrl(seo?.ogImageUrl);
+    if (ogImgVal) {
+      const resolvedOg = ogImgVal.startsWith('/')
+        ? `${window.location.origin}${ogImgVal}`
+        : ogImgVal;
       const ogImg = document.querySelector('meta[property="og:image"]');
+      const ogImgSec = document.querySelector('meta[property="og:image:secure_url"]');
       const twImg = document.querySelector('meta[name="twitter:image"]');
-      if (ogImg) ogImg.setAttribute('content', safeOgImageUrl);
-      if (twImg) twImg.setAttribute('content', safeOgImageUrl);
+      if (ogImg) ogImg.setAttribute('content', resolvedOg);
+      if (ogImgSec) ogImgSec.setAttribute('content', resolvedOg);
+      if (twImg) twImg.setAttribute('content', resolvedOg);
     }
 
-    const safeFaviconUrl = sanitizePublicUrl(brand?.faviconUrl, true);
-    if (safeFaviconUrl) {
-      const icons = document.querySelectorAll('link[rel*="icon"]');
-      icons.forEach((link) => link.setAttribute('href', safeFaviconUrl));
+    const normalizedBrandLogo = normalizeBrandLogoUrl(brand?.logoUrl);
+    if (normalizedBrandLogo) {
+      document
+        .querySelectorAll<HTMLImageElement>(
+          '#hdrBrandLogo, #drawerBrandLogo, .sf__biz-logo, .rn__brand img, .rn__plbl img, .sf__brand img'
+        )
+        .forEach((img) => {
+          if (img.getAttribute('src') !== normalizedBrandLogo) {
+            img.setAttribute('src', normalizedBrandLogo);
+          }
+        });
+    }
+
+    const normalizedFavicon = normalizeFaviconUrl(brand?.faviconUrl);
+    if (normalizedFavicon) {
+      const svgIconLinks = document.querySelectorAll('link[rel="icon"][type="image/svg+xml"]');
+      if (normalizedFavicon === BRAND_LOGO_SVG || normalizedFavicon.endsWith('.svg')) {
+        svgIconLinks.forEach((link) => link.setAttribute('href', normalizedFavicon));
+      } else {
+        const icoLinks = document.querySelectorAll('link[rel="icon"][href*="favicon.ico"], link[rel="shortcut icon"]');
+        icoLinks.forEach((link) => link.setAttribute('href', normalizedFavicon));
+      }
     }
 
     if (brand?.shopName) {
@@ -192,6 +197,45 @@ export const applyPublicWebsiteMetadata = (): void => {
     }
   } catch (err) {
     console.warn('Skipped dynamic SEO application:', err);
+  }
+};
+
+/**
+ * Safely clears any legacy Service Workers or CacheStorage caches that could serve stale logos.
+ */
+export const clearStaleBrandCaches = async (): Promise<void> => {
+  if (typeof window === 'undefined') return;
+  try {
+    if ('serviceWorker' in navigator && typeof navigator.serviceWorker.getRegistrations === 'function') {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((reg) => reg.unregister().catch(() => false)));
+    }
+    if ('caches' in window && typeof window.caches.keys === 'function') {
+      const cacheNames = await window.caches.keys();
+      await Promise.all(
+        cacheNames.map(async (name) => {
+          if (/aman|brand|logo|workbox|precache|vite-pwa/i.test(name)) {
+            await window.caches.delete(name).catch(() => false);
+            return;
+          }
+          try {
+            const cache = await window.caches.open(name);
+            const requests = await cache.keys();
+            await Promise.all(
+              requests
+                .filter((req) =>
+                  /aman-logo|aman_computer_logo|22258|favicon|icon-192|icon-512|logo\.svg/i.test(req.url)
+                )
+                .map((req) => cache.delete(req))
+            );
+          } catch {
+            // Ignore per-cache access errors
+          }
+        })
+      );
+    }
+  } catch {
+    // Cache cleanup is best-effort only
   }
 };
 
@@ -273,8 +317,9 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
     }
 
     if (!webRes.error && webRes.data?.content) {
-      if (safeCachePublicJson('aman_website_content', webRes.data.content)) {
-        emitPublicEvent('aman_website_content_changed', webRes.data.content);
+      const sanitizedWebContent = sanitizeWebsiteBrandAndSeo(webRes.data.content);
+      if (safeCachePublicJson('aman_website_content', sanitizedWebContent)) {
+        emitPublicEvent('aman_website_content_changed', sanitizedWebContent);
         applyPublicWebsiteMetadata();
       }
     }
@@ -370,7 +415,6 @@ export const submitPublicEnquiry = async (
 };
 
 if (typeof window !== 'undefined') {
-  (window as any).__submitAmanEnquiry = submitPublicEnquiry;
-  (window as any).__applyPublicWebsiteMetadata = applyPublicWebsiteMetadata;
+  void clearStaleBrandCaches();
   void syncPublicWebsiteFromSupabase();
 }

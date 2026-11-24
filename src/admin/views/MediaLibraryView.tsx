@@ -6,20 +6,19 @@ import {
   FileText,
   FolderOpen,
   Image as ImageIcon,
-  Loader2,
   Trash2,
   Upload,
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { MediaAsset } from '../types';
-import { deleteStorageFileByUrl, uploadFileToStorage } from '../services/storageService';
+import { deleteStorageFileByUrl, uploadFileToStorage, UploadOptions } from '../services/storageService';
 import { CmsModal, CmsPageHeader, CmsSurfaceCard } from '../components/CmsPrimitives';
+import { ContextualDropZone } from '../components/ContextualDropZone';
 
 export const MediaLibraryView: React.FC = () => {
   const { mediaAssets, addMediaAsset, deleteMediaAsset, showToast } = useAdmin();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
 
   const [formData, setFormData] = useState<{
     name: string;
@@ -35,38 +34,44 @@ export const MediaLibraryView: React.FC = () => {
     category: 'document-template',
   });
 
-  const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingFile(true);
-    try {
-      const res = await uploadFileToStorage('media-library', file, formData.category, 'any');
-      if (!res.success || !res.url) {
+  const handleContextualUpload = async (file: File, options?: UploadOptions) => {
+    const expectedStorageCat =
+      formData.category === 'document-template' ? 'document' : 'image';
+    const res = await uploadFileToStorage(
+      'media-library',
+      file,
+      formData.category,
+      expectedStorageCat,
+      options
+    );
+    if (!res.success || !res.url) {
+      if (!res.aborted) {
         showToast(
           'Upload Failed',
           res.error || "We couldn't upload this file right now.",
           'error'
         );
-        return;
       }
-      const detectedType: 'image' | 'pdf' | 'doc' = file.type.startsWith('image/')
-        ? 'image'
-        : file.type === 'application/pdf'
-        ? 'pdf'
-        : 'doc';
-
-      setFormData((prev) => ({
-        ...prev,
-        name: prev.name || file.name,
-        fileType: detectedType,
-        fileSize: res.fileSize || prev.fileSize,
-        url: res.url!,
-      }));
-      showToast('File Uploaded', 'Your file has been saved to media storage.');
-    } finally {
-      setUploadingFile(false);
-      e.target.value = '';
+      return res;
     }
+
+    const lowerName = file.name.toLowerCase();
+    const detectedType: 'image' | 'pdf' | 'doc' =
+      lowerName.endsWith('.pdf') || file.type === 'application/pdf'
+        ? 'pdf'
+        : lowerName.endsWith('.doc') || lowerName.endsWith('.docx')
+        ? 'doc'
+        : 'image';
+
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || file.name,
+      fileType: detectedType,
+      fileSize: res.fileSize || prev.fileSize,
+      url: res.url!,
+    }));
+    showToast('File Uploaded', 'Your file has been saved to media storage.');
+    return res;
   };
 
   const categories = ['all', 'document-template', 'banner', 'logo', 'gallery'];
@@ -318,35 +323,44 @@ export const MediaLibraryView: React.FC = () => {
 
             <div>
               <label className="block font-medium text-[#E8E5DF] mb-1.5">
-                Upload File or URL *
+                Category Acceptance Mode
               </label>
-              <div className="space-y-2">
-                <label className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#211B16] border border-[#C9A96E]/35 text-[#DFC492] font-medium cursor-pointer hover:border-[#C9A96E]/65">
-                  {uploadingFile ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#C9A96E]" />
-                  ) : (
-                    <Upload className="w-3.5 h-3.5 text-[#C9A96E]" />
-                  )}
-                  <span>{uploadingFile ? 'Uploading…' : 'Choose File'}</span>
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,image/*"
-                    onChange={handleFilePick}
-                    disabled={uploadingFile}
-                    className="hidden"
-                  />
-                </label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://..."
-                  value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#E8E5DF] outline-none focus:border-[#C9A96E]/60 font-mono text-[10px]"
-                />
+              <div className="px-3 py-2.5 rounded-xl bg-[#0A0A0E] border border-white/[0.08] text-[#85838A] text-[11px]">
+                {formData.category === 'document-template'
+                  ? 'Documents Only (PDF, DOC, DOCX)'
+                  : 'Images Only (JPG, PNG, WebP)'}
               </div>
             </div>
           </div>
+
+          <ContextualDropZone
+            label={
+              formData.category === 'document-template'
+                ? 'Document File *'
+                : formData.category === 'logo'
+                ? 'Brand Logo Image *'
+                : 'Media Image File *'
+            }
+            fieldId="media-library-asset-upload"
+            value={formData.url}
+            onChange={(nextUrl) => setFormData((prev) => ({ ...prev, url: nextUrl }))}
+            onRemove={(prevUrl) => {
+              void deleteStorageFileByUrl(prevUrl);
+            }}
+            config={{
+              category: 'media-library-dynamic',
+              dynamicSubcategory: formData.category,
+            }}
+            onUploadFile={handleContextualUpload}
+            emptyLabel={
+              formData.category === 'document-template'
+                ? 'Drop a PDF or Word document template here'
+                : 'Drop a JPG, PNG, or WebP asset here'
+            }
+            aspectClass="aspect-[16/7]"
+            fitClass="object-contain"
+            allowUrlInput={true}
+          />
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.07]">
             <button

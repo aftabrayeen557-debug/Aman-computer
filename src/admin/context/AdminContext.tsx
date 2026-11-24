@@ -111,6 +111,12 @@ import {
   dbDeleteGovernmentScheme,
 } from '../services/supabaseService';
 import { validateHeroContent } from '../services/heroValidationService';
+import {
+  isLegacyFaviconUrl,
+  isLegacyLogoUrl,
+  sanitizeMediaAssets,
+  sanitizeWebsiteBrandAndSeo,
+} from '../../lib/brandAssets';
 
 export type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated' | 'unauthorized';
 export type DbSyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'not-configured';
@@ -578,7 +584,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     safeGetStorage<GovernmentSchemeItem[]>('aman_government_schemes', INITIAL_GOVERNMENT_SCHEMES)
   );
   const [websiteContent, setWebsiteContent] = useState<WebsiteSectionContent>(() =>
-    safeGetStorage<WebsiteSectionContent>('aman_website_content', INITIAL_WEBSITE_CONTENT)
+    sanitizeWebsiteBrandAndSeo(
+      safeGetStorage<WebsiteSectionContent>('aman_website_content', INITIAL_WEBSITE_CONTENT)
+    )
   );
   const [faqs, setFaqs] = useState<FaqItem[]>(() =>
     safeGetStorage<FaqItem[]>('aman_faqs', INITIAL_FAQS)
@@ -592,7 +600,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [ownerProfileStatus, setOwnerProfileStatus] = useState<'ready' | 'loading' | 'saving' | 'error'>('ready');
   const [ownerProfileError, setOwnerProfileError] = useState<string | null>(null);
   const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>(() =>
-    safeGetStorage<MediaAsset[]>('aman_media', INITIAL_MEDIA_ASSETS)
+    sanitizeMediaAssets(safeGetStorage<MediaAsset[]>('aman_media', INITIAL_MEDIA_ASSETS))
   );
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -698,11 +706,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (totalCloudRows === 0) {
         if (dbProf !== null) setBusinessProfile(dbProf);
         if (dbWeb !== null) {
-          setWebsiteContent((prev) => ({
-            ...INITIAL_WEBSITE_CONTENT,
-            ...prev,
-            ...dbWeb,
-          }));
+          setWebsiteContent((prev) =>
+            sanitizeWebsiteBrandAndSeo({
+              ...INITIAL_WEBSITE_CONTENT,
+              ...prev,
+              ...dbWeb,
+            })
+          );
           if (Array.isArray(dbWeb.governmentSchemesFallback) && dbWeb.governmentSchemesFallback.length > 0) {
             setGovernmentSchemes(dbWeb.governmentSchemesFallback);
           }
@@ -728,11 +738,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (dbJrn !== null) setJourney(sortJourneyChronologically(dbJrn));
       if (dbProf !== null) setBusinessProfile(dbProf);
       if (dbWeb !== null) {
-        setWebsiteContent((prev) => ({
+        const sanitizedWeb = sanitizeWebsiteBrandAndSeo({
           ...INITIAL_WEBSITE_CONTENT,
-          ...prev,
           ...dbWeb,
-        }));
+        });
+        setWebsiteContent((prev) =>
+          sanitizeWebsiteBrandAndSeo({
+            ...INITIAL_WEBSITE_CONTENT,
+            ...prev,
+            ...dbWeb,
+          })
+        );
+        const rawLogo = dbWeb.brandSettings?.logoUrl;
+        const rawFav = dbWeb.brandSettings?.faviconUrl;
+        if (isLegacyLogoUrl(rawLogo) || isLegacyFaviconUrl(rawFav)) {
+          void dbSaveWebsiteContent(sanitizedWeb, { skipHeroValidation: true });
+        }
       }
       if (dbSchemes !== null) {
         setGovernmentSchemes(dbSchemes);
@@ -742,7 +763,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (dbFaq !== null) setFaqs(dbFaq);
       if (dbTst !== null) setTestimonials(dbTst);
       if (dbRcp !== null) setReceipts(dbRcp);
-      if (dbMed !== null) setMediaAssets(dbMed);
+      if (dbMed !== null) {
+        const sanitizedMed = sanitizeMediaAssets(dbMed);
+        setMediaAssets(sanitizedMed);
+        dbMed.forEach((orig, idx) => {
+          const nextMed = sanitizedMed[idx];
+          if (orig && nextMed && orig.url !== nextMed.url) {
+            void dbUpsertMediaAsset(nextMed);
+          }
+        });
+      }
       if (dbNtf !== null) setNotifications(dbNtf);
       if (dbStf !== null) setStaff(dbStf);
       if (dbLogs !== null) setActivityLogs(dbLogs);
@@ -1653,18 +1683,22 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOwnerProfileError(null);
     if (!isSupabaseActive) {
       const localWeb = safeGetStorage<WebsiteSectionContent>('aman_website_content', INITIAL_WEBSITE_CONTENT);
-      setWebsiteContent((prev) => ({ ...INITIAL_WEBSITE_CONTENT, ...prev, ...localWeb }));
+      setWebsiteContent((prev) =>
+        sanitizeWebsiteBrandAndSeo({ ...INITIAL_WEBSITE_CONTENT, ...prev, ...localWeb })
+      );
       setOwnerProfileStatus('ready');
       return;
     }
     try {
       const dbWeb = await dbGetWebsiteContent();
       if (dbWeb) {
-        setWebsiteContent((prev) => ({
-          ...INITIAL_WEBSITE_CONTENT,
-          ...prev,
-          ...dbWeb,
-        }));
+        setWebsiteContent((prev) =>
+          sanitizeWebsiteBrandAndSeo({
+            ...INITIAL_WEBSITE_CONTENT,
+            ...prev,
+            ...dbWeb,
+          })
+        );
       }
       setOwnerProfileStatus('ready');
     } catch (err: any) {
@@ -2014,11 +2048,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (data.docRequirements && Array.isArray(data.docRequirements)) setDocRequirements(data.docRequirements);
       if (data.gallery && Array.isArray(data.gallery)) setGallery(data.gallery);
       if (data.journey && Array.isArray(data.journey)) setJourney(sortJourneyChronologically(data.journey));
-      if (data.websiteContent && typeof data.websiteContent === 'object') setWebsiteContent(data.websiteContent);
+      if (data.websiteContent && typeof data.websiteContent === 'object') setWebsiteContent(sanitizeWebsiteBrandAndSeo(data.websiteContent));
       if (data.faqs && Array.isArray(data.faqs)) setFaqs(data.faqs);
       if (data.testimonials && Array.isArray(data.testimonials)) setTestimonials(data.testimonials);
       if (data.businessProfile && typeof data.businessProfile === 'object') setBusinessProfile(data.businessProfile);
-      if (data.mediaAssets && Array.isArray(data.mediaAssets)) setMediaAssets(data.mediaAssets);
+      if (data.mediaAssets && Array.isArray(data.mediaAssets)) setMediaAssets(sanitizeMediaAssets(data.mediaAssets));
       if (data.staff && Array.isArray(data.staff)) setStaff(data.staff);
       if (data.terminalSettings && typeof data.terminalSettings === 'object') setTerminalSettings(data.terminalSettings);
 

@@ -8,10 +8,6 @@
 <style>@font-face{font-family:'Onest';font-style:normal;font-display:swap;font-weight:100 900;src:url(/fonts/onest-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Onest';font-style:normal;font-display:swap;font-weight:100 900;src:url(/fonts/onest-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}</style>
 
 <meta name="description" content="Aman Computer — Cyber Cafe &amp; Digital Center for online forms, government schemes, PAN &amp; Aadhaar services, certificates, banking, printing and travel assistance." />
-<meta property="og:title" content="Aman Computer — Cyber Cafe &amp; Digital Center" />
-<meta property="og:description" content="Comprehensive digital assistance for online forms, government schemes, identity cards, banking, bill payments and official documentation." />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
 <meta name="theme-color" content="#1A1818" />
 <script>
 window.addEventListener('unhandledrejection',function(e){if(e.reason&&(typeof e.reason.message==='string'&&(e.reason.message.includes('ViewTransition')||e.reason.message.includes('Transition was aborted')||e.reason.message.includes('opt-in disabled'))||e.reason.name==='AbortError'||e.reason.name==='InvalidStateError')){e.preventDefault();e.stopImmediatePropagation();}});
@@ -48,10 +44,6 @@ window.addEventListener('unhandledrejection',function(e){if(e.reason&&(typeof e.
   --fs-body:clamp(16px,4.1vw,17.5px);
   --fs-desc:clamp(14px,3.6vw,15px);
   --fs-label:clamp(11px,2.9vw,12.5px);
-  /* Hero strict responsive clamp typography scale */
-  --hero-fs-main:clamp(36px,calc(32.5px + 0.9vw),40px);
-  --hero-fs-sub:clamp(19px,calc(17px + 0.52vw),21px);
-  --hero-fs-desc:clamp(15px,calc(14px + 0.26vw),16px);
   color-scheme:light;
 }
 @media (min-width:640px){
@@ -64,13 +56,6 @@ window.addEventListener('unhandledrejection',function(e){if(e.reason&&(typeof e.
     --fs-label:12px;
   }
 }
-@media (min-width:768px){
-  :root{
-    --hero-fs-main:clamp(44px,calc(20px + 3.13vw),52px);
-    --hero-fs-sub:clamp(22px,calc(16px + 0.78vw),24px);
-    --hero-fs-desc:clamp(16px,calc(13px + 0.39vw),17px);
-  }
-}
 @media (min-width:1024px){
   :root{
     --fs-hero:clamp(54px,4.8vw,76px);
@@ -79,9 +64,6 @@ window.addEventListener('unhandledrejection',function(e){if(e.reason&&(typeof e.
     --fs-body:clamp(16px,1.15vw,18px);
     --fs-desc:clamp(14.5px,1.02vw,16px);
     --fs-label:12.5px;
-    --hero-fs-main:clamp(56px,calc(16.6px + 3.846vw),72px);
-    --hero-fs-sub:clamp(24px,calc(14.15px + 0.96vw),28px);
-    --hero-fs-desc:clamp(17px,calc(14.54px + 0.24vw),18px);
   }
 }
 /* dark mode: charcoal, a step above pure black */
@@ -175,16 +157,22 @@ body.ready .line>span{transform:none;opacity:1}
 .hdr.stuck{background:var(--background);box-shadow:0 1px 0 rgba(var(--fg-rgb),.08)}
 .hdr.stuck .hdr__in{padding-block:.85rem}
 .hdr.away{opacity:0;translate:0 -100%;pointer-events:none}
-.hdr__in{transition:padding .35s ease;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;padding-block:1.25rem}
-@media (min-width:640px){.hdr__in{padding-block:1.5rem}}
-.brand{display:flex;align-items:center;gap:.5rem;font-size:clamp(18px,1.35vw,22px);font-weight:600;letter-spacing:-.01em}
-.brand svg{font-size:1.25em;color:var(--accent)}
+.hdr__in{transition:padding .35s ease;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-block:1.1rem}
+@media (min-width:640px){.hdr__in{padding-block:1.35rem;gap:1.5rem}}
+.brand{display:inline-flex;align-items:center;gap:.6rem;flex:none;min-width:0;font-size:clamp(15.5px,1.25vw,19px);font-weight:650;letter-spacing:-.015em;white-space:nowrap;transition:opacity .2s ease}
+.brand:hover{opacity:.88}
+.brand__badge{width:32px;height:32px;border-radius:9999px;display:grid;place-items:center;flex:none;overflow:hidden;background:radial-gradient(circle,rgba(11,17,28,.16) 0%,transparent 74%);filter:drop-shadow(0 2px 6px rgba(0,0,0,.16))}
+@media (min-width:640px){.brand__badge{width:38px;height:38px}}
+html[data-mode="dark"] .brand__badge{background:transparent;filter:drop-shadow(0 2px 10px rgba(56,189,248,.18))}
+.brand__logo{width:100%;height:100%;object-fit:contain;display:block;border-radius:9999px}
+.brand__name{overflow:hidden;text-overflow:ellipsis}
 .hdr nav{flex:1;min-width:0}
 .nav{display:none}
-@media (min-width:1200px){.nav{display:flex;gap:1.4rem;font-size:clamp(14.5px,1vw,16px);white-space:nowrap}.menu-btn{display:none}}
+@media (min-width:1200px){.nav{display:flex;justify-content:center;gap:clamp(.9rem,1.2vw,1.4rem);font-size:clamp(14px,.98vw,15.5px);white-space:nowrap}.menu-btn{display:none}}
 
-/* small screens: nav list hides and local-time clock anchors right */
-@media (max-width:1199.98px){.hdr nav{display:none}.hdr__right{flex:1;justify-content:flex-end}}
+/* small screens: nav list hides, brand clears floating menu button, and local-time clock anchors right */
+@media (max-width:1199.98px){.hdr nav{display:none}.hdr__right{flex:0 0 auto;margin-left:auto}}
+@media (max-width:759.98px){.hdr .shell{padding-left:max(4.5rem,calc(env(safe-area-inset-left) + 68px))}}
 @media (min-width:760px) and (max-width:1360px){.shell{padding-left:max(var(--gut-lg,2rem),92px)}}
 
 .nav button{display:block}
@@ -205,10 +193,8 @@ body.ready .line>span{transform:none;opacity:1}
 .hero{position:relative;isolation:isolate;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);
   background:radial-gradient(120% 90% at 62% 30%,var(--hero-from) 0%,var(--hero-mid) 48%,var(--hero-to) 100%);
   --fig-h:27rem;min-height:100svh;display:flex;flex-direction:column}
-.hero.hero--no-fig{min-height:clamp(540px,84svh,680px)}
 .hero__content{flex:1}
-@media (min-width:768px) and (max-width:1023.98px){.hero{--fig-h:43rem}.hero.hero--no-fig{min-height:clamp(620px,84svh,750px)}}
-@media (min-width:1024px){.hero.hero--no-fig{min-height:clamp(620px,88svh,830px)}}
+@media (min-width:768px) and (max-width:1023.98px){.hero{--fig-h:43rem}}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;
   background:radial-gradient(120% 90% at 62% 30%,#2A2525 0%,#1F1C1C 48%,#141212 100%)}
 html[data-mode="dark"] .hero::before{opacity:1}
@@ -269,87 +255,31 @@ body.ready .fig{opacity:1;transform:translate(-50%,0)}
 .faq-item summary{cursor:pointer;list-style:none;padding:1.1rem 1.25rem;font-weight:600;font-size:clamp(16px,1.15vw,17px);line-height:1.4;display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .faq-item summary::-webkit-details-marker{display:none}
 .faq-item p{padding:0 1.25rem 1.15rem;font-size:var(--fs-desc);line-height:1.62;color:rgba(var(--fg-rgb),.76)}
-.story__stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.85rem;margin-top:1.15rem;max-width:min(100%,520px);width:100%}
-.story__stat{padding:.75rem .9rem;border-radius:12px;border:1px solid rgba(var(--fg-rgb),.11);background:rgba(var(--fg-rgb),.03)}
-html[data-mode="dark"] .story__stat{border-color:rgba(232,228,224,.12);background:rgba(232,228,224,.04)}
-.story__stat b{display:block;font-size:clamp(18px,1.8vw,22px);font-weight:700;letter-spacing:-.02em;color:var(--foreground);font-variant-numeric:tabular-nums}
-.story__stat span{display:block;margin-top:2px;font-size:11.5px;color:rgba(var(--fg-rgb),.68)}
-.pillars-sec{padding-block:clamp(3.5rem,7vw,5.5rem);background:var(--background);color:var(--foreground);border-top:1px solid var(--line)}
-.pillars__grid{display:grid;grid-template-columns:1fr;gap:1.1rem;margin-top:2rem}
-@media (min-width:640px){.pillars__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:1024px){.pillars__grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-.pillar-card{padding:1.25rem;border-radius:var(--radius-control);border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:.55rem}
-.pillar-card__n{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;font-weight:600;letter-spacing:.1em;color:rgba(var(--fg-rgb),.55)}
-.pillar-card h3{font-size:17px;font-weight:650;line-height:1.3;color:var(--foreground)}
-.pillar-card p{font-size:var(--fs-desc);line-height:1.58;color:rgba(var(--fg-rgb),.76)}
-.process-block{margin-top:clamp(2.75rem,5vw,4rem);padding-top:clamp(2rem,4vw,3rem);border-top:1px solid var(--line)}
-.process__title{font-size:clamp(22px,2.4vw,30px);font-weight:650;letter-spacing:-.02em;line-height:1.18}
-.steps__grid{display:grid;grid-template-columns:1fr;gap:1rem;margin-top:1.5rem}
-@media (min-width:768px){.steps__grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.step-card{padding:1.25rem;border-radius:var(--radius-control);border:1px solid var(--line);background:rgba(var(--fg-rgb),.025);display:flex;flex-direction:column;gap:.45rem}
-.step-card__num{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7A5A2B}
-html[data-mode="dark"] .step-card__num{color:#D9BA7C}
-.step-card h4{font-size:16px;font-weight:650;line-height:1.35;color:var(--foreground)}
-.step-card p{font-size:var(--fs-desc);line-height:1.56;color:rgba(var(--fg-rgb),.75)}
-.enq-sec{padding-block:clamp(3.5rem,7vw,5.5rem) clamp(4.5rem,8vw,6.5rem);background:var(--background);color:var(--foreground);border-top:1px solid var(--line)}
-.enq-wrap{display:grid;grid-template-columns:1fr;gap:2.25rem;align-items:start}
-@media (min-width:1024px){.enq-wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:3.5rem}}
-.enq-info__prompts{display:flex;flex-direction:column;gap:.65rem;margin-top:1.25rem;padding-top:1.1rem;border-top:1px solid var(--line);font-size:var(--fs-desc);line-height:1.58;color:rgba(var(--fg-rgb),.78)}
-.enq-form{padding:clamp(1.25rem,3vw,2rem);border-radius:var(--radius-card-sm);border:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;gap:1rem}
-.enq-row{display:grid;grid-template-columns:1fr;gap:1rem}
-@media (min-width:640px){.enq-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.enq-field{display:flex;flex-direction:column;gap:.4rem}
-.enq-field label{font-size:12.5px;font-weight:600;color:var(--foreground)}
-.enq-input{width:100%;min-height:44px;padding:.65rem .85rem;border-radius:10px;border:1px solid var(--line);background:var(--background);color:var(--foreground);font:inherit;font-size:14.5px;transition:border-color .2s}
-.enq-input:focus{outline:none;border-color:var(--accent)}
-textarea.enq-input{min-height:92px;resize:vertical}
-.enq-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;padding-top:.25rem}
-.enq-submit{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:44px;padding:.7rem 1.45rem;border-radius:9999px;background:var(--btn-bg);color:var(--btn-fg);font-size:14.5px;font-weight:600;cursor:pointer;transition:opacity .2s,transform .2s}
-.enq-submit:hover{transform:translateY(-1px)}
-.enq-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.enq-status{padding:.75rem .95rem;border-radius:10px;font-size:13.5px;line-height:1.5;border:1px solid var(--line);background:rgba(var(--fg-rgb),.04)}
-.enq-status[data-tone="ok"]{border-color:rgba(21,128,61,.4);background:rgba(21,128,61,.1);color:#14532D}
-html[data-mode="dark"] .enq-status[data-tone="ok"]{color:#86EFAC;background:rgba(34,197,94,.12)}
-.enq-status[data-tone="err"]{border-color:rgba(185,28,28,.4);background:rgba(185,28,28,.09);color:#991B1B}
-html[data-mode="dark"] .enq-status[data-tone="err"]{color:#FCA5A5;background:rgba(239,68,68,.12)}
-.sf__disclaimer{margin-top:1.75rem;padding-top:1rem;border-top:1px solid rgba(var(--sf-rgb),.08);font-size:12px;line-height:1.6;color:rgba(var(--sf-rgb),.56);max-width:78ch}
-.db-logo{width:24px;height:24px;border-radius:8px;object-fit:cover;flex:none;border:1px solid rgba(201,169,110,.35)}
 .ch__img{width:100%;max-width:24rem;aspect-ratio:16/10;object-fit:cover;border-radius:.85rem;margin:.6rem 0 .85rem;border:1px solid var(--line);display:block}
 .fig img,.fig canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%}
 .fig canvas{pointer-events:none}
 
-.hero__content{position:relative;z-index:20;display:flex;flex-direction:column;justify-content:center;gap:1.5rem;padding-top:5.75rem;padding-bottom:calc(var(--fig-h) + 1.25rem)}
-.hero.hero--no-fig .hero__content{padding-top:5.35rem;padding-bottom:2rem}
-@media (min-width:768px) and (max-width:1023.98px){
-  .hero.hero--no-fig .hero__content{padding-top:6.25rem;padding-bottom:2.5rem}
-}
+.hero__content{position:relative;z-index:20;display:flex;flex-direction:column;gap:2rem;padding-top:7rem;padding-bottom:calc(var(--fig-h) + 1.25rem)}
 @media (min-width:1024px){
-  .hero__content{display:grid;min-height:calc(100lvh - var(--bar-h));grid-template-columns:repeat(12,1fr);align-content:center;gap:2rem;padding-top:6rem;padding-bottom:3rem}
-  .hero.hero--no-fig .hero__content{min-height:calc(min(88svh,830px) - var(--bar-h));padding-top:5.75rem;padding-bottom:2.5rem}
+  .hero__content{display:grid;min-height:calc(100lvh - var(--bar-h));grid-template-columns:repeat(12,1fr);align-content:center;gap:2.5rem;padding-top:7rem;padding-bottom:4rem}
 }
-.hero__left{display:flex;flex-direction:column;gap:.95rem;min-width:0}
-@media (min-width:768px){.hero__left{gap:1.15rem}}
+.hero__left{display:flex;flex-direction:column;gap:1.75rem;min-width:0}
 .hero__right{display:flex;flex-direction:column;align-items:flex-start;gap:2rem;min-width:0}
 @media (min-width:1024px){
   .hero__left{grid-column:1 / span 7}
-  .hero.hero--no-fig .hero__left{grid-column:1 / span 9}
   .hero__right{grid-column:1 / span 7;grid-row:2;align-self:end;flex-direction:row;align-items:flex-end;gap:2.25rem}
 }
 
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-label);font-weight:600;letter-spacing:.08em;text-transform:uppercase;line-height:1.4;color:rgba(var(--fg-rgb),.68)}
 .eyebrow::before{content:"";width:6px;height:6px;flex:none;border-radius:9999px;background:rgba(var(--fg-rgb),.5)}
-.h1,.hero__h1{font-size:var(--hero-fs-main);font-weight:650;line-height:1.1;letter-spacing:-.025em;text-wrap:balance;max-width:min(100%,17ch)}
-@media (min-width:1024px){.h1,.hero__h1{line-height:1.09;max-width:min(100%,18ch)}}
+.h1{font-size:var(--fs-hero);font-weight:650;line-height:1.03;letter-spacing:-.025em;text-wrap:balance;max-width:min(100%,880px)}
 @media (min-width:640px) and (max-width:1023.98px){.hero__left{padding-left:1.5rem}}
 .h1 .soft{color:rgba(var(--fg-rgb),.52)}
-.hero__sub{font-size:var(--hero-fs-sub);font-weight:500;line-height:1.14;letter-spacing:-.015em;color:rgba(var(--fg-rgb),.8);text-wrap:pretty;max-width:min(100%,36ch);margin-top:.1rem}
-@media (min-width:1024px){.hero__sub{line-height:1.15;max-width:min(100%,42ch)}}
-.hero__desc{font-size:var(--hero-fs-desc);font-weight:400;line-height:1.5;color:rgba(var(--fg-rgb),.72);text-wrap:pretty;max-width:min(100%,54ch)}
 
 /* ---------- flip calendar (skills) ---------- */
-.cal-line{display:block;padding-top:.22em;padding-bottom:.38em;font-size:clamp(22px,2.9vw,36px)}
-.cal{--cal-w:7em;position:relative;display:inline-block;font-size:1em;perspective:14em;perspective-origin:30% 0;vertical-align:top;
-  --from:translateY(.5em) rotateX(-18deg);--ease:var(--e-soft);will-change:transform,opacity}
+.cal-line{display:block;padding-top:.34em;margin-top:.1em;padding-bottom:.42em}
+.cal{--cal-w:7em;position:relative;display:inline-block;font-size:.9em;perspective:14em;perspective-origin:30% 0;vertical-align:top;
+  --from:translateY(.5em) rotateX(-18deg);--ease:var(--e-soft)}
 .cal.rv{transition-duration:1.1s}
 .cal__body{position:relative;display:block;width:var(--cal-w);height:1.72em;transform:rotateX(10deg) rotateY(-9deg);transform-style:preserve-3d;transition:width .5s var(--e-soft)}
 .cal__stand{position:absolute;left:.2em;right:-.14em;top:.28em;bottom:-.4em;border-radius:.26em;
@@ -378,8 +308,8 @@ html[data-mode="dark"] .enq-status[data-tone="err"]{color:#FCA5A5;background:rgb
 .rating{display:flex;align-items:center;gap:.75rem}
 .stars{display:flex;gap:.1rem;color:var(--accent);font-size:16px}
 .rating p{font-size:clamp(13.5px,1vw,14.5px);font-weight:500;color:rgba(var(--fg-rgb),.7)}
-.ctas{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:.25rem}
-.hero__credit{margin-top:.1rem;font-size:13px;line-height:1.5;color:rgba(var(--fg-rgb),.64);--d:820ms}
+.ctas{display:flex;flex-wrap:wrap;gap:.75rem}
+.hero__credit{margin-top:-.65rem;font-size:13px;line-height:1.5;color:rgba(var(--fg-rgb),.64);--d:820ms}
 .hero__credit a,.story__credit a{color:var(--foreground);font-weight:550;text-decoration:underline;text-underline-offset:.22em;text-decoration-color:rgba(var(--fg-rgb),.28);transition:color .22s ease,text-decoration-color .22s ease}
 .hero__credit a:hover,.story__credit a:hover{color:#8C6226;text-decoration-color:#8C6226}
 html[data-mode="dark"] .hero__credit a:hover,html[data-mode="dark"] .story__credit a:hover{color:#E2C285;text-decoration-color:#E2C285}
@@ -954,11 +884,10 @@ html[data-mode="dark"] .dock{
 .dock-head{display:none;align-items:center;justify-content:space-between;padding:2px 4px 12px;border-bottom:1px solid rgba(var(--fg-rgb),.08);margin-bottom:8px;flex:none}
 .dock-head .db{display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:700;letter-spacing:-.015em;color:var(--dock-tx)}
 .dock-head .db-mark{
-  width:24px;height:24px;border-radius:8px;display:grid;place-items:center;
-  background:linear-gradient(135deg,var(--dock-gold-hi),var(--dock-gold));
-  color:var(--dock-gold-ink);font-size:12px;font-weight:800;flex:none;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  width:28px;height:28px;border-radius:9999px;display:grid;place-items:center;
+  background:transparent;overflow:hidden;flex:none;
 }
+.dock-head .db-mark img{width:100%;height:100%;object-fit:contain;display:block;border-radius:9999px}
 .dock-x{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--dock-mut);background:rgba(var(--fg-rgb),.04);border:1px solid rgba(var(--fg-rgb),.1);cursor:pointer}
 .dock-x:hover{background:var(--dock-hover);color:var(--dock-tx);border-color:rgba(201,169,110,.4)}
 .dock-sec{display:none;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--dock-mut2);font-weight:650;padding:4px 10px 6px;flex:none}
@@ -1076,6 +1005,9 @@ body{margin:0}
 .sf__cols a.sf__admin-link svg{width:14px;height:14px;flex:none;opacity:.82}
 .sf__biz{display:flex;flex-direction:column;gap:14px}
 .sf__biz-group{display:flex;flex-direction:column;gap:4px}
+.sf__biz-brand{display:flex;align-items:center;gap:.85rem}
+.sf__biz-logo{width:52px;height:52px;border-radius:9999px;object-fit:contain;flex:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.35))}
+@media (max-width:639.98px){.sf__biz-logo{width:44px;height:44px}}
 .sf__biz-name{font-size:16px;font-weight:650;line-height:1.35;color:#fff}
 .sf__biz-sub{font-size:14.5px;line-height:1.58;color:rgba(var(--sf-rgb),.78);overflow-wrap:break-word;word-break:normal}
 .sf__biz-addr{font-size:14.5px;line-height:1.58;color:rgba(var(--sf-rgb),.86);max-width:42ch;overflow-wrap:break-word;word-break:normal;hyphens:none}
@@ -1116,7 +1048,7 @@ body{margin:0}
 @media (max-width:767.98px){.totop{width:3rem;height:3rem}}
 @media (prefers-reduced-motion:reduce){.totop,.totop svg.ar{transition:opacity .2s ease,visibility 0s linear .2s}}
 </style>
-<script>try{var _m=localStorage.getItem('aman-mode');if(_m==='dark'){document.documentElement.dataset.mode='dark';document.querySelector('meta[name=theme-color]')}}catch(e){}</script>
+<script>try{var _m=localStorage.getItem('aman-mode')||localStorage.getItem('rishi-mode');if(_m==='dark'){document.documentElement.dataset.mode='dark';document.querySelector('meta[name=theme-color]')}}catch(e){}</script>
 <script>
 /* modest devices get the same site with the heaviest per-frame effects eased off */
 (function(){var n=navigator,m=n.deviceMemory||8,c=n.hardwareConcurrency||8,s=n.connection&&n.connection.saveData;
@@ -1124,20 +1056,32 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
 </script>
 
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
-<meta name="keywords" content="Aman Computer, Cyber Cafe Varanasi, Digital Seva Center, PAN Card, Aadhaar Update, Online Exam Forms, Government Schemes, Printing, Travel Booking" />
 <meta name="author" content="Aman Computer" />
-<link rel="icon" href="/favicon.ico" sizes="48x48" />
-<link rel="icon" type="image/png" href="/icon-192.png" sizes="192x192" />
-<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/svg+xml" href="/assets/aistudio/logo.svg" />
+<link rel="icon" href="/favicon.ico?v=20261123" sizes="48x48" />
+<link rel="icon" type="image/png" href="/favicon-32x32.png?v=20261123" sizes="32x32" />
+<link rel="icon" type="image/png" href="/favicon-16x16.png?v=20261123" sizes="16x16" />
+<link rel="icon" type="image/png" href="/icon-192.png?v=20261123" sizes="192x192" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=20261123" />
+<link rel="manifest" href="/site.webmanifest?v=20261123" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Aman Computer" />
 <meta property="og:locale" content="en_IN" />
+<meta property="og:url" content="https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/" />
 <meta property="og:title" content="Aman Computer — Cyber Cafe &amp; Digital Center" />
 <meta property="og:description" content="Comprehensive digital assistance for online forms, government schemes, identity cards, banking, bill payments and official documentation." />
+<meta property="og:image" content="https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/og.jpg?v=20261123" />
+<meta property="og:image:secure_url" content="https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/og.jpg?v=20261123" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Aman Computer — Cyber Cafe &amp; Digital Center" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Aman Computer — Cyber Cafe &amp; Digital Center" />
 <meta name="twitter:description" content="Comprehensive digital assistance for online forms, government schemes, identity cards, banking, bill payments and official documentation." />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Aman Computer","description":"Cyber Cafe & Digital Center for online forms, government schemes, PAN & Aadhaar services, certificates, banking, printing and travel assistance.","telephone":"+918595515718","founder":{"@type":"Person","name":"Sharique Aman"},"address":{"@type":"PostalAddress","streetAddress":"Shop No. 4 & 5, Commercial Complex, Main Market Road","addressLocality":"Varanasi","addressRegion":"Uttar Pradesh","postalCode":"221001","addressCountry":"IN"},"areaServed":"Varanasi"}</script>
+<meta name="twitter:image" content="https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/og.jpg?v=20261123" />
+<meta name="twitter:image:alt" content="Aman Computer — Cyber Cafe &amp; Digital Center" />
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Aman Computer","description":"Cyber Cafe & Digital Center for online forms, government schemes, PAN & Aadhaar services, certificates, banking, printing and travel assistance.","image":"https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/og.jpg?v=20261123","logo":"https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/assets/aistudio/logo.svg","telephone":"+918595515718","founder":{"@type":"Person","name":"Sharique Aman"}}</script>
 </head>
 <body>
 
@@ -1166,6 +1110,10 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
 <!-- ============ Header ============ -->
 <header class="hdr rv">
   <div class="shell hdr__in">
+    <a href="#home" data-go="home" class="brand" aria-label="Aman Computer Home">
+      <span class="brand__badge"><img src="/assets/aistudio/logo.svg" alt="Aman Computer Logo" class="brand__logo" id="hdrBrandLogo" width="38" height="38" /></span>
+      <span class="brand__name" id="hdrBrandName">Aman Computer</span>
+    </a>
     <nav aria-label="Primary">
       <ul class="nav">
         <li><button data-go="home" aria-current="page"><span data-h="y 0 -2|o .8 1" data-hs="320 22" data-ht="button">Home</span></button></li>
@@ -1196,7 +1144,7 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
 
 <main id="main">
   <!-- ============ Hero ============ -->
-  <section id="home" class="hero hero--no-fig" aria-label="Introduction">
+  <section id="home" class="hero" aria-label="Introduction">
     <div class="hero__vig" aria-hidden="true"></div>
 
     <div class="hero__stage">
@@ -1214,32 +1162,31 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
     <div class="shell hero__content">
       <div class="hero__left">
         <p class="eyebrow rv" id="heroBadge" style="--d:200ms">CYBER CAFE &amp; DIGITAL CENTER</p>
-        <h1 class="h1 hero__h1">
-          <span class="sr-only" id="heroSrTitle">Your Trusted Digital Partner — Fast, Reliable &amp; Professional Digital Services.</span>
+        <h1 class="h1">
+          <span class="sr-only" id="heroSrTitle">Welcome to Aman Computer. Your one-stop center for digital services.</span>
           <span aria-hidden="true">
-            <span class="line"><span id="heroHeadline" style="--d:250ms">Your Trusted Digital Partner</span></span>
+            <span class="line"><span id="heroHeadline" style="--d:250ms">Welcome to Aman Computer.</span></span>
+            <span class="line"><span class="soft" id="heroSubheadline" style="--d:370ms">Your one-stop center for</span></span>
+            <span class="cal-line">
+              <span class="cal rv" id="cal" style="--d:520ms">
+                <span class="cal__body">
+                  <span class="cal__stand"></span>
+                  <span class="cal__stack">
+                    <span class="cal__back"><span class="cal__holes"></span></span>
+                    <span class="cal__page" data-under><span class="cal__holes"></span><span class="cal__word"></span><span class="cal__no"></span><span class="cal__shade"></span></span>
+                    <span class="cal__leaf">
+                      <span class="cal__face"><span class="cal__holes"></span><span class="cal__word"></span><span class="cal__no"></span><span class="cal__shade"></span></span>
+                      <span class="cal__rear"><span class="cal__holes"></span></span>
+                    </span>
+                  </span>
+                  <span class="cal__rings"></span>
+                </span>
+                <span class="cal__measure"></span>
+              </span>
+            </span>
           </span>
         </h1>
-        <p class="hero__sub rv" id="heroSubheadline" style="--d:350ms">Fast, Reliable &amp; Professional Digital Services.</p>
-        <p class="hero__desc rv" id="heroDescription" style="--d:440ms">From online applications and PAN services to Aadhaar assistance, photo studio and printing — all your digital needs, under one roof.</p>
-        <div class="cal-line">
-          <span class="cal rv" id="cal" style="--d:520ms">
-            <span class="cal__body">
-              <span class="cal__stand"></span>
-              <span class="cal__stack">
-                <span class="cal__back"><span class="cal__holes"></span></span>
-                <span class="cal__page" data-under><span class="cal__holes"></span><span class="cal__word"></span><span class="cal__no"></span><span class="cal__shade"></span></span>
-                <span class="cal__leaf">
-                  <span class="cal__face"><span class="cal__holes"></span><span class="cal__word"></span><span class="cal__no"></span><span class="cal__shade"></span></span>
-                  <span class="cal__rear"><span class="cal__holes"></span></span>
-                </span>
-              </span>
-              <span class="cal__rings"></span>
-            </span>
-            <span class="cal__measure"></span>
-          </span>
-        </div>
-        <div class="ctas rv" style="--d:680ms">
+        <div class="ctas rv" style="--d:750ms">
           <a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" class="pill pill--dark pill--arrow" id="heroPrimaryCta" data-contact data-wa-btn>
             <span class="pill__in" data-h="s 1 1.04" data-hs="320 18" data-ht=".pill"><span id="heroPrimaryText">WhatsApp Us</span>
               <span class="pill__badge"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-h="x 0 3" data-hs="320 18" data-ht=".pill"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
@@ -1374,11 +1321,6 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
               <p class="eyebrow" id="storyEyebrow">Our Journey</p>
               <h2 class="story__h" id="storyTitle">Your Trust, Our Service — Fast, Honest &amp; Reliable Digital Services</h2>
               <p class="story__desc" id="storyDesc">From competitive exam applications and PAN &amp; Aadhaar services to smart cards, instant photo printing and professional digital assistance, we make essential services simple, convenient and accessible.</p>
-              <div class="story__stats" id="storyStats">
-                <div class="story__stat"><b id="statYears">12+ Years</b><span>Serving Citizens</span></div>
-                <div class="story__stat"><b id="statCustomers">15,000+</b><span>Happy Clients</span></div>
-                <div class="story__stat"><b id="statSuccess">99.4%</b><span>Form Accuracy</span></div>
-              </div>
               <div class="story__credit">
                 <p class="story__credit-k">Website Design &amp; Development</p>
                 <p class="story__credit-v">Crafted with attention to detail by <a href="https://www.instagram.com/mdaftab_557/" target="_blank" rel="noopener noreferrer">Md Aftab</a>.</p>
@@ -1489,74 +1431,6 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
       <div class="faqs-sec__list" id="faqsList"></div>
     </div>
   </section>
-
-  <section id="trustProcessSec" class="pillars-sec" aria-labelledby="whyHeading">
-    <div class="shell">
-      <div class="schemes__head">
-        <div>
-          <p class="eyebrow">How We Serve</p>
-          <h2 class="schemes__title" id="whyHeading">Why Locals Trust Aman Computer</h2>
-        </div>
-        <p class="schemes__sub" id="whySubheading">No Hidden Charges. No Server Rejection Surprises. Transparent Service Always.</p>
-      </div>
-      <div class="pillars__grid" id="whyPointsGrid"></div>
-      <div class="process-block" id="howItWorksBlock">
-        <h3 class="process__title" id="howHeading">How Our Center Works in 3 Easy Steps</h3>
-        <div class="steps__grid" id="howStepsGrid"></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="enquiry" class="enq-sec" aria-labelledby="enqTitle">
-    <div class="shell enq-wrap">
-      <div>
-        <p class="eyebrow">Direct Counter Request</p>
-        <h2 class="schemes__title" id="enqTitle" style="margin-top:.55rem">Submit a Service Enquiry</h2>
-        <p class="schemes__sub" style="margin-top:.75rem">Send your required service and contact number ahead of visiting. Our counter operator will confirm required documents and timing.</p>
-        <div class="enq-info__prompts" id="enqPrompts">
-          <p id="enqWaPrompt">Message us directly on WhatsApp for quick status checks or document verification.</p>
-          <p id="enqVisitPrompt">Walk in during counter hours with original documents for instant portal processing.</p>
-        </div>
-      </div>
-
-      <form class="enq-form" id="publicEnquiryForm" novalidate>
-        <div class="enq-row">
-          <div class="enq-field">
-            <label for="enqName">Full Name</label>
-            <input class="enq-input" id="enqName" name="customerName" type="text" required minlength="2" maxlength="100" placeholder="Enter your full name" autocomplete="name" />
-          </div>
-          <div class="enq-field">
-            <label for="enqPhone">Mobile / WhatsApp Number</label>
-            <input class="enq-input" id="enqPhone" name="phoneNumber" type="tel" required minlength="10" maxlength="15" placeholder="+91 98765 43210" autocomplete="tel" />
-          </div>
-        </div>
-        <div class="enq-row">
-          <div class="enq-field">
-            <label for="enqService">Service Needed</label>
-            <select class="enq-input" id="enqService" name="serviceName">
-              <option value="General Service">General Service / Form Inquiry</option>
-            </select>
-          </div>
-          <div class="enq-field">
-            <label for="enqUrgency">Priority</label>
-            <select class="enq-input" id="enqUrgency" name="urgency">
-              <option value="normal">Standard Processing</option>
-              <option value="urgent">Urgent / Last Date Approaching</option>
-            </select>
-          </div>
-        </div>
-        <div class="enq-field">
-          <label for="enqMessage">Notes or Document Details (Optional)</label>
-          <textarea class="enq-input" id="enqMessage" name="customerMessage" maxlength="1000" placeholder="Share exam/scheme name or question..."></textarea>
-        </div>
-        <div class="enq-status" id="enqStatus" role="status" aria-live="polite" hidden></div>
-        <div class="enq-actions">
-          <button type="submit" class="enq-submit" id="enqSubmitBtn">Send Enquiry</button>
-          <a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" class="scheme-card__ghost" data-contact data-wa-btn>Message on WhatsApp</a>
-        </div>
-      </form>
-    </div>
-  </section>
 </main>
 <div class="sfw">
 <footer class="sf" id="contact-footer" aria-labelledby="sfTitle">
@@ -1579,18 +1453,18 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
       <div>
         <h3>Our Services</h3>
         <ul>
-          <li><a href="/web-developer/" data-door="0">Latest Updates</a></li>
-          <li><a href="/app-developer/" data-door="1">Documents Need</a></li>
-          <li><a href="/ui-ux-designer/" data-door="2">Our Services</a></li>
-          <li><a href="/graphic-designer/" data-door="3">Gallery</a></li>
+          <li><a href="web-developer/" data-door="0">Latest Updates</a></li>
+          <li><a href="app-developer/" data-door="1">Documents Need</a></li>
+          <li><a href="ui-ux-designer/" data-door="2">Our Services</a></li>
+          <li><a href="graphic-designer/" data-door="3">Gallery</a></li>
         </ul>
       </div>
       <div>
         <h3>Quick Links</h3>
         <ul>
-          <li><a href="/" data-go="home">Home</a></li>
-          <li><a href="/#about" data-go="about">About Aman Computer</a></li>
-          <li><a href="/#about" data-go="about">Our Journey</a></li>
+          <li><a href="./" data-go="home">Home</a></li>
+          <li><a href="./#about" data-go="about">About Aman Computer</a></li>
+          <li><a href="./#about" data-go="about">Our Journey</a></li>
           <li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact>Contact &amp; Location</a></li>
           <li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact>WhatsApp Us</a></li>
           <li><a href="/admin" class="sf__admin-link"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="16" r="1"/><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/></svg><span>Admin Login</span></a></li>
@@ -1600,8 +1474,13 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
         <h3>Business Information</h3>
         <div id="sfBizInfo" class="sf__biz">
           <div class="sf__biz-group">
-            <p class="sf__biz-name">Aman Computer</p>
-            <p class="sf__biz-sub">Cyber Cafe &amp; Digital Center — Your Trust, Our Service.</p>
+            <div class="sf__biz-brand">
+              <img src="/assets/aistudio/logo.svg" alt="Aman Computer Official Logo" class="sf__biz-logo" width="52" height="52" />
+              <div>
+                <p class="sf__biz-name">Aman Computer</p>
+                <p class="sf__biz-sub">Cyber Cafe &amp; Digital Center — Your Trust, Our Service.</p>
+              </div>
+            </div>
           </div>
           <div class="sf__biz-group">
             <p class="sf__biz-addr">Shop No. 4 &amp; 5, Commercial Complex, Main Market Road, Varanasi, Uttar Pradesh&nbsp;–&nbsp;221001</p>
@@ -1618,14 +1497,13 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
         </div>
       </div>
     </div>
-    <p class="sf__disclaimer" id="sfDisclaimer" hidden></p>
     <div class="sf__bot">
       <span id="sfCopy">© <span data-fyear>2026</span> Aman Computer. All rights reserved.</span>
       <span class="sf__dev">Designed &amp; Developed by <a href="https://www.instagram.com/mdaftab_557/" target="_blank" rel="noopener noreferrer">Md Aftab</a></span>
       <span class="sf__legal">
-        <a href="/privacy-policy/" target="_self">Privacy Policy</a>
+        <a href="privacy-policy/" target="_self">Privacy Policy</a>
         <span aria-hidden="true" style="opacity:0.3;margin:0 0.4rem;">|</span>
-        <a href="/terms-and-conditions/" target="_self">Terms &amp; Conditions</a>
+        <a href="terms-and-conditions/" target="_self">Terms &amp; Conditions</a>
       </span>
       <button data-go="home">Back to top ↑</button>
     </div>
@@ -1755,7 +1633,7 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
   </button>
 
   <div class="dock-head">
-    <span class="db"><img class="db-logo" id="drawerBrandLogo" alt="" hidden /><span class="db-mark" id="drawerBrandMark" aria-hidden="true">A</span><span id="drawerBrandName">Aman Computer</span></span>
+    <span class="db"><span class="db-mark" aria-hidden="true"><img src="/assets/aistudio/logo.svg" alt="" id="drawerBrandLogo" width="28" height="28" /></span><span id="drawerBrandName">Aman Computer</span></span>
     <button type="button" class="dock-x" id="dockClose" aria-label="Close navigation sidebar">
       <svg class="i" aria-hidden="true"><use href="#ic-dock-x"/></svg>
     </button>
@@ -1839,7 +1717,7 @@ if(m<=2||c<=2||s)document.documentElement.classList.add('lite');})();
 </div>
 
 <script type="importmap">
-{ "imports": { "lenis": "/vendor/lenis.min.mjs" } }
+{ "imports": { "lenis": "./vendor/lenis.min.mjs" } }
 </script>
 <script type="module">
 const $ = (s, r = document) => r.querySelector(s);
@@ -2163,9 +2041,7 @@ bindHovers();
     const wEm = max / fs + 0.8 + 0.06;               // word + side padding
     body.style.setProperty('--cal-w', wEm.toFixed(3) + 'em');
     cal.style.setProperty('--cal-w', wEm.toFixed(3) + 'em');
-    const calBox = cal.closest('.hero__left') || cal.closest('.h1') || cal.parentElement;
-    const boxW = calBox ? calBox.getBoundingClientRect().width : window.innerWidth;
-    const avail = Math.max(180, boxW - Math.max(26, fs * 1.35));
+    const avail = cal.closest('.h1').getBoundingClientRect().width - fs * 0.25;
     const need = wEm * fs;
     if (need > avail) cal.style.fontSize = (fs * avail / need).toFixed(2) + 'px';
     // spiral rings + punched holes, spaced roughly every 0.62em
@@ -2175,11 +2051,7 @@ bindHovers();
   }
   fit();
   document.fonts?.ready.then(fit);
-  addEventListener('resize', () => { clearTimeout(fit._t); fit._t = setTimeout(fit, 80); });
-  if (typeof ResizeObserver === 'function') {
-    const _calBox = cal.closest('.hero__left') || cal.parentElement;
-    if (_calBox) new ResizeObserver(() => { clearTimeout(fit._t); fit._t = setTimeout(fit, 40); }).observe(_calBox);
-  }
+  addEventListener('resize', () => { clearTimeout(fit._t); fit._t = setTimeout(fit, 120); });
 
   function flip(){
     if (document.hidden){ timer = setTimeout(flip, 600); return; }
@@ -2612,7 +2484,7 @@ const toggleMode = () => setMode(getMode() === 'dark' ? 'light' : 'dark');
 /* ---------- Doors: hover cracks a door open; click swings it open and carries you through it ---------- */
 (function doors(){
   // each door is its own page
-  const ROUTES = ['/web-developer/', '/app-developer/', '/ui-ux-designer/', '/graphic-designer/'];
+  const ROUTES = ['web-developer/', 'app-developer/', 'ui-ux-designer/', 'graphic-designer/'];
   const SLUGS = ['web-developer', 'app-developer', 'ui-ux-designer', 'graphic-designer'];
   // a link like …#graphic-designer lands at the doors and walks straight through that one
   const HASH_DOOR = SLUGS.indexOf(decodeURIComponent(location.hash.slice(1)));
@@ -3363,17 +3235,6 @@ try {
     return ma - mb;
   });
 
-  const safeUrl = (raw) => {
-    const val = String(raw == null ? '' : raw).trim();
-    if (!val) return '';
-    if (val.startsWith('/') && !val.startsWith('//')) return val;
-    try {
-      const parsed = new URL(val, location.origin);
-      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return parsed.href;
-    } catch (e) {}
-    return '';
-  };
-
   function renderJourneyTimeline() {
     let items = [];
     try {
@@ -3419,8 +3280,7 @@ try {
       const dateLabel = escapeHtml(item.date || item.year || 'Jan 2024');
       const title = escapeHtml(item.title || '');
       const subtitle = item.subtitle ? `<p class="ch__org">${escapeHtml(item.subtitle)}</p>` : '';
-      const imgSafe = safeUrl(item.imageUrl);
-      const imgHtml = imgSafe ? `<img class="ch__img" src="${escapeHtml(imgSafe)}" alt="${title}" loading="lazy" />` : '';
+      const imgHtml = item.imageUrl ? `<img class="ch__img" src="${escapeHtml(item.imageUrl)}" alt="${title}" loading="lazy" />` : '';
       const desc = item.description ? `<p class="ch__desc">${escapeHtml(item.description)}</p>` : '';
       let bulletsHtml = '';
       if (Array.isArray(item.bullets) && item.bullets.length > 0) {
@@ -3474,17 +3334,6 @@ try {
 /* ---------- Aman Computer Public CMS Hydration (Local Cache + Supabase Live Sync) ---------- */
 (() => {
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const safeHttpUrl = (raw, allowRelative = true) => {
-    const val = String(raw == null ? '' : raw).trim();
-    if (!val) return '';
-    if (allowRelative && val.startsWith('/') && !val.startsWith('//')) return val;
-    if (allowRelative && val.startsWith('#') && val.length > 1) return val;
-    try {
-      const parsed = new URL(val, location.origin);
-      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return val.startsWith('http') ? parsed.href : val;
-    } catch (e) {}
-    return '';
-  };
   const readJson = (key, fallback) => {
     try {
       const raw = localStorage.getItem(key);
@@ -3512,11 +3361,9 @@ try {
     grid.innerHTML = arr.map(s => {
       const docs = Array.isArray(s.requiredDocuments) && s.requiredDocuments.length
         ? `<div><strong>Required Documents:</strong> ${esc(s.requiredDocuments.join(', '))}</div>` : '';
-      const imgSafe = safeHttpUrl(s.posterImage, true);
-      const img = imgSafe ? `<img class="scheme-card__img" src="${esc(imgSafe)}" alt="${esc(s.title)}" loading="lazy" />` : '';
-      const linkSafe = safeHttpUrl(s.officialLink, false);
-      const officialBtn = linkSafe
-        ? `<a class="scheme-card__btn" href="${esc(linkSafe)}" target="_blank" rel="noopener noreferrer">Official Portal →</a>` : '';
+      const img = s.posterImage ? `<img class="scheme-card__img" src="${esc(s.posterImage)}" alt="${esc(s.title)}" loading="lazy" />` : '';
+      const officialBtn = s.officialLink
+        ? `<a class="scheme-card__btn" href="${esc(s.officialLink)}" target="_blank" rel="noopener noreferrer">Official Portal →</a>` : '';
       return `<article class="scheme-card">
         <div>
           ${img}
@@ -3590,26 +3437,59 @@ try {
     // Brand settings
     const brand = content.brandSettings || {};
     const shopName = brand.shopName || profile.businessName || 'Aman Computer';
+    const extractBrandPath = (u) => {
+      const c = String(u || '').split('#')[0].split('?')[0].trim();
+      if (!c) return '';
+      try { if (/^https?:\/\//i.test(c)) return new URL(c).pathname.toLowerCase(); } catch (e) {}
+      const d = c.replace(/^\.+/, '');
+      return (d.startsWith('/') ? d : '/' + d).toLowerCase();
+    };
+    const isLegacyBrandUrl = (u) => {
+      const raw = String(u || '').trim();
+      if (!raw) return true;
+      if (/^data:image\//i.test(raw)) return false;
+      const p = extractBrandPath(raw);
+      if (p === '/assets/aistudio/logo.svg') return false;
+      if ([
+        '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png',
+        '/favicon.ico', '/favicon-16x16.png', '/favicon-32x32.png', '/apple-touch-icon.png',
+        '/brand/aman-logo.png', '/brand/aman-logo-compact.png', '/brand/aman-logo-master.png',
+        '/assets/aistudio/22258_70e2ad05.png'
+      ].includes(p)) return true;
+      return /1794752550523_aman_computer_logo|1794752567070_aman_computer_logo|\/aman_computer_logo\.(jpe?g|png|webp)$|\/brand\/aman-logo|\/assets\/aistudio\/22258_70e2ad05\.png$/i.test(p);
+    };
+    const rawLogo = String(brand.logoUrl || '').trim();
+    const rawFavicon = String(brand.faviconUrl || '').trim();
+    const isLegacyLogo = isLegacyBrandUrl(rawLogo);
+    const isLegacyFavicon = isLegacyBrandUrl(rawFavicon);
+    const brandLogo = isLegacyLogo ? '/assets/aistudio/logo.svg' : rawLogo;
+    const compactLogo = isLegacyLogo ? '/assets/aistudio/logo.svg' : rawLogo;
+    if (content.brandSettings && ((rawLogo && isLegacyLogo) || (rawFavicon && isLegacyFavicon))) {
+      try {
+        localStorage.setItem('aman_website_content', JSON.stringify({
+          ...content,
+          brandSettings: {
+            ...brand,
+            logoUrl: brandLogo,
+            faviconUrl: isLegacyFavicon ? '/assets/aistudio/logo.svg' : rawFavicon,
+          },
+        }));
+      } catch (e) {}
+    }
     window.__amanShopName = shopName;
+    const hdrName = document.getElementById('hdrBrandName');
+    if (hdrName) hdrName.textContent = shopName;
+    const hdrLogo = document.getElementById('hdrBrandLogo');
+    if (hdrLogo && hdrLogo.getAttribute('src') !== compactLogo) hdrLogo.setAttribute('src', compactLogo);
     const dbName = document.getElementById('drawerBrandName');
     if (dbName) dbName.textContent = shopName;
     const dbLogo = document.getElementById('drawerBrandLogo');
-    const dbMark = document.getElementById('drawerBrandMark');
-    const safeLogo = safeHttpUrl(brand.logoUrl, true);
-    if (dbLogo && dbMark) {
-      if (safeLogo && safeLogo !== '/icon-192.png') {
-        dbLogo.src = safeLogo;
-        dbLogo.alt = shopName;
-        dbLogo.hidden = false;
-        dbMark.hidden = true;
-      } else {
-        dbLogo.hidden = true;
-        dbMark.hidden = false;
+    if (dbLogo && dbLogo.getAttribute('src') !== compactLogo) dbLogo.setAttribute('src', compactLogo);
+    document.querySelectorAll('link[rel="icon"][type="image/svg+xml"]').forEach((lnk) => {
+      if (isLegacyFavicon || String(rawFavicon).endsWith('.svg')) {
+        lnk.setAttribute('href', '/assets/aistudio/logo.svg');
       }
-    }
-    if (brand.accentColor && /^#[0-9a-fA-F]{3,8}$/.test(brand.accentColor.trim())) {
-      document.documentElement.style.setProperty('--aman-brand-accent', brand.accentColor.trim());
-    }
+    });
     const ldName = document.getElementById('ldBrandName');
     if (ldName) ldName.textContent = shopName;
     const ldBadge = document.getElementById('ldBadge');
@@ -3650,70 +3530,22 @@ try {
 
     // Hero Content
     const hero = content.hero || {};
-    const HERO_DEFAULTS = {
-      headline: 'Your Trusted Digital Partner',
-      subheadline: 'Fast, Reliable & Professional Digital Services.',
-      description: 'From online applications and PAN services to Aadhaar assistance, photo studio and printing — all your digital needs, under one roof.'
-    };
-    const isLegacyHeroString = (val, maxLen) => {
-      const t = String(val || '').replace(/\s+/g, ' ').trim();
-      if (!t || t.length > maxLen) return true;
-      const lower = t.toLowerCase();
-      return (
-        lower === 'welcome to aman computer.' ||
-        lower === 'your one-stop center for' ||
-        lower.includes('local neighborhood digital partner') ||
-        lower.includes('fast, honest & 100% reliable digital services') ||
-        lower.includes('competitive exam forms, pan & aadhaar smart cards')
-      );
-    };
-    const resolvedHeadline = isLegacyHeroString(hero.headline, 45)
-      ? HERO_DEFAULTS.headline
-      : String(hero.headline).replace(/\s+/g, ' ').trim();
-    const resolvedSubheadline = isLegacyHeroString(hero.subheadline, 65)
-      ? HERO_DEFAULTS.subheadline
-      : String(hero.subheadline).replace(/\s+/g, ' ').trim();
-    const resolvedDescription = isLegacyHeroString(hero.description, 180)
-      ? HERO_DEFAULTS.description
-      : String(hero.description).replace(/\s+/g, ' ').trim();
-
     const badgeEl = document.getElementById('heroBadge');
     const h1El = document.getElementById('heroHeadline');
     const subEl = document.getElementById('heroSubheadline');
-    const descEl = document.getElementById('heroDescription');
     const srEl = document.getElementById('heroSrTitle');
-    const pCta = document.getElementById('heroPrimaryCta');
     const pBtn = document.getElementById('heroPrimaryText');
-    const sCta = document.getElementById('heroSecondaryCta');
     const sBtn = document.getElementById('heroSecondaryText');
     const barL = document.getElementById('heroBarLeft');
     const barM = document.getElementById('heroBarMid');
     if (badgeEl && hero.badge) badgeEl.textContent = hero.badge;
-    if (h1El) h1El.textContent = resolvedHeadline;
-    if (subEl) subEl.textContent = resolvedSubheadline;
-    if (descEl) descEl.textContent = resolvedDescription;
-    if (srEl) {
-      srEl.textContent = [resolvedHeadline, resolvedSubheadline].filter(Boolean).join(' — ');
+    if (h1El && hero.headline) h1El.textContent = hero.headline;
+    if (subEl && hero.subheadline) subEl.textContent = hero.subheadline;
+    if (srEl && (hero.headline || hero.subheadline)) {
+      srEl.textContent = [hero.headline, hero.subheadline].filter(Boolean).join(' ');
     }
     if (pBtn && hero.ctaPrimaryText) pBtn.textContent = hero.ctaPrimaryText;
-    if (pCta && hero.ctaPrimaryLink) {
-      const safePrimary = safeHttpUrl(hero.ctaPrimaryLink, true);
-      if (safePrimary) {
-        pCta.href = safePrimary;
-        if (safePrimary.startsWith('#')) {
-          pCta.removeAttribute('target');
-          pCta.removeAttribute('data-contact');
-          pCta.dataset.go = safePrimary.slice(1);
-        }
-      }
-    }
     if (sBtn && hero.ctaSecondaryText) sBtn.textContent = hero.ctaSecondaryText;
-    if (sCta && hero.ctaSecondaryLink) {
-      const secLink = String(hero.ctaSecondaryLink || '').trim();
-      if (secLink.startsWith('#') && secLink.length > 1) {
-        sCta.dataset.go = secLink.slice(1);
-      }
-    }
     if (barL && hero.timingNotice) barL.textContent = hero.timingNotice;
     if (barM && (profile.openingHours || brand.tagline)) {
       barM.textContent = profile.openingHours ? `Open ${profile.openingHours}` : brand.tagline;
@@ -3728,7 +3560,7 @@ try {
       window.__updateFlipCalendar?.(activeLabels);
     }
 
-    // Owner Portrait (strict: ONLY shown if visible === true AND valid safe imageUrl exists)
+    // Owner Portrait (strict: ONLY shown if visible === true AND valid imageUrl exists)
     const portrait = content.ownerPortrait || {};
     const fig = document.getElementById('fig');
     const figImg = document.getElementById('figPortrait');
@@ -3736,12 +3568,11 @@ try {
     const figCapTitle = document.getElementById('figCapTitle');
     const figCapSub = document.getElementById('figCapSub');
     if (fig && figImg) {
-      const url = safeHttpUrl(portrait.imageUrl, true);
+      const url = String(portrait.imageUrl || '').trim();
       if (portrait.visible === true && url) {
         figImg.src = url;
         figImg.alt = portrait.altText || portrait.caption || shopName;
         fig.hidden = false;
-        if (secHome) secHome.classList.remove('hero--no-fig');
         if (figCap && (portrait.caption || portrait.subcaption)) {
           if (figCapTitle) figCapTitle.textContent = portrait.caption || '';
           if (figCapSub) figCapSub.textContent = portrait.subcaption || '';
@@ -3752,7 +3583,6 @@ try {
       } else {
         figImg.removeAttribute('src');
         fig.hidden = true;
-        if (secHome) secHome.classList.add('hero--no-fig');
         if (figCap) figCap.hidden = true;
       }
     }
@@ -3768,18 +3598,11 @@ try {
       .trim()
       .toLowerCase();
 
-    // Journey Header + Stats
+    // Journey Header
     const about = content.about || {};
     const stTitle = document.getElementById('storyTitle');
     const stEye = document.getElementById('storyEyebrow');
     const stDesc = document.getElementById('storyDesc');
-    const statY = document.getElementById('statYears');
-    const statC = document.getElementById('statCustomers');
-    const statS = document.getElementById('statSuccess');
-    if (statY && about.experienceYears) statY.textContent = String(about.experienceYears).trim();
-    if (statC && about.customersServed) statC.textContent = String(about.customersServed).trim();
-    if (statS && about.successRate) statS.textContent = String(about.successRate).trim();
-
     const LEGACY_ABOUT_HEADING = 'About Aman Computer';
     const LEGACY_ABOUT_SUB = 'Serving Students, Families & Local Businesses for Over 12+ Years with Integrity';
     const LEGACY_ABOUT_BIO = 'Established in 2014, Aman Computer began with a single vision: to ensure that no student or citizen faces rejection or harassment due to complex government online portals or formatting mistakes. Today, we stand as the most trusted cyber cafe and digital center in the area, backed by commercial laser printing machinery, licensed banking kiosks, and dedicated operators.';
@@ -3815,54 +3638,6 @@ try {
       stDesc.textContent = resolvedAboutDesc;
     }
 
-    // Why Choose Us & How It Works
-    const DEFAULT_WHY_POINTS = [
-      { title: '100% Transparent Fees', desc: 'Official portal fee receipts and clear service pricing communicated upfront before every submission.' },
-      { title: 'Zero-Error Form Checking', desc: 'Photo resizing, document PDF checks, and applicant verification before final government portal lock.' },
-      { title: 'Same-Day Counter Turnaround', desc: 'Priority processing for certificates, PAN cards, scholarship renewals, and railway tickets.' },
-      { title: 'Trusted Document Privacy', desc: 'All citizen IDs and scan copies are purged from local counter folders once handed over safely.' }
-    ];
-    const DEFAULT_HOW_STEPS = [
-      { stepNumber: '01', title: 'Confirm Required Documents', desc: 'Check our Documents Need door or WhatsApp our counter to confirm exact originals required.' },
-      { stepNumber: '02', title: 'Walk In or Send Enquiry', desc: 'Submit the enquiry form below or visit our Varanasi center for verified portal filing.' },
-      { stepNumber: '03', title: 'Track & Collect Acknowledgement', desc: 'Receive your printed government acknowledgement slip, receipt, or PDF right away.' }
-    ];
-    const whyData = content.whyChooseUs || {};
-    const howData = content.howItWorks || {};
-    const whyHeadingEl = document.getElementById('whyHeading');
-    const whySubEl = document.getElementById('whySubheading');
-    const whyGridEl = document.getElementById('whyPointsGrid');
-    const howHeadingEl = document.getElementById('howHeading');
-    const howGridEl = document.getElementById('howStepsGrid');
-    if (whyHeadingEl && whyData.heading) whyHeadingEl.textContent = whyData.heading;
-    if (whySubEl && whyData.subheading) whySubEl.textContent = whyData.subheading;
-    const pts = Array.isArray(whyData.points) && whyData.points.length ? whyData.points : DEFAULT_WHY_POINTS;
-    if (whyGridEl) {
-      whyGridEl.innerHTML = pts.map((pt, i) => `
-        <article class="pillar-card">
-          <span class="pillar-card__n">${String(i + 1).padStart(2, '0')}</span>
-          <h3>${esc(pt.title || '')}</h3>
-          <p>${esc(pt.desc || '')}</p>
-        </article>`).join('');
-    }
-    if (howHeadingEl && howData.heading) howHeadingEl.textContent = howData.heading;
-    const steps = Array.isArray(howData.steps) && howData.steps.length ? howData.steps : DEFAULT_HOW_STEPS;
-    if (howGridEl) {
-      howGridEl.innerHTML = steps.map((st, i) => `
-        <article class="step-card">
-          <span class="step-card__num">Step ${esc(st.stepNumber || String(i + 1).padStart(2, '0'))}</span>
-          <h4>${esc(st.title || '')}</h4>
-          <p>${esc(st.desc || '')}</p>
-        </article>`).join('');
-    }
-
-    // Contact Prompts
-    const contact = content.contact || {};
-    const waPromptEl = document.getElementById('enqWaPrompt');
-    const visitPromptEl = document.getElementById('enqVisitPrompt');
-    if (waPromptEl && contact.whatsappPrompt) waPromptEl.textContent = contact.whatsappPrompt;
-    if (visitPromptEl && contact.visitingPrompt) visitPromptEl.textContent = contact.visitingPrompt;
-
     // Footer & Business Profile
     const sfEye = document.getElementById('sfEye');
     const sfTitle = document.getElementById('sfTitle');
@@ -3870,8 +3645,8 @@ try {
     const sfBizTag = document.getElementById('sfBizTag');
     const sfBiz = document.getElementById('sfBizInfo');
     const sfCopy = document.getElementById('sfCopy');
-    const sfDisclaimer = document.getElementById('sfDisclaimer');
     const footer = content.footer || {};
+    const contact = content.contact || {};
     const LEGACY_CONTACT_HEADING = 'Visit Our Center or Reach Out';
     const LEGACY_CONTACT_SUB = 'We are situated right at the main market square with dedicated customer seating.';
     const DEFAULT_CONTACT_HEADING = 'Visit Our Center or Get in Touch';
@@ -3919,17 +3694,19 @@ try {
         : [rawHours, rawDays].filter(Boolean);
       const phoneDisplay = String(profile.primaryPhone || '+91 85955 15718').trim();
       const phoneTel = phoneDisplay.replace(/[^\d+]/g, '') || '+918595515718';
-      const emailDisplay = String(profile.email || '').trim();
-      const mapsSafe = safeHttpUrl(profile.googleMapsDirectLink, false);
 
       sfBiz.innerHTML = [
         `<div class="sf__biz-group">`,
-        `  <p class="sf__biz-name">${esc(bizName)}</p>`,
-        bizTagline ? `  <p class="sf__biz-sub">${esc(bizTagline)}</p>` : '',
+        `  <div class="sf__biz-brand">`,
+        `    <img src="${esc(brandLogo)}" alt="${esc(bizName)} Official Logo" class="sf__biz-logo" width="52" height="52" />`,
+        `    <div>`,
+        `      <p class="sf__biz-name">${esc(bizName)}</p>`,
+        bizTagline ? `      <p class="sf__biz-sub">${esc(bizTagline)}</p>` : '',
+        `    </div>`,
+        `  </div>`,
         `</div>`,
         `<div class="sf__biz-group">`,
         `  <p class="sf__biz-addr">${esc(addrFull).replace(/\s+–\s+(\d{6})$/, '&nbsp;–&nbsp;$1')}</p>`,
-        mapsSafe ? `  <p class="sf__biz-line"><a class="sf__biz-tel" href="${esc(mapsSafe)}" target="_blank" rel="noopener noreferrer">Open in Google Maps →</a></p>` : '',
         `</div>`,
         hoursLines.length ? [
           `<div class="sf__biz-group">`,
@@ -3937,11 +3714,10 @@ try {
           ...hoursLines.map(line => `  <p class="sf__biz-line">${esc(line)}</p>`),
           `</div>`,
         ].join('') : '',
-        (phoneDisplay || emailDisplay) ? [
+        phoneDisplay ? [
           `<div class="sf__biz-group">`,
           `  <p class="sf__biz-label">Contact</p>`,
-          phoneDisplay ? `  <p class="sf__biz-line"><a class="sf__biz-tel" href="tel:${esc(phoneTel)}">${esc(phoneDisplay)}</a></p>` : '',
-          emailDisplay ? `  <p class="sf__biz-line"><a class="sf__biz-tel" href="mailto:${esc(emailDisplay)}">${esc(emailDisplay)}</a></p>` : '',
+          `  <p class="sf__biz-line"><a class="sf__biz-tel" href="tel:${esc(phoneTel)}">${esc(phoneDisplay)}</a></p>`,
           `</div>`,
         ].join('') : '',
       ].filter(Boolean).join('');
@@ -3949,122 +3725,21 @@ try {
     if (sfCopy && footer.copyrightText) {
       sfCopy.textContent = footer.copyrightText;
     }
-    if (sfDisclaimer) {
-      const disc = String(footer.disclaimer || '').trim();
-      sfDisclaimer.hidden = !disc;
-      if (disc) sfDisclaimer.textContent = disc;
-    }
-  }
-
-  function populateEnquiryServices() {
-    const sel = document.getElementById('enqService');
-    if (!sel) return;
-    const raw = readJson('aman_services', []);
-    const visible = Array.isArray(raw) ? raw.filter(s => s && s.visible !== false && s.title) : [];
-    const currentVal = sel.value;
-    const options = [{ id: 'general', title: 'General Service / Form Inquiry' }].concat(
-      visible.map(s => ({ id: s.id || s.title, title: s.title }))
-    );
-    sel.innerHTML = options.map(o => `<option value="${esc(o.title)}" data-service-id="${esc(o.id)}">${esc(o.title)}</option>`).join('');
-    if (currentVal && [...sel.options].some(opt => opt.value === currentVal)) {
-      sel.value = currentVal;
-    }
-  }
-
-  function initEnquiryForm() {
-    const form = document.getElementById('publicEnquiryForm');
-    if (!form || form.dataset.bound === '1') return;
-    form.dataset.bound = '1';
-    const btn = document.getElementById('enqSubmitBtn');
-    const statusEl = document.getElementById('enqStatus');
-
-    const showStatus = (tone, msg) => {
-      if (!statusEl) return;
-      statusEl.hidden = false;
-      statusEl.dataset.tone = tone;
-      statusEl.textContent = msg;
-    };
-
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const nameEl = document.getElementById('enqName');
-      const phoneEl = document.getElementById('enqPhone');
-      const srvEl = document.getElementById('enqService');
-      const urgEl = document.getElementById('enqUrgency');
-      const msgEl = document.getElementById('enqMessage');
-
-      const customerName = (nameEl?.value || '').trim();
-      const phoneNumber = (phoneEl?.value || '').trim();
-      const digitsOnly = phoneNumber.replace(/\D/g, '');
-      const selectedOpt = srvEl?.options?.[srvEl.selectedIndex];
-      const serviceName = (srvEl?.value || 'General Service').trim();
-      const serviceId = (selectedOpt?.dataset?.serviceId || 'general').trim();
-      const urgency = urgEl?.value === 'urgent' ? 'urgent' : 'normal';
-      const customerMessage = (msgEl?.value || '').trim();
-
-      if (customerName.length < 2 || customerName.length > 100) {
-        showStatus('err', 'Please enter your full name (2 to 100 characters).');
-        nameEl?.focus();
-        return;
-      }
-      if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-        showStatus('err', 'Please enter a valid 10 to 15 digit mobile number.');
-        phoneEl?.focus();
-        return;
-      }
-
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Sending...';
-      }
-
-      try {
-        if (typeof window.__submitAmanEnquiry === 'function') {
-          const res = await window.__submitAmanEnquiry({
-            customerName,
-            phoneNumber,
-            serviceId,
-            serviceName,
-            customerMessage,
-            urgency
-          });
-          if (res && res.ok) {
-            showStatus('ok', 'Enquiry received! Our team at Aman Computer will reach out shortly.');
-            form.reset();
-            populateEnquiryServices();
-          } else {
-            showStatus('err', (res && res.error) || 'Unable to submit online enquiry right now. Please message us on WhatsApp.');
-          }
-        } else {
-          showStatus('err', 'Online enquiry service is currently offline. Please use the WhatsApp button below.');
-        }
-      } catch (err) {
-        showStatus('err', 'Unable to submit online enquiry right now. Please message us on WhatsApp.');
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = 'Send Enquiry';
-        }
-      }
-    });
   }
 
   function hydrateAll() {
     applyWebsiteAndBusiness();
     renderSchemes();
     renderFaqs();
-    populateEnquiryServices();
   }
 
-  initEnquiryForm();
   hydrateAll();
   window.addEventListener('aman_website_content_changed', hydrateAll);
   window.addEventListener('aman_business_profile_changed', hydrateAll);
-  window.addEventListener('aman_services_changed', populateEnquiryServices);
   window.addEventListener('aman_schemes_changed', renderSchemes);
   window.addEventListener('aman_faqs_changed', renderFaqs);
   window.addEventListener('storage', e => {
-    if (!e.key || ['aman_website_content','aman_business_profile','aman_government_schemes','aman_faqs','aman_services'].includes(e.key)) {
+    if (!e.key || ['aman_website_content','aman_business_profile','aman_government_schemes','aman_faqs'].includes(e.key)) {
       hydrateAll();
     }
   });

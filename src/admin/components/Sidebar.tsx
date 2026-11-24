@@ -28,6 +28,7 @@ import {
   getParentIdForTab,
   resolveStudioTab,
 } from '../config/navigation';
+import { normalizeBrandLogoUrl } from '../../lib/brandAssets';
 
 const EXPANDED_STORAGE_KEY = 'aman_admin_expanded_accordions_v1';
 
@@ -56,8 +57,12 @@ export const Sidebar: React.FC = () => {
     setSearchModalOpen,
     unreadNotificationCount,
     enquiries,
+    websiteContent,
     logout,
   } = useAdmin();
+
+  const compactBrandLogo = normalizeBrandLogoUrl(websiteContent?.brandSettings?.logoUrl, true);
+  const brandShopName = websiteContent?.brandSettings?.shopName || 'Aman Computer';
 
   const [dockExpanded, setDockExpanded] = useState(false);
   const isOpen = dockExpanded || mobileMenuOpen;
@@ -372,6 +377,27 @@ export const Sidebar: React.FC = () => {
         }`}
       >
         <button
+          type="button"
+          onClick={() => handleSelectTab('overview')}
+          aria-label={`${brandShopName} — Dashboard Overview`}
+          className="group relative w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-full grid place-items-center transition-transform duration-200 cursor-pointer hover:scale-105 active:scale-95 shrink-0"
+        >
+          <img
+            src={compactBrandLogo}
+            alt={brandShopName}
+            width={34}
+            height={34}
+            className="w-8 h-8 sm:w-[34px] sm:h-[34px] rounded-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.22)] dark:drop-shadow-[0_2px_8px_rgba(56,189,248,0.22)]"
+          />
+          <span
+            role="tooltip"
+            className="hidden sm:block pointer-events-none absolute left-[50px] z-50 px-2.5 py-1 rounded-[9px] bg-[#24180d] text-[#f8efe0] border border-[#C9A96E]/35 text-[10.5px] font-medium whitespace-nowrap shadow-lg opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0 transition-all duration-150"
+          >
+            {brandShopName}
+          </span>
+        </button>
+
+        <button
           id="dockOpen"
           type="button"
           onClick={openSidebar}
@@ -454,16 +480,19 @@ export const Sidebar: React.FC = () => {
                 onClick={() => handleSelectTab('overview')}
                 className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer"
               >
-                <span
-                  aria-hidden="true"
-                  className="w-2 h-2 rounded-full bg-[#C9A96E] shadow-[0_0_0_4px_rgba(201,169,110,0.2)] shrink-0"
+                <img
+                  src={compactBrandLogo}
+                  alt={brandShopName}
+                  width={34}
+                  height={34}
+                  className="w-8 h-8 sm:w-[34px] sm:h-[34px] rounded-full object-contain shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.22)] dark:drop-shadow-[0_2px_8px_rgba(56,189,248,0.22)]"
                 />
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold tracking-tight text-[var(--st-tx)] truncate">
-                    Aman Computer
+                    {brandShopName}
                   </div>
                   <div className="text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--st-mut)] truncate">
-                    Quick Navigation
+                    Owner Workspace
                   </div>
                 </div>
               </button>

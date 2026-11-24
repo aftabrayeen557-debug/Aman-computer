@@ -9,6 +9,7 @@ import {
 } from '../components/CmsPrimitives';
 import { deleteStorageFileByUrl } from '../services/storageService';
 import { INITIAL_WEBSITE_CONTENT } from '../data/initialData';
+import { BRAND_OG_IMAGE, normalizeOgImageUrl } from '../../lib/brandAssets';
 
 export const SeoManagerView: React.FC = () => {
   const { websiteContent, updateWebsiteContent, showToast } = useAdmin();
@@ -19,17 +20,21 @@ export const SeoManagerView: React.FC = () => {
       'Authorized digital seva, online government forms, PAN & Aadhaar facilitation, AEPS banking, ticket booking, and commercial printing at Aman Computer, Varanasi.',
     keywords:
       'Aman Computer, Cyber Cafe Varanasi, Digital Seva Kendra, PAN Card Center, Aadhaar Update, Online Exam Forms, CSC Center',
-    ogImageUrl: '/og.jpg',
+    ogImageUrl: BRAND_OG_IMAGE,
     canonicalUrl: '',
   };
 
-  const [draft, setDraft] = useState<SeoSettings>(
-    websiteContent.seoSettings || defaults
-  );
+  const [draft, setDraft] = useState<SeoSettings>(() => ({
+    ...(websiteContent.seoSettings || defaults),
+    ogImageUrl: normalizeOgImageUrl(websiteContent.seoSettings?.ogImageUrl),
+  }));
 
   useEffect(() => {
     if (websiteContent.seoSettings) {
-      setDraft(websiteContent.seoSettings);
+      setDraft({
+        ...websiteContent.seoSettings,
+        ogImageUrl: normalizeOgImageUrl(websiteContent.seoSettings.ogImageUrl),
+      });
     }
   }, [websiteContent.seoSettings]);
 

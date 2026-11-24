@@ -250,7 +250,7 @@ export const OverviewView: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="font-editorial text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-[var(--st-tx)] leading-[1.1]">
+            <h1 className="font-editorial text-3xl sm:text-4xl lg:text-[42px] font-semibold tracking-tight text-[var(--st-tx)] leading-[1.1]">
               {greeting}, {ownerName}.
             </h1>
 
@@ -332,7 +332,7 @@ export const OverviewView: React.FC = () => {
                 </div>
 
                 <div className="mt-3 flex items-baseline justify-between gap-2">
-                  <span className="font-editorial text-4xl font-normal text-[var(--st-tx)] tabular-nums tracking-tight">
+                  <span className="font-editorial text-4xl font-semibold text-[var(--st-tx)] tabular-nums tracking-tight">
                     {kpi.value}
                   </span>
                   <span className="text-xs font-mono text-[#C9A96E] tabular-nums">

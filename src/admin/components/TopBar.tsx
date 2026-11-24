@@ -28,6 +28,7 @@ import {
   getOwnerProfileInitials,
 } from '../services/ownerProfileService';
 import { AdminTab } from '../types';
+import { normalizeBrandLogoUrl } from '../../lib/brandAssets';
 
 const GLASS_PREFS_KEY = 'aman_studio_glass_v1';
 
@@ -229,16 +230,14 @@ export const TopBar: React.FC = () => {
           onClick={() => setCurrentTab('overview')}
           className="flex items-center gap-2.5 min-w-0 text-left group cursor-pointer"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[11px] bg-[#20150b] text-[#f1e8da] dark:bg-[#f1e8da] dark:text-[#20150b] flex items-center justify-center font-editorial text-base font-bold shrink-0 shadow-xs overflow-hidden">
-            {brandSettings?.logoUrl ? (
-              <img
-                src={brandSettings.logoUrl}
-                alt={brandSettings.shopName || 'Aman Computer'}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              'A.'
-            )}
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden drop-shadow-[0_2px_6px_rgba(0,0,0,0.18)] dark:drop-shadow-[0_2px_8px_rgba(56,189,248,0.2)]">
+            <img
+              src={normalizeBrandLogoUrl(brandSettings?.logoUrl, true)}
+              alt={brandSettings?.shopName || 'Aman Computer'}
+              width={36}
+              height={36}
+              className="w-full h-full object-contain rounded-full"
+            />
           </div>
           <div className="min-w-0 leading-tight">
             <div className="text-[13px] sm:text-[14px] font-semibold text-[var(--st-tx)] truncate">

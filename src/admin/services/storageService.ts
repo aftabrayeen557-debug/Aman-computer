@@ -1,4 +1,16 @@
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import {
+  supabase,
+  supabaseUrl,
+  supabaseAnonKey,
+  isSupabaseConfigured,
+  getRefreshedSupabaseAccessToken,
+} from '../../lib/supabase';
+import {
+  buildSafeStorageObjectPath,
+  ContextualUploadConfig,
+  formatUploadBytes,
+  validateFileDeep,
+} from './fileSecurityService';
 
 export type StorageBucketName =
   | 'gallery-images'
@@ -12,6 +24,13 @@ export interface UploadResult {
   path?: string;
   error?: string;
   fileSize?: string;
+  aborted?: boolean;
+}
+
+export interface UploadOptions {
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+  deepConfig?: ContextualUploadConfig;
 }
 
 export const ALLOWED_IMAGE_TYPES = [
@@ -81,9 +100,7 @@ export const validateUploadFile = (
  * Format bytes to human-readable string (e.g. 2.4 MB)
  */
 export const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return formatUploadBytes(bytes);
 };
 
 const KNOWN_BUCKETS: StorageBucketName[] = [
@@ -120,6 +137,97 @@ export const extractStorageLocationFromUrl = (
 };
 
 /**
+ * Performs a real XHR multipart/raw upload to Supabase Storage with genuine upload progress
+ * and AbortSignal cancellation support.
+ */
+const uploadViaXhrWithProgress = (params: {
+  bucket: StorageBucketName;
+  filePath: string;
+  file: File;
+  contentType: string;
+  accessToken: string;
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}): Promise<{ ok: boolean; path?: string; status?: number; aborted?: boolean; error?: string }> => {
+  const { bucket, filePath, file, contentType, accessToken, onProgress, signal } = params;
+  const encodedPath = filePath
+    .split('/')
+    .map((seg) => encodeURIComponent(seg))
+    .join('/');
+  const endpoint = `${supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/${encodeURIComponent(
+    bucket
+  )}/${encodedPath}`;
+
+  return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve({ ok: false, aborted: true, error: 'Upload cancelled by user.' });
+      return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+    xhr.setRequestHeader('apikey', supabaseAnonKey);
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.setRequestHeader('cache-control', '3600');
+    xhr.setRequestHeader('Content-Type', contentType);
+
+    const onAbortSignal = () => {
+      try {
+        xhr.abort();
+      } catch {
+        // Ignore abort cleanup
+      }
+    };
+
+    if (signal) {
+      signal.addEventListener('abort', onAbortSignal, { once: true });
+    }
+
+    xhr.upload.onprogress = (evt) => {
+      if (evt.lengthComputable && evt.total > 0) {
+        const pct = Math.min(100, Math.round((evt.loaded / evt.total) * 100));
+        onProgress?.(pct);
+      }
+    };
+
+    xhr.onload = () => {
+      if (signal) signal.removeEventListener('abort', onAbortSignal);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress?.(100);
+        resolve({ ok: true, path: filePath, status: xhr.status });
+      } else {
+        let serverMsg = "We couldn't upload your file right now. Please try again.";
+        try {
+          const parsed = JSON.parse(xhr.responseText);
+          if (parsed?.message && /mime|size|policy|unauthorized/i.test(parsed.message)) {
+            serverMsg = parsed.message;
+          }
+        } catch {
+          // Keep friendly default message
+        }
+        resolve({ ok: false, status: xhr.status, error: serverMsg });
+      }
+    };
+
+    xhr.onerror = () => {
+      if (signal) signal.removeEventListener('abort', onAbortSignal);
+      resolve({
+        ok: false,
+        error: 'Unable to upload file due to a connection issue. Please check your internet and retry.',
+      });
+    };
+
+    xhr.onabort = () => {
+      if (signal) signal.removeEventListener('abort', onAbortSignal);
+      resolve({ ok: false, aborted: true, error: 'Upload cancelled.' });
+    };
+
+    xhr.send(file);
+  });
+};
+
+/**
  * Uploads a validated file directly to Supabase Storage.
  * Requires valid Supabase configuration and authenticated admin session.
  */
@@ -127,61 +235,126 @@ export const uploadFileToStorage = async (
   bucket: StorageBucketName,
   file: File,
   folderPath: string = '',
-  expectedCategory: 'image' | 'document' | 'any' = 'any'
+  expectedCategory: 'image' | 'document' | 'any' = 'any',
+  options?: UploadOptions
 ): Promise<UploadResult> => {
-  const validation = validateUploadFile(file, expectedCategory);
-  if (!validation.valid) {
-    return { success: false, error: validation.error };
+  // 1. Deep security validation (magic bytes, double-extensions, MIME, size)
+  const inferredDeepConfig: ContextualUploadConfig =
+    options?.deepConfig || {
+      category: expectedCategory === 'document' ? 'document' : 'image',
+    };
+
+  let resolvedContentType = file.type;
+
+  if (typeof (file as File).slice === 'function' && typeof (file as File).arrayBuffer === 'function') {
+    if (expectedCategory === 'any' && !options?.deepConfig) {
+      const isDocExt = /\.(pdf|doc|docx)$/i.test(file.name);
+      inferredDeepConfig.category = isDocExt ? 'document' : 'image';
+    }
+    const deepCheck = await validateFileDeep(file, inferredDeepConfig);
+    if (!deepCheck.valid) {
+      return {
+        success: false,
+        error: deepCheck.rejectionReason || deepCheck.error || 'File failed security validation.',
+      };
+    }
+    if (deepCheck.resolvedMimeType) {
+      resolvedContentType = deepCheck.resolvedMimeType;
+    }
+  } else {
+    const basicCheck = validateUploadFile(file, expectedCategory);
+    if (!basicCheck.valid) {
+      return { success: false, error: basicCheck.error };
+    }
   }
 
+  // 2. Verify Supabase availability & authenticated admin token
   if (!isSupabaseConfigured() || !supabase) {
     return {
       success: false,
       error:
-        'Media storage is currently unavailable. Please enter an image URL instead.',
+        'Media storage is currently unavailable. Please verify connection or paste a direct image URL.',
     };
   }
 
-  const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const timestamp = Date.now();
-  const filePath = folderPath
-    ? `${folderPath}/${timestamp}_${cleanFileName}`
-    : `${timestamp}_${cleanFileName}`;
+  const accessToken = await getRefreshedSupabaseAccessToken();
+  if (!accessToken) {
+    return {
+      success: false,
+      error: 'Admin authentication is required before uploading files to secure storage.',
+    };
+  }
+
+  if (options?.signal?.aborted) {
+    return { success: false, aborted: true, error: 'Upload cancelled.' };
+  }
+
+  // 3. Generate safe, randomized, traversal-proof storage object key
+  const filePath = buildSafeStorageObjectPath(file.name, folderPath);
+  const uploadMime = resolvedContentType || file.type || 'application/octet-stream';
 
   try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type,
-      });
+    let uploadedPath: string | null = null;
 
-    if (error) {
-      console.error('Media storage upload rejected:', error);
-      return {
-        success: false,
-        error: "We couldn't upload your file right now. Please try again or use a different image.",
-      };
+    if (
+      (options?.onProgress || options?.signal) &&
+      typeof XMLHttpRequest !== 'undefined' &&
+      supabaseUrl &&
+      supabaseAnonKey
+    ) {
+      const xhrRes = await uploadViaXhrWithProgress({
+        bucket,
+        filePath,
+        file,
+        contentType: uploadMime,
+        accessToken,
+        onProgress: options.onProgress,
+        signal: options.signal,
+      });
+      if (!xhrRes.ok) {
+        return {
+          success: false,
+          aborted: xhrRes.aborted,
+          error: xhrRes.error,
+        };
+      }
+      uploadedPath = xhrRes.path || filePath;
+    } else {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: uploadMime,
+        });
+
+      if (error || !data) {
+        console.error('Media storage upload rejected:', error);
+        return {
+          success: false,
+          error: "We couldn't upload your file right now. Please try again or use a different file.",
+        };
+      }
+      uploadedPath = data.path;
     }
 
     if (bucket === 'customer-documents') {
       const { data: signedData, error: signErr } = await supabase.storage
         .from(bucket)
-        .createSignedUrl(data.path, 60 * 60 * 24 * 7);
+        .createSignedUrl(uploadedPath, 60 * 60 * 24 * 7);
 
       if (signErr || !signedData) {
         return {
           success: true,
-          path: data.path,
-          url: data.path,
+          path: uploadedPath,
+          url: uploadedPath,
           fileSize: formatFileSize(file.size),
         };
       }
 
       return {
         success: true,
-        path: data.path,
+        path: uploadedPath,
         url: signedData.signedUrl,
         fileSize: formatFileSize(file.size),
       };
@@ -189,15 +362,15 @@ export const uploadFileToStorage = async (
 
     const { data: publicUrlData } = supabase.storage
       .from(bucket)
-      .getPublicUrl(data.path);
+      .getPublicUrl(uploadedPath);
 
     return {
       success: true,
-      path: data.path,
+      path: uploadedPath,
       url: publicUrlData.publicUrl,
       fileSize: formatFileSize(file.size),
     };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Media upload failure:', err);
     return {
       success: false,
@@ -223,7 +396,7 @@ export const deleteFileFromStorage = async (
       return { success: false, error: 'Unable to remove this file right now.' };
     }
     return { success: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error('Media deletion exception:', err);
     return { success: false, error: 'Unable to remove this file right now.' };
   }

@@ -731,17 +731,18 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
               className="pointer-events-none fixed -left-[9999px] top-0 opacity-0"
               style={{
                 width: '350px',
-                fontFamily: "'Onest', ui-sans-serif, system-ui, sans-serif",
+                fontFamily: "var(--font-body, 'Inter', 'Noto Sans Devanagari', sans-serif)",
               }}
             >
               <h2
                 ref={measureH1Ref}
                 style={{
+                  fontFamily: "var(--font-display, 'Manrope', 'Noto Sans Devanagari', sans-serif)",
                   fontSize: '36px',
                   lineHeight: 1.1,
-                  fontWeight: 650,
-                  letterSpacing: '-0.025em',
-                  maxWidth: 'min(100%, 16ch)',
+                  fontWeight: 800,
+                  letterSpacing: '-0.028em',
+                  maxWidth: 'min(100%, 17ch)',
                   textWrap: 'balance',
                 }}
               >
@@ -750,9 +751,10 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
               <p
                 ref={measureSubRef}
                 style={{
+                  fontFamily: "var(--font-display, 'Manrope', 'Noto Sans Devanagari', sans-serif)",
                   fontSize: '19px',
                   lineHeight: 1.14,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   letterSpacing: '-0.015em',
                   maxWidth: 'min(100%, 36ch)',
                 }}
@@ -838,7 +840,7 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
                 style={{
                   width: previewViewport === 'mobile' ? '390px' : '100%',
                   maxWidth: vpSpec.containerMaxWidth,
-                  fontFamily: "'Onest', ui-sans-serif, system-ui, sans-serif",
+                  fontFamily: "var(--font-body, 'Inter', 'Noto Sans Devanagari', sans-serif)",
                   background:
                     previewTheme === 'light'
                       ? 'radial-gradient(120% 90% at 62% 30%, #EEEAE6 0%, #E8E4E0 48%, #D8CDCA 100%)'
@@ -870,11 +872,12 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
 
                     <h2
                       style={{
+                        fontFamily: "var(--font-display, 'Manrope', 'Noto Sans Devanagari', sans-serif)",
                         fontSize: vpSpec.h1Size,
                         lineHeight: vpSpec.h1LineHeight,
-                        fontWeight: 650,
-                        letterSpacing: '-0.025em',
-                        maxWidth: 'min(100%, 16ch)',
+                        fontWeight: 800,
+                        letterSpacing: '-0.028em',
+                        maxWidth: 'min(100%, 17ch)',
                         textWrap: 'balance',
                       }}
                     >
@@ -883,9 +886,10 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
 
                     <p
                       style={{
+                        fontFamily: "var(--font-display, 'Manrope', 'Noto Sans Devanagari', sans-serif)",
                         fontSize: vpSpec.subSize,
                         lineHeight: vpSpec.subLineHeight,
-                        fontWeight: 500,
+                        fontWeight: 600,
                         letterSpacing: '-0.015em',
                         maxWidth:
                           previewViewport === 'mobile'
@@ -918,8 +922,9 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
                     {/* Compact Flip-Notebook Service Chip */}
                     <div className="pt-0.5">
                       <span
-                        className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold tracking-tight shadow-sm"
+                        className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold tracking-tight shadow-sm"
                         style={{
+                          fontFamily: "var(--font-display, 'Manrope', 'Noto Sans Devanagari', sans-serif)",
                           background: 'linear-gradient(180deg, #fdfcf9 0%, #f3f1ec 100%)',
                           color: '#0a0a0a',
                           boxShadow: '0 2px 0 #d8d4cb, 0 6px 14px -6px rgba(0,0,0,0.28)',
@@ -952,7 +957,7 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
                     {/* CTA Pills */}
                     <div className="flex flex-wrap items-center gap-2.5 pt-1">
                       <span
-                        className="inline-flex items-center gap-2 rounded-full pl-4 pr-1.5 py-1.5 text-[13px] font-medium"
+                        className="inline-flex items-center gap-2 rounded-full pl-4 pr-1.5 py-1.5 text-[13px] font-semibold"
                         style={{
                           background: previewTheme === 'light' ? '#1A1818' : '#E8E4E0',
                           color: previewTheme === 'light' ? '#E8E4E0' : '#1A1818',
@@ -970,7 +975,7 @@ export const HeroManagerView: React.FC<HeroManagerViewProps> = ({ mode }) => {
                         </span>
                       </span>
                       <span
-                        className="inline-flex items-center rounded-full px-4 py-2 text-[13px] font-medium border"
+                        className="inline-flex items-center rounded-full px-4 py-2 text-[13px] font-semibold border"
                         style={{
                           borderColor:
                             previewTheme === 'light'

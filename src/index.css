@@ -2,12 +2,17 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-display: "Onest", sans-serif;
-  --font-sans: "Onest", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Manrope", "Noto Sans Devanagari", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter", "Noto Sans Devanagari", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 :root {
+  --font-display: 'Manrope', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', 'Noto Sans Devanagari', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fs-admin-h1: clamp(1.375rem, 1.8vw, 1.875rem);
+  --fs-admin-h2: clamp(1.125rem, 1.3vw, 1.375rem);
+  --fs-admin-body: clamp(0.8125rem, 0.9vw, 0.9375rem);
   --background: #E8E4E0;
   --foreground: #1A1818;
   --ink: #1A1818;
@@ -24,7 +29,8 @@
   --chip-line: rgba(196, 176, 176, 0.45);
   --btn-bg: #1A1818;
   --btn-fg: #E8E4E0;
-  font-family: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 400;
   color-scheme: light;
 }
 
@@ -145,6 +151,8 @@ body {
   --studio-muted: rgba(44, 28, 14, 0.72);
 
   min-height: 100vh;
+  font-family: var(--font-body);
+  font-weight: 400;
   color: var(--st-tx);
   background:
     radial-gradient(52% 42% at 14% 8%, rgba(235, 168, 92, 0.68), transparent 66%),
@@ -702,7 +710,67 @@ html.dark
 }
 
 .font-editorial {
-  font-family: "EB Garamond", Georgia, "Times New Roman", serif;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.admin-studio-theme {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.admin-studio-theme h1,
+.admin-studio-theme .font-editorial.text-3xl,
+.admin-studio-theme .font-editorial.text-4xl {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.admin-studio-theme h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.admin-studio-theme h3,
+.admin-studio-theme h4,
+.admin-studio-theme .font-editorial {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.admin-studio-theme :is(p, td, th, input, select, textarea) {
+  font-family: var(--font-body);
+}
+
+.admin-studio-theme td {
+  font-weight: 400;
+}
+
+.admin-studio-theme th {
+  font-weight: 500;
+}
+
+.admin-studio-theme label {
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+.admin-studio-theme :is(button:not(.text-left), .studio-btn-primary, .studio-btn-secondary) {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.admin-studio-theme button.text-left :is(span, div):not(.font-editorial):not(.font-mono) {
+  font-family: var(--font-body);
+}
+
+.admin-studio-theme :is(nav, aside) :is(a, button) {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.admin-studio-theme .tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 .admin-studio-scroll::-webkit-scrollbar {

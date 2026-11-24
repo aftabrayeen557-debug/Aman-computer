@@ -9,6 +9,12 @@ import {
 } from '../components/CmsPrimitives';
 import { deleteStorageFileByUrl } from '../services/storageService';
 import { INITIAL_WEBSITE_CONTENT } from '../data/initialData';
+import {
+  BRAND_FAVICON_ICO,
+  BRAND_LOGO_MAIN,
+  normalizeBrandLogoUrl,
+  normalizeFaviconUrl,
+} from '../../lib/brandAssets';
 
 export const BrandSettingsView: React.FC = () => {
   const { websiteContent, updateWebsiteContent, showToast } = useAdmin();
@@ -17,31 +23,37 @@ export const BrandSettingsView: React.FC = () => {
     shopName: 'Aman Computer',
     tagline: 'Cyber Cafe & Digital Center — Your Trust, Our Service.',
     headerBadgeText: 'Authorised Digital Seva Center',
-    logoUrl: '/icon-192.png',
-    faviconUrl: '/favicon.ico',
+    logoUrl: BRAND_LOGO_MAIN,
+    faviconUrl: BRAND_FAVICON_ICO,
     accentColor: '#C9A96E',
     footerBrandWordmark: 'Aman Computer',
   };
 
-  const [draft, setDraft] = useState<BrandSettings>(
-    websiteContent.brandSettings || defaultBrand
-  );
+  const [draft, setDraft] = useState<BrandSettings>(() => ({
+    ...(websiteContent.brandSettings || defaultBrand),
+    logoUrl: normalizeBrandLogoUrl(websiteContent.brandSettings?.logoUrl),
+    faviconUrl: normalizeFaviconUrl(websiteContent.brandSettings?.faviconUrl),
+  }));
 
   useEffect(() => {
     if (websiteContent.brandSettings) {
-      setDraft(websiteContent.brandSettings);
+      setDraft({
+        ...websiteContent.brandSettings,
+        logoUrl: normalizeBrandLogoUrl(websiteContent.brandSettings.logoUrl),
+        faviconUrl: normalizeFaviconUrl(websiteContent.brandSettings.faviconUrl),
+      });
     }
   }, [websiteContent.brandSettings]);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    await updateWebsiteContent('brandSettings', {
+    updateWebsiteContent('brandSettings', {
       ...draft,
       shopName: draft.shopName.trim() || 'Aman Computer',
       tagline: draft.tagline.trim(),
       headerBadgeText: draft.headerBadgeText.trim(),
-      logoUrl: draft.logoUrl.trim(),
-      faviconUrl: draft.faviconUrl.trim(),
+      logoUrl: normalizeBrandLogoUrl(draft.logoUrl),
+      faviconUrl: normalizeFaviconUrl(draft.faviconUrl),
       accentColor: draft.accentColor.trim() || '#C9A96E',
       footerBrandWordmark: draft.footerBrandWordmark.trim() || 'Aman Computer',
     });
@@ -161,7 +173,9 @@ export const BrandSettingsView: React.FC = () => {
                 }}
                 bucket="media-library"
                 folder="brand"
-                aspectClass="aspect-square max-w-[180px]"
+                category="brand-logo"
+                aspectClass="aspect-square max-w-[220px]"
+                fitClass="object-contain"
                 emptyLabel="No custom logo uploaded"
                 onError={(msg) => showToast('Logo Upload Error', msg, 'error')}
               />
@@ -177,7 +191,9 @@ export const BrandSettingsView: React.FC = () => {
                 }}
                 bucket="media-library"
                 folder="brand"
-                aspectClass="aspect-square max-w-[180px]"
+                category="favicon"
+                aspectClass="aspect-square max-w-[220px]"
+                fitClass="object-contain"
                 emptyLabel="No custom favicon uploaded"
                 onError={(msg) => showToast('Favicon Upload Error', msg, 'error')}
               />
@@ -209,9 +225,9 @@ export const BrandSettingsView: React.FC = () => {
                 <div className="flex items-center gap-3 min-w-0">
                   {draft.logoUrl ? (
                     <img
-                      src={draft.logoUrl}
+                      src={normalizeBrandLogoUrl(draft.logoUrl, true)}
                       alt={draft.shopName}
-                      className="w-8 h-8 rounded-lg object-cover border border-white/10 shrink-0"
+                      className="w-9 h-9 rounded-full object-contain shrink-0"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-lg bg-[#211B16] border border-[#C9A96E]/35 flex items-center justify-center text-[#C9A96E] shrink-0">

@@ -45,7 +45,7 @@ export const EnquiryDetailDrawer: React.FC = () => {
                   {selectedEnquiry.id}
                 </span>
                 {selectedEnquiry.urgency === 'urgent' && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/15 text-rose-500 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-rose-500/15 text-rose-500 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
                     <ShieldAlert className="w-3 h-3" />
                     URGENT
                   </span>
