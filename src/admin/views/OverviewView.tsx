@@ -23,6 +23,7 @@ import { useAdmin } from '../context/AdminContext';
 import { StudioCanvasWrapper } from '../components/three/StudioCanvasWrapper';
 import { ADMIN_QUICK_SHORTCUTS } from '../data/phase1MockPreview';
 import { AdminTab, Enquiry } from '../types';
+import { ENQUIRY_STATUS_META, isEnquiryUrgent } from '../services/enquiryAnalyticsService';
 
 function getTimeGreeting(): string {
   const hour = new Date().getHours();
@@ -140,15 +141,17 @@ export const OverviewView: React.FC = () => {
   const pendingEnquiriesCount = useMemo(
     () =>
       enquiries.filter(
-        (e) => e.status === 'new' || e.status === 'pending' || e.status === 'in-progress'
+        (e) =>
+          e.status === 'new' ||
+          e.status === 'contacted' ||
+          e.status === 'pending' ||
+          e.status === 'in-progress'
       ).length,
     [enquiries]
   );
 
   const urgentEnquiriesCount = useMemo(
-    () =>
-      enquiries.filter((e) => e.status !== 'completed' && e.urgency === 'urgent')
-        .length,
+    () => enquiries.filter((e) => isEnquiryUrgent(e)).length,
     [enquiries]
   );
 
@@ -169,6 +172,7 @@ export const OverviewView: React.FC = () => {
       detail: string;
       targetTab: AdminTab;
       icon: React.ElementType;
+      icon3d?: string;
     }>
   >(
     () => [
@@ -180,6 +184,7 @@ export const OverviewView: React.FC = () => {
         detail: 'All recorded customer requests',
         targetTab: 'enquiries',
         icon: MessageSquareText,
+        icon3d: '/assets/3d-icons/27-kpi-total-enquiries.png',
       },
       {
         id: 'pending-enquiries',
@@ -189,6 +194,7 @@ export const OverviewView: React.FC = () => {
         detail: 'Open walk-in & online inquiries',
         targetTab: 'enquiries',
         icon: Clock,
+        icon3d: '/assets/3d-icons/28-kpi-pending-active.png',
       },
       {
         id: 'total-customers',
@@ -198,6 +204,7 @@ export const OverviewView: React.FC = () => {
         detail: 'Saved citizen & applicant profiles',
         targetTab: 'customers',
         icon: Users,
+        icon3d: '/assets/3d-icons/29-kpi-registered-customers.png',
       },
       {
         id: 'published-content',
@@ -207,6 +214,7 @@ export const OverviewView: React.FC = () => {
         detail: 'Live services, schemes, updates & photos',
         targetTab: 'government-schemes',
         icon: Layers,
+        icon3d: '/assets/3d-icons/30-kpi-published-content.png',
       },
     ],
     [
@@ -326,8 +334,19 @@ export const OverviewView: React.FC = () => {
                   <span className="text-xs font-medium text-[var(--st-mut)] group-hover:text-[var(--st-tx)] transition-colors">
                     {kpi.label}
                   </span>
-                  <div className="w-8 h-8 rounded-[10px] bg-white/35 dark:bg-white/[0.06] border border-[var(--st-line)] grid place-items-center text-[#C9A96E]">
-                    <Icon className="w-4 h-4" />
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[12px] bg-white/40 dark:bg-white/[0.06] border border-[var(--st-line)] flex items-center justify-center p-1 group-hover:scale-105 group-hover:border-[#C9A96E]/50 transition-all shadow-xs shrink-0">
+                    {kpi.icon3d ? (
+                      <img
+                        src={kpi.icon3d}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+                      />
+                    ) : (
+                      <Icon className="w-4 h-4 text-[#C9A96E]" />
+                    )}
                   </div>
                 </div>
 
@@ -541,12 +560,24 @@ export const OverviewView: React.FC = () => {
                   onClick={() => setCurrentTab(item.tab)}
                   className="w-full py-2.5 flex items-center justify-between gap-3 text-left group cursor-pointer"
                 >
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-[var(--st-tx)] group-hover:text-[#C9A96E] transition-colors truncate">
-                      {item.title}
-                    </div>
-                    <div className="text-[11px] text-[var(--st-mut)] truncate">
-                      {item.subtitle}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {item.icon3d && (
+                      <img
+                        src={item.icon3d}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        decoding="async"
+                        className="w-5 h-5 object-contain shrink-0 drop-shadow-[0_1px_3px_rgba(0,0,0,0.14)] group-hover:scale-110 transition-transform"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-[var(--st-tx)] group-hover:text-[#C9A96E] transition-colors truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-[11px] text-[var(--st-mut)] truncate">
+                        {item.subtitle}
+                      </div>
                     </div>
                   </div>
                   <ArrowUpRight className="w-3.5 h-3.5 text-[var(--st-mut)] group-hover:text-[#C9A96E] shrink-0 transition-colors" />
@@ -616,18 +647,14 @@ export const OverviewView: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3 pr-4 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--st-tx)] capitalize">
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-[var(--st-tx)]">
                           <span
                             className={`w-1.5 h-1.5 rounded-full ${
-                              row.status === 'new'
-                                ? 'bg-[#C9A96E]'
-                                : row.status === 'completed'
-                                ? 'bg-emerald-400'
-                                : 'bg-amber-400'
+                              (ENQUIRY_STATUS_META[row.status] || ENQUIRY_STATUS_META.new).dotClass
                             }`}
                           />
-                          {row.status}
-                          {row.urgency === 'urgent' ? ' · Urgent' : ''}
+                          {(ENQUIRY_STATUS_META[row.status] || ENQUIRY_STATUS_META.new).shortLabel}
+                          {isEnquiryUrgent(row) ? ' · High' : ''}
                         </span>
                       </td>
                       <td className="py-3 text-right font-mono text-[11px] text-[var(--st-mut)] tabular-nums whitespace-nowrap">

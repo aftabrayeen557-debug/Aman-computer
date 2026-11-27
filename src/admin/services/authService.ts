@@ -214,6 +214,8 @@ export const PRIVATE_ADMIN_STORAGE_KEYS = [
   'aman_customers',
   'aman_receipts',
   'aman_enquiries',
+  'aman_enquiry_follow_ups',
+  'aman_enquiry_audit_logs',
   'aman_staff',
   'aman_activity_logs',
   'aman_notifications',

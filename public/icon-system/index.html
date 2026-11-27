@@ -1,0 +1,1889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CSC Government Services Icon System — Aman Computer</title>
+<meta name="description" content="Complete 40-icon pure SVG outline system, bespoke redesign audit, and tonal squircle button components for Aman Computer Cyber Cafe and Government Services workflows." />
+<link rel="preload" href="../fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/assets/csc-icons.css" />
+<style>
+  @font-face {
+    font-family: 'Onest';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    src: url(../fonts/onest-latin.woff2) format('woff2');
+  }
+
+  :root {
+    --page-bg: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-subtle: #F1F5F9;
+    --ink: #0F172A;
+    --ink-muted: #475569;
+    --ink-faint: #64748B;
+    --line: #E2E8F0;
+    --line-strong: #CBD5E1;
+    --primary: #1E40AF;
+    --primary-deep: #1E3A8A;
+    --code-bg: #0F172A;
+    --code-fg: #E2E8F0;
+    --accent-gold: #C9A96E;
+    --accent-gold-soft: #DFC492;
+    --font-sans: 'Onest', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    --page-bg: #0B1120;
+    --surface: #111827;
+    --surface-subtle: #1E293B;
+    --ink: #F1F5F9;
+    --ink-muted: #CBD5E1;
+    --ink-faint: #94A3B8;
+    --line: #1E293B;
+    --line-strong: #334155;
+    --primary: #60A5FA;
+    --primary-deep: #3B82F6;
+    --code-bg: #060B16;
+    --code-fg: #E2E8F0;
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- 3-Zone Top Bar Contract ---- */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .topbar__in {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+
+  .topbar__brand {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar__nav {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topbar__nav::-webkit-scrollbar { display: none; }
+
+  .topbar__nav a {
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: color 160ms ease, border-color 160ms ease;
+  }
+
+  .topbar__nav a:hover {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .topbar__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: var(--primary-deep);
+    color: #FFFFFF;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background-color 160ms ease, transform 160ms ease;
+  }
+
+  .topbar__cta:hover { background: var(--primary); }
+  .topbar__cta:active { transform: scale(0.97); }
+  html[data-theme="dark"] .topbar__cta { color: #0B1120; }
+
+  @media (max-width: 860px) {
+    .topbar__nav { display: none; }
+    .topbar__in { gap: 16px; padding: 0 16px; }
+  }
+
+  /* ---- Container & Hero ---- */
+  .container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 24px 16px 64px; }
+  }
+
+  .hero {
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+
+  .hero__meta {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+
+  .hero__title {
+    margin: 0 0 12px;
+    font-size: clamp(1.9rem, 3.2vw, 2.65rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    text-wrap: balance;
+    max-width: 26ch;
+  }
+
+  .hero__desc {
+    margin: 0;
+    max-width: 72ch;
+    color: var(--ink-muted);
+    font-size: 15.5px;
+    line-height: 1.65;
+  }
+
+  /* ---- Spec Strip ---- */
+  .specs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+
+  @media (max-width: 860px) {
+    .specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  .spec__k {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 2px;
+  }
+
+  .spec__v {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  /* ---- Section Header & Common Rules ---- */
+  .section-head {
+    margin-bottom: 24px;
+  }
+
+  .section-tag {
+    display: inline-block;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #92400E;
+    margin-bottom: 6px;
+  }
+
+  html[data-theme="dark"] .section-tag {
+    color: #FBBF24;
+  }
+
+  .section-title {
+    font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+
+  .section-desc {
+    margin: 0;
+    max-width: 72ch;
+    font-size: 14.5px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+
+  /* ========================================================================
+     Bespoke Redesign Audit: Side-by-Side Comparison Section
+     ======================================================================== */
+  .audit-section {
+    margin-bottom: 56px;
+    scroll-margin-top: 84px;
+    padding: 28px 24px 32px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 4px 18px -4px rgba(15, 23, 42, 0.04);
+  }
+
+  .audit-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    margin: 20px 0 28px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .audit-bar__left {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+
+  .audit-bar__lbl {
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .audit-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .audit-card {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--page-bg);
+    overflow: hidden;
+    transition: border-color 150ms ease;
+  }
+
+  .audit-card:hover {
+    border-color: var(--line-strong);
+  }
+
+  .audit-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .audit-card__title {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .audit-card__symbol {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .audit-card__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  @media (max-width: 820px) {
+    .audit-card__body { grid-template-columns: 1fr; }
+  }
+
+  .audit-pane {
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .audit-pane--old {
+    background: rgba(239, 68, 68, 0.03);
+    border-right: 1px solid var(--line);
+  }
+
+  @media (max-width: 820px) {
+    .audit-pane--old { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+
+  .audit-pane--new {
+    background: rgba(30, 64, 175, 0.02);
+  }
+
+  html[data-theme="dark"] .audit-pane--old {
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  html[data-theme="dark"] .audit-pane--new {
+    background: rgba(96, 165, 250, 0.04);
+  }
+
+  .pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+
+  .status-pill--old {
+    background: rgba(220, 38, 38, 0.12);
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+  }
+
+  .status-pill--new {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803D;
+    border: 1px solid rgba(22, 163, 74, 0.25);
+  }
+
+  html[data-theme="dark"] .status-pill--old {
+    background: rgba(248, 113, 113, 0.18);
+    color: #F87171;
+    border-color: rgba(248, 113, 113, 0.35);
+  }
+
+  html[data-theme="dark"] .status-pill--new {
+    background: rgba(74, 222, 128, 0.18);
+    color: #4ADE80;
+    border-color: rgba(74, 222, 128, 0.35);
+  }
+
+  .audit-render-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .audit-icon-preview {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .audit-icon-preview--old {
+    background: rgba(220, 38, 38, 0.08);
+    color: #DC2626;
+    border: 1px dashed rgba(220, 38, 38, 0.35);
+  }
+
+  .audit-icon-preview--old svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .audit-preview-desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .audit-critique {
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin: 0;
+    color: var(--ink-faint);
+  }
+
+  .audit-critique strong {
+    color: var(--ink);
+  }
+
+  /* ---- Interactive Controls Bar ---- */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 36px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+
+  .controls__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: min(290px, 100%);
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--ink-faint);
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px 0 36px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--page-bg);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13.5px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--icon-focus-ring);
+  }
+
+  .seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    background: var(--surface-subtle);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .seg__btn {
+    height: 32px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink-muted);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+
+  .seg__btn:hover { color: var(--ink); }
+
+  .seg__btn.is-on {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+
+  .desk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+
+  .desk-btn:hover {
+    border-color: var(--primary);
+    background: var(--surface-subtle);
+  }
+
+  /* ---- Category Sections & Labeled Grid ---- */
+  .cat-section {
+    margin-bottom: 48px;
+    scroll-margin-top: 84px;
+  }
+
+  .cat-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cat-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .cat-meta {
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .icon-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    transition: border-color 160ms ease;
+  }
+
+  .icon-card:hover {
+    border-color: var(--line-strong);
+  }
+
+  .icon-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .icon-card__info { min-width: 0; }
+
+  .icon-card__name {
+    font-size: 14.5px;
+    font-weight: 650;
+    color: var(--ink);
+    margin: 0 0 2px;
+  }
+
+  .icon-card__id {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--primary);
+    margin: 0 0 4px;
+    word-break: break-all;
+  }
+
+  .icon-card__use {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  /* 3-State Strip: Default / Hover / Active side-by-side */
+  .state-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+
+  .state-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 4px;
+    border-radius: 10px;
+    background: var(--page-bg);
+  }
+
+  .state-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-faint);
+  }
+
+  /* Bottom Bar: 16px Legibility Check + Copy Button */
+  .icon-card__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+
+  .mini-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mini-check__box {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--surface-subtle);
+    color: var(--ink);
+  }
+
+  .copy-btn {
+    height: 30px;
+    padding: 0 11px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .copy-btn.is-copied {
+    background: #15803D;
+    border-color: #15803D;
+    color: #FFFFFF;
+  }
+
+  /* ---- Interactive Checkmark Demo Bar ---- */
+  .trust-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+
+  .trust-bar__left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .trust-bar__title {
+    font-size: 14px;
+    font-weight: 650;
+    margin: 0 0 2px;
+  }
+
+  .trust-bar__sub {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+
+  /* ---- Code Export Section ---- */
+  .code-panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .code-panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .code-pre {
+    margin: 0;
+    padding: 18px 20px;
+    background: var(--code-bg);
+    color: var(--code-fg);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.6;
+    max-height: 420px;
+    overflow: auto;
+  }
+
+  .empty-state {
+    padding: 48px 20px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    color: var(--ink-muted);
+  }
+
+  .footer {
+    margin-top: 56px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__in">
+    <a href="/" class="topbar__brand">
+      <svg class="csc-icon" viewBox="0 0 24 24" style="color:var(--accent-gold);" aria-hidden="true">
+        <rect x="3.5" y="6" width="17" height="13.5" rx="2.5" />
+        <path d="M3.5 10.5h17" />
+        <path d="M7 6V4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V6" />
+        <path d="M14.5 11h5a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V12a1 1 0 0 1 1-1Z" />
+        <circle cx="17.25" cy="13.75" r="0.75" fill="currentColor" stroke="none" />
+      </svg>
+      Aman Computer Icon System
+    </a>
+    <nav class="topbar__nav" aria-label="Icon categories">
+      <a href="#audit-section">Redesign Audit</a>
+      <a href="#cat-navigation">Navigation</a>
+      <a href="#cat-forms">Forms</a>
+      <a href="#cat-documents">Documents</a>
+      <a href="#cat-statuses">Statuses</a>
+      <a href="#cat-code">CSS &amp; SVG Code</a>
+    </nav>
+    <a href="/" class="topbar__cta">Back to Website</a>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <p class="hero__meta">Common Service Center · Pure SVG Outline Standard · 40 Hand-Crafted Icons</p>
+    <h1 class="hero__title">Government Services &amp; Cybercafe Icon Standard</h1>
+    <p class="hero__desc">
+      Built for daily walk-in operations across PAN, Aadhaar, Voter ID, Ration Card, and official certificate portals. Every icon uses a uniform 1.75px rounded outline stroke on a 24×24px grid with a 20×20px safe zone and tactile squircle containers.
+    </p>
+
+    <div class="specs">
+      <div>
+        <div class="spec__k">Grid &amp; Safe Area</div>
+        <div class="spec__v">24×24px (20×20 safe)</div>
+      </div>
+      <div>
+        <div class="spec__k">Stroke Weight</div>
+        <div class="spec__v">1.75px round caps/joins</div>
+      </div>
+      <div>
+        <div class="spec__k">Squircle Wrapper</div>
+        <div class="spec__v">40 / 44 / 48px · r13px</div>
+      </div>
+      <div>
+        <div class="spec__k">Warm Brown Token</div>
+        <div class="spec__v">#2A1F18 · Gold #C9A96E</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Bespoke Redesign Audit: Side-by-Side Comparison
+       ====================================================================== -->
+  <section class="audit-section" id="audit-section" aria-label="Bespoke Redesign Audit">
+    <div class="section-head">
+      <span class="section-tag">Human Senior Product Design Audit</span>
+      <h2 class="section-title">Custom Redesign Audit: Side-by-Side Comparison</h2>
+      <p class="section-desc">
+        Generic stock library clichés (Material/FontAwesome/AI defaults) have been eliminated and completely redrawn from scratch with custom geometry, tailored proportions, and purposeful domain metaphors for Aman Computer.
+      </p>
+    </div>
+
+    <!-- Live Squircle Mode Toggle inside Audit -->
+    <div class="audit-bar">
+      <div class="audit-bar__left">
+        <span class="audit-bar__lbl">Preview Squircle Container:</span>
+        <div class="seg" role="group" aria-label="Audit squircle container variant">
+          <button type="button" class="seg__btn is-on" data-audit-style="warm">Warm Dark-Brown (#2A1F18 / Gold)</button>
+          <button type="button" class="seg__btn" data-audit-style="portal">Portal Deep Blue (#1E40AF)</button>
+          <button type="button" class="seg__btn" data-audit-style="bare">Outline Only (No Container)</button>
+        </div>
+      </div>
+      <div class="audit-bar__left">
+        <span class="audit-bar__lbl">Size:</span>
+        <div class="seg" role="group" aria-label="Audit container size">
+          <button type="button" class="seg__btn" data-audit-size="sm">40px</button>
+          <button type="button" class="seg__btn is-on" data-audit-size="md">44px</button>
+          <button type="button" class="seg__btn" data-audit-size="lg">48px</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="audit-grid" id="auditCardsRoot"></div>
+  </section>
+
+  <!-- Interactive Controls for Catalog -->
+  <section class="controls" aria-label="Style guide controls">
+    <div class="controls__group">
+      <label class="search-wrap" aria-label="Filter icons by name or use case">
+        <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5" />
+          <path d="m15.3 15.3 4.7 4.7" />
+        </svg>
+        <input id="iconSearch" class="search-input" type="search" placeholder="Search 40 icons (e.g. aadhaar, newspaper, checkmark, photo)..." />
+      </label>
+
+      <div class="seg" role="group" aria-label="Catalog squircle skin">
+        <button type="button" class="seg__btn is-on" data-catalog-skin="warm">Warm Brown (#2A1F18)</button>
+        <button type="button" class="seg__btn" data-catalog-skin="portal">Portal Blue (#1E40AF)</button>
+      </div>
+
+      <div class="seg" role="group" aria-label="Container size">
+        <button type="button" class="seg__btn" data-size="sm">40px</button>
+        <button type="button" class="seg__btn is-on" data-size="md">44px</button>
+        <button type="button" class="seg__btn" data-size="lg">48px</button>
+      </div>
+    </div>
+
+    <div class="controls__group">
+      <button type="button" class="desk-btn" id="themeToggle">Toggle Dark Surface</button>
+    </div>
+  </section>
+
+  <!-- Rendered Icon Categories -->
+  <div id="catalogRoot"></div>
+
+  <!-- Master CSS & Reusable SVG Code Section -->
+  <section class="cat-section" id="cat-code">
+    <div class="cat-head">
+      <h2 class="cat-title">Reusable CSS &amp; SVG Bundle</h2>
+      <span class="cat-meta">Production ready · /assets/csc-icons.css · /assets/csc-icons.svg</span>
+    </div>
+
+    <div class="code-panel">
+      <div class="code-panel__head">
+        <div class="seg" role="tablist" aria-label="Code export tabs">
+          <button type="button" class="seg__btn is-on" role="tab" aria-selected="true" data-code-tab="css">Master CSS (.icon-btn &amp; .icon-btn--warm)</button>
+          <button type="button" class="seg__btn" role="tab" aria-selected="false" data-code-tab="svg">All 40 Pure SVGs</button>
+          <button type="button" class="seg__btn" role="tab" aria-selected="false" data-code-tab="usage">HTML Usage Examples</button>
+        </div>
+        <button type="button" class="copy-btn" id="copyBundleBtn">Copy Code</button>
+      </div>
+      <pre class="code-pre"><code id="codeOutput">Loading code bundle...</code></pre>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>Aman Computer · Cyber Cafe &amp; Digital Facilitation Icon System</span>
+    <span>Pure SVG Outline · Fixed 1.75px Stroke · 16px Legibility Verified</span>
+  </footer>
+</main>
+
+<script>
+// ============================================================================
+// 1. AUDIT COMPARISON DATA (OLD Generic AI Cliché vs NEW Hand-Crafted Bespoke)
+// ============================================================================
+const AUDIT_ITEMS = [
+  {
+    name: 'Article / Newspaper',
+    symbolId: 'icon-article-newspaper',
+    oldSvgPaths: `
+      <!-- Generic dog-ear page + 3 equal lines -->
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" />
+      <line x1="8" y1="17" x2="16" y2="17" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Standard single-sheet dog-ear corner fold with 3 identical horizontal lines copy-pasted from web icon packs. Completely lacks newspaper or broadsheet identity.',
+    newPaths: `
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M6.5 7.5h11" stroke-width="2.2" />
+      <path d="M6.5 11h4" />
+      <path d="M6.5 14h3.5" />
+      <path d="M6.5 17h4" />
+      <path d="M12.5 10.5v7" />
+      <rect x="14.5" y="11" width="3.5" height="3" rx="0.5" />
+      <path d="M14.5 16.5h3" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Authentic broadsheet newspaper layout with heavy masthead headline banner, dual-column layout with vertical editorial divider rule, left ragged-right body text lines, and right-column news photo box.'
+  },
+  {
+    name: 'Document + Checkmark',
+    symbolId: 'icon-doc-checkmark',
+    oldSvgPaths: `
+      <!-- Dog-ear file with floating disconnected checkmark inside -->
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="m9 15 2 2 4-4" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Floating checkmark mark hovering awkwardly inside a generic dog-ear page. Feels like two disconnected clipart assets pasted together without structural unity.',
+    newPaths: `
+      <path d="M11 20.5H5.5a1.5 1.5 0 0 1-1.5-1.5V4.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5V11" />
+      <path d="M7.5 7h9" stroke-width="2.2" />
+      <path d="M7.5 10.5h5.5" />
+      <path d="M7.5 14h3.5" />
+      <circle cx="16" cy="16" r="4.25" />
+      <path d="m14.25 16 1.25 1.25 2.5-2.5" stroke-width="2" />
+      <path d="M14.5 20.25V22l1.5-.75L17.5 22v-1.75" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Official certified government certificate parchment where the chassis flows into an embossed notary seal (r4.25) with integrated verification checkmark and hanging ribbon tails.'
+  },
+  {
+    name: 'Image / Photo Gallery',
+    symbolId: 'icon-image-photo',
+    oldSvgPaths: `
+      <!-- Classic mountain + sun cliché -->
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> The ubiquitous double-triangle mountains + floating sun circle cliché found in 99% of AI templates. Has zero relevance to citizen photo services or cybercafe work.',
+    newPaths: `
+      <path d="M3.5 8.5a2 2 0 0 1 2-2h2.2l1.6-2h5.4l1.6 2h2.2a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />
+      <circle cx="12" cy="13.5" r="3.75" />
+      <circle cx="12" cy="13.5" r="1.5" />
+      <circle cx="17.5" cy="9.5" r="0.8" fill="currentColor" stroke="none" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Precision studio rangefinder camera chassis with optical prism turret, concentric dual-ring lens barrel (outer rim r3.75 + inner glass pupil r1.5), and top-right flash emitter dot. Zero mountains or sun.'
+  },
+  {
+    name: 'Notification Bell',
+    symbolId: 'icon-notification-bell',
+    oldSvgPaths: `
+      <!-- Generic cartoon bell -->
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Standard flat bell silhouette copied verbatim from FontAwesome/Lucide. Overused and lacks cybercafe terminal distinction.',
+    newPaths: `
+      <path d="M12 3v2" />
+      <circle cx="12" cy="4" r="0.8" fill="currentColor" stroke="none" />
+      <path d="M6 15.5c0-3.8 2.2-6.5 6-6.5s6 2.7 6 6.5" />
+      <path d="M4 16.5h16" />
+      <path d="M10 19.5a2 2 0 0 0 4 0" />
+      <circle cx="18.5" cy="5.5" r="1.25" fill="currentColor" stroke="none" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Architectural cybercafe chime with cantilevered suspension eyelet dot, fluted acoustic rim, and an active beacon indicator dot positioned at top-right for urgent portal updates.'
+  },
+  {
+    name: 'Console Settings',
+    symbolId: 'icon-settings',
+    oldSvgPaths: `
+      <!-- Generic 8-spoke industrial gear cog -->
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Standard industrial 8-spoke factory gear cog. Looks like heavy machinery rather than fine software/hardware configuration for biometric scanners and printers.',
+    newPaths: `
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2" />
+      <path d="m12 12 2.5-2" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Precision calibrated console tuner dial with outer measurement ring, cardinal tick notches, centered circular hub, and calibration index needle.'
+  },
+  {
+    name: 'CSC Ledger Wallet',
+    symbolId: 'icon-wallet',
+    oldSvgPaths: `
+      <!-- Generic retail purse / pouch -->
+      <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+      <path d="M16 12a2 2 0 1 0 4 0 2 2 0 1 0-4 0z" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Clumsy rounded coin purse. Lacks the professional administrative presence required for an operator portal fee ledger.',
+    newPaths: `
+      <rect x="3.5" y="6" width="17" height="13.5" rx="2.5" />
+      <path d="M3.5 10.5h17" />
+      <path d="M7 6V4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V6" />
+      <path d="M14.5 11h5a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V12a1 1 0 0 1 1-1Z" />
+      <circle cx="17.25" cy="13.75" r="0.75" fill="currentColor" stroke="none" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Official bi-fold ledger wallet with top document slot tab, horizontal ledger separator, and right security closure flap with gold rivet stud.'
+  },
+  {
+    name: 'Document Upload',
+    symbolId: 'icon-document-upload',
+    oldSvgPaths: `
+      <!-- Generic up-arrow in open box -->
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    `,
+    oldCritique: '<strong>Generic Stock / AI Cliché:</strong> Arrow jumping out of an open tray. Generic file uploader seen on generic cloud drives, completely detached from scanning citizen paper proofs.',
+    newPaths: `
+      <path d="M7.5 19H5.5a1.5 1.5 0 0 1-1.5-1.5V5.5a1.5 1.5 0 0 1 1.5-1.5h8.5l4 4v2" />
+      <path d="M2.5 20.5h19" />
+      <path d="M15 17V9.5" />
+      <path d="m11.5 13 3.5-3.5 3.5 3.5" />
+    `,
+    newRationale: '<strong>Senior Bespoke Geometry:</strong> Physical scanner platen bed with bottom glass guide, folded ID carrier sheet, and dynamic upward transmission flight path for scanning proofs.'
+  }
+];
+
+// ============================================================================
+// 2. COMPLETE 40-ICON CATALOG DATA
+// ============================================================================
+const ICON_CATEGORIES = [
+  {
+    id: 'cat-navigation',
+    title: 'Navigation Icons',
+    subtitle: 'Primary portal shell, drawer, and screen controls',
+    icons: [
+      {
+        id: 'icon-home-dashboard',
+        name: 'Home / Dashboard',
+        use: 'Main operator counter dashboard and home entry',
+        paths: '<path d="M3.5 10.5 12 3.5l8.5 7" />\n  <path d="M5.5 9.2V19.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.2" />\n  <path d="M9.5 20.5v-6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6" />'
+      },
+      {
+        id: 'icon-menu',
+        name: 'Menu',
+        use: 'Expand navigation drawer on tablet and mobile',
+        paths: '<path d="M4 6.5h16" />\n  <path d="M4 12h16" />\n  <path d="M4 17.5h11" />'
+      },
+      {
+        id: 'icon-back',
+        name: 'Back',
+        use: 'Return to previous application step or portal screen',
+        paths: '<path d="M19.5 12H4.5" />\n  <path d="M10.5 6 4.5 12l6 6" />'
+      },
+      {
+        id: 'icon-search',
+        name: 'Search',
+        use: 'Search application ACK number, mobile, or citizen name',
+        paths: '<circle cx="10.5" cy="10.5" r="6.5" />\n  <path d="m15.3 15.3 4.7 4.7" />'
+      },
+      {
+        id: 'icon-close',
+        name: 'Close',
+        use: 'Close modal, drawer, or clear active search filter',
+        paths: '<path d="M6 6l12 12" />\n  <path d="M18 6 6 18" />'
+      },
+      {
+        id: 'icon-profile-user',
+        name: 'Profile / User',
+        use: 'Operator desk session or applicant profile card',
+        paths: '<circle cx="12" cy="8" r="3.75" />\n  <path d="M5 20a7 7 0 0 1 14 0" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-forms',
+    title: 'Form & Application Icons',
+    subtitle: 'Core CSC desk actions for filing, editing, uploading, and printing',
+    icons: [
+      {
+        id: 'icon-new-application',
+        name: 'New Application',
+        use: 'Start fresh online form registration with signature bevel notch',
+        paths: '<path d="M5 3.5h10.5L20 8v11.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5Z" />\n  <path d="M15.5 3.5V8H20" />\n  <path d="M12 11.5v5" />\n  <path d="M9.5 14h5" />'
+      },
+      {
+        id: 'icon-correction',
+        name: 'Edit / Correction',
+        use: 'Name, DOB, address, or mobile update on existing document',
+        paths: '<path d="M13 4H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3.5" />\n  <path d="M8 9h3.5" />\n  <path d="M8 13h2" />\n  <path d="M18.8 4.7a1.75 1.75 0 0 1 2.48 2.48L14.2 14.25l-3.2.75.75-3.2 7.05-7.1Z" />'
+      },
+      {
+        id: 'icon-submit',
+        name: 'Submit Form',
+        use: 'Final portal submission after citizen verification',
+        paths: '<path d="M14 4H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7.5" />\n  <path d="M8 9h4" />\n  <path d="M8 13h2.5" />\n  <path d="M12.5 12h8" />\n  <path d="m17.5 9 3 3-3 3" />'
+      },
+      {
+        id: 'icon-save-draft',
+        name: 'Save Draft',
+        use: 'Save partial application while waiting for missing proof',
+        paths: '<path d="M6 4h9.5L19 7.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />\n  <path d="M8 4v4.5h6V4" />\n  <rect x="7.5" y="13.5" width="9" height="6.5" rx="1" />'
+      },
+      {
+        id: 'icon-print',
+        name: 'Print',
+        use: 'Print application summary, admit card, or acknowledgment',
+        paths: '<path d="M7 8V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V8" />\n  <rect x="3.5" y="8" width="17" height="7.5" rx="2" />\n  <path d="M7 13.5h10v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6Z" />\n  <path d="M16.5 11h.01" />'
+      },
+      {
+        id: 'icon-download-form',
+        name: 'Download Form',
+        use: 'Download PDF certificate, slip, or official blank form',
+        paths: '<path d="M12 4v10.5" />\n  <path d="m8 10.5 4 4 4-4" />\n  <path d="M4.5 15.5V18a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5" />'
+      },
+      {
+        id: 'icon-document-upload',
+        name: 'Upload Document (Bespoke)',
+        use: 'Scanned proof attach via scanner platen & upward transmission',
+        paths: '<path d="M7.5 19H5.5a1.5 1.5 0 0 1-1.5-1.5V5.5a1.5 1.5 0 0 1 1.5-1.5h8.5l4 4v2" />\n  <path d="M2.5 20.5h19" />\n  <path d="M15 17V9.5" />\n  <path d="m11.5 13 3.5-3.5 3.5 3.5" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-documents',
+    title: 'Document Type Icons',
+    subtitle: 'Visually distinct geometry for each Indian government ID & certificate',
+    icons: [
+      {
+        id: 'icon-article-newspaper',
+        name: 'Newspaper / Updates (Bespoke)',
+        use: 'Broadsheet newspaper: heavy headline bar + 2 columns + photo frame',
+        paths: '<rect x="3.5" y="4" width="17" height="16" rx="2" />\n  <path d="M6.5 7.5h11" stroke-width="2.2" />\n  <path d="M6.5 11h4" />\n  <path d="M6.5 14h3.5" />\n  <path d="M6.5 17h4" />\n  <path d="M12.5 10.5v7" />\n  <rect x="14.5" y="11" width="3.5" height="3" rx="0.5" />\n  <path d="M14.5 16.5h3" />'
+      },
+      {
+        id: 'icon-doc-checkmark',
+        name: 'Verified Document (Bespoke)',
+        use: 'Certified parchment with embossed notary seal, checkmark & ribbon tails',
+        paths: '<path d="M11 20.5H5.5a1.5 1.5 0 0 1-1.5-1.5V4.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5V11" />\n  <path d="M7.5 7h9" stroke-width="2.2" />\n  <path d="M7.5 10.5h5.5" />\n  <path d="M7.5 14h3.5" />\n  <circle cx="16" cy="16" r="4.25" />\n  <path d="m14.25 16 1.25 1.25 2.5-2.5" stroke-width="2" />\n  <path d="M14.5 20.25V22l1.5-.75L17.5 22v-1.75" />'
+      },
+      {
+        id: 'icon-image-photo',
+        name: 'Photo / Gallery (Bespoke)',
+        use: 'Precision studio camera with dual-ring lens barrel & flash (NO mountains)',
+        paths: '<path d="M3.5 8.5a2 2 0 0 1 2-2h2.2l1.6-2h5.4l1.6 2h2.2a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />\n  <circle cx="12" cy="13.5" r="3.75" />\n  <circle cx="12" cy="13.5" r="1.5" />\n  <circle cx="17.5" cy="9.5" r="0.8" fill="currentColor" stroke="none" />'
+      },
+      {
+        id: 'icon-doc-aadhaar',
+        name: 'Aadhaar Card',
+        use: 'Left photo + 12-digit 3-group bottom bar layout',
+        paths: '<rect x="3" y="5" width="18" height="14" rx="2.5" />\n  <circle cx="8" cy="10" r="1.75" />\n  <path d="M12.5 9h5.5" />\n  <path d="M12.5 12h4" />\n  <path d="M6.5 15.5h3M10.75 15.5h2.5M14.5 15.5h3" />'
+      },
+      {
+        id: 'icon-doc-pan',
+        name: 'PAN Card',
+        use: 'Top official header rule + right photo box layout',
+        paths: '<rect x="3" y="5" width="18" height="14" rx="2.5" />\n  <path d="M3 8.5h18" />\n  <path d="M6 11.75h5.5" />\n  <path d="M6 15h4" />\n  <rect x="14.25" y="11" width="3.75" height="4.75" rx="0.75" />'
+      },
+      {
+        id: 'icon-doc-voter-id',
+        name: 'Voter ID (EPIC)',
+        use: 'Vertical EPIC portrait card with ballot verification mark',
+        paths: '<rect x="5.5" y="3" width="13" height="18" rx="2.25" />\n  <circle cx="12" cy="8.5" r="2" />\n  <path d="M8.75 13.5a3.25 3.25 0 0 1 6.5 0" />\n  <path d="M8.5 17h4" />\n  <path d="m14.25 16.75 1 1 1.75-1.75" />'
+      },
+      {
+        id: 'icon-doc-ration-card',
+        name: 'Ration Card',
+        use: 'Folded dual-leaf family entitlement booklet',
+        paths: '<path d="M4.5 5.5a2 2 0 0 1 2-2H12v17H6.5a2 2 0 0 1-2-2v-13Z" />\n  <path d="M12 3.5h5.5a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H12v-17Z" />\n  <path d="M7.25 8.5h2" />\n  <path d="M7.25 12h2" />\n  <path d="M14.75 8.5h2" />\n  <path d="M14.75 12h2" />\n  <path d="M14.75 15.5h1.5" />'
+      },
+      {
+        id: 'icon-doc-income-caste',
+        name: 'Income / Caste Cert.',
+        use: 'Portrait official certificate with hanging ribbon rosette seal',
+        paths: '<path d="M14 20H6.5a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2V11" />\n  <path d="M8 8h8" />\n  <path d="M8 11.5h4.5" />\n  <path d="M8 15h3.5" />\n  <circle cx="16.5" cy="15.5" r="2.5" />\n  <path d="M15.25 17.75v3l1.25-.75 1.25.75v-3" />'
+      },
+      {
+        id: 'icon-doc-birth-death',
+        name: 'Birth / Death Cert.',
+        use: 'Landscape municipal registry frame with circular stamp seal',
+        paths: '<rect x="3" y="4.5" width="18" height="15" rx="2.25" />\n  <path d="M7 8.5h10" />\n  <path d="M7 12h5.5" />\n  <path d="M7 15.5h4" />\n  <circle cx="15.75" cy="14.25" r="2.25" />'
+      },
+      {
+        id: 'icon-doc-passport',
+        name: 'Passport',
+        use: 'Vertical passport booklet with globe meridian emblem',
+        paths: '<rect x="5.5" y="3" width="13" height="18" rx="2" />\n  <circle cx="12" cy="10" r="3.25" />\n  <path d="M8.75 10h6.5" />\n  <path d="M12 6.75a4.5 4.5 0 0 1 0 6.5 4.5 4.5 0 0 1 0-6.5Z" />\n  <path d="M9.5 16.75h5" />'
+      },
+      {
+        id: 'icon-doc-driving-license',
+        name: 'Driving License',
+        use: 'Horizontal smart card with steering emblem & vehicle classes',
+        paths: '<rect x="3" y="5" width="18" height="14" rx="2.5" />\n  <circle cx="8.5" cy="12" r="3" />\n  <path d="M5.75 12h5.5" />\n  <path d="M8.5 12v3" />\n  <path d="M14 9.5h4" />\n  <path d="M14 12.5h4" />\n  <path d="M14 15.5h2.5" />'
+      },
+      {
+        id: 'icon-doc-generic-form',
+        name: 'Generic Govt. Form',
+        use: 'Standard lined portal application or declaration sheet',
+        paths: '<rect x="5" y="3.5" width="14" height="17" rx="2" />\n  <path d="M8.5 8h7" />\n  <path d="M8.5 12h7" />\n  <path d="M8.5 16h4.5" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-statuses',
+    title: 'Status Icons',
+    subtitle: 'Color-coded tonal wrappers paired with unambiguous geometry',
+    hasTrustDemo: true,
+    icons: [
+      {
+        id: 'icon-status-pending',
+        name: 'Pending Verification',
+        use: 'Amber tonal · Awaiting officer review or OTP confirmation',
+        variant: 'icon-btn--pending',
+        paths: '<circle cx="12" cy="12" r="8.5" />\n  <path d="M12 7.5V12l3 2" />'
+      },
+      {
+        id: 'icon-status-approved',
+        name: 'Approved / Verified',
+        use: 'Green tonal · Self-drawing checkmark confirms portal success',
+        variant: 'icon-btn--approved',
+        extraClass: 'is-drawing',
+        paths: '<circle cx="12" cy="12" r="8.5" />\n  <path class="icon-draw-check" d="m8.5 12.25 2.5 2.5 4.75-5" />'
+      },
+      {
+        id: 'icon-status-rejected',
+        name: 'Rejected / Objection',
+        use: 'Red tonal · Mismatch in proof or rejected submission',
+        variant: 'icon-btn--rejected',
+        paths: '<circle cx="12" cy="12" r="8.5" />\n  <path d="m9.25 9.25 5.5 5.5" />\n  <path d="m14.75 9.25-5.5 5.5" />'
+      },
+      {
+        id: 'icon-status-correction',
+        name: 'Under Correction',
+        use: 'Orange tonal · Document flagged for operator re-upload or edit',
+        variant: 'icon-btn--correction',
+        paths: '<path d="M14.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-4.5-4.5Z" />\n  <path d="M14.5 3.5V8H19" />\n  <path d="M12 10.5v3.5" />\n  <path d="M12 17v.01" />'
+      },
+      {
+        id: 'icon-status-in-progress',
+        name: 'In Progress',
+        use: 'Blue tonal · Active portal sync or background verification',
+        variant: 'icon-btn--progress',
+        paths: '<path d="M20 12a8 8 0 0 1-14.3 4.9" />\n  <path d="M4 12a8 8 0 0 1 14.3-4.9" />\n  <path d="M15.5 7.25H19V3.75" />\n  <path d="M8.5 16.75H5v3.5" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-payments',
+    title: 'Payment & Fees Icons',
+    subtitle: 'Counter billing, CSC wallet ledger, and thermal receipts',
+    icons: [
+      {
+        id: 'icon-payment-receipt',
+        name: 'Payment / Receipt',
+        use: 'Fee receipt slip with Indian rupee mark',
+        paths: '<path d="M6 3.5h12v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5v-17Z" />\n  <path d="M9.5 8h5" />\n  <path d="M9.5 10.75h4" />\n  <path d="M10 8a2.25 2.25 0 0 1 0 4.5l3.25 3" />'
+      },
+      {
+        id: 'icon-wallet',
+        name: 'CSC Wallet (Bespoke)',
+        use: 'Operator ledger wallet with angled flap & gold security stud',
+        paths: '<rect x="3.5" y="6" width="17" height="13.5" rx="2.5" />\n  <path d="M3.5 10.5h17" />\n  <path d="M7 6V4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V6" />\n  <path d="M14.5 11h5a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V12a1 1 0 0 1 1-1Z" />\n  <circle cx="17.25" cy="13.75" r="0.75" fill="currentColor" stroke="none" />'
+      },
+      {
+        id: 'icon-invoice',
+        name: 'Invoice',
+        use: 'Itemized govt fee + service charge billing sheet',
+        paths: '<rect x="5" y="3.5" width="14" height="17" rx="2" />\n  <path d="M8.5 8h7" />\n  <path d="M8.5 11.5h4" />\n  <path d="M15 11.5h.5" />\n  <path d="M8.5 15h3.5" />\n  <path d="M14 15h1.5" />\n  <path d="M8.5 17.75h7" />'
+      },
+      {
+        id: 'icon-print-receipt',
+        name: 'Print Receipt',
+        use: 'Print thermal counter token & fee acknowledgment slip',
+        paths: '<path d="M7 8V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V8" />\n  <rect x="3.5" y="8" width="17" height="7" rx="2" />\n  <path d="M7.5 13h9v7.5l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1V13Z" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-utility',
+    title: 'Utility Icons',
+    subtitle: 'Desk support, console tuning, alerts, and customer roster',
+    icons: [
+      {
+        id: 'icon-help-support',
+        name: 'Help / Support',
+        use: 'CSC operator desk support & portal helpline',
+        paths: '<path d="M5 14v-2a7 7 0 0 1 14 0v2" />\n  <rect x="3.5" y="13.5" width="3" height="4.5" rx="1.25" />\n  <rect x="17.5" y="13.5" width="3" height="4.5" rx="1.25" />\n  <path d="M19 18v.5a2.5 2.5 0 0 1-2.5 2.5H13" />'
+      },
+      {
+        id: 'icon-settings',
+        name: 'Console Tuner (Bespoke)',
+        use: 'Calibrated console dial: cardinal ticks + measurement index',
+        paths: '<circle cx="12" cy="12" r="8.5" />\n  <circle cx="12" cy="12" r="3.5" />\n  <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2" />\n  <path d="m12 12 2.5-2" />\n  <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />'
+      },
+      {
+        id: 'icon-logout',
+        name: 'Logout',
+        use: 'Sign out safely from operator terminal',
+        paths: '<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />\n  <path d="M16 16l4-4-4-4" />\n  <path d="M20 12H9.5" />'
+      },
+      {
+        id: 'icon-notification-bell',
+        name: 'Notification Chime (Bespoke)',
+        use: 'Architectural chime with suspension eyelet & active alert beacon',
+        paths: '<path d="M12 3v2" />\n  <circle cx="12" cy="4" r="0.8" fill="currentColor" stroke="none" />\n  <path d="M6 15.5c0-3.8 2.2-6.5 6-6.5s6 2.7 6 6.5" />\n  <path d="M4 16.5h16" />\n  <path d="M10 19.5a2 2 0 0 0 4 0" />\n  <circle cx="18.5" cy="5.5" r="1.25" fill="currentColor" stroke="none" />'
+      },
+      {
+        id: 'icon-history',
+        name: 'Past Applications',
+        use: 'Submission history & prior citizen application logs',
+        paths: '<path d="M4.25 12a7.75 7.75 0 1 0 2.27-5.48L4.25 8.75" />\n  <path d="M4.25 4.75v4h4" />\n  <path d="M12 8v4l2.5 1.75" />'
+      },
+      {
+        id: 'icon-customer-list',
+        name: 'Customer List',
+        use: 'Walk-in client records and repeat applicant directory',
+        paths: '<circle cx="8" cy="8.5" r="2.75" />\n  <path d="M3.75 18.5a4.5 4.5 0 0 1 8.5 0" />\n  <path d="M14.5 8.5h6" />\n  <path d="M14.5 12.5h6" />\n  <path d="M14.5 16.5h4.5" />'
+      }
+    ]
+  },
+  {
+    id: 'cat-ai',
+    title: 'AI / Auto-Assist Icons',
+    subtitle: 'Smart form prefill, document check hints, and OCR card scanning',
+    icons: [
+      {
+        id: 'icon-auto-fill',
+        name: 'Auto-Fill',
+        use: 'Populate verified applicant address & DOB into form fields',
+        paths: '<rect x="4" y="13.5" width="16" height="5.5" rx="1.5" />\n  <path d="M7.5 16.25h5" />\n  <path d="M10.5 4.5 11.7 7.3 14.5 8.5l-2.8 1.2L10.5 12.5 9.3 9.7 6.5 8.5l2.8-1.2L10.5 4.5Z" />\n  <path d="M17.5 4.5v3" />\n  <path d="M16 6h3" />'
+      },
+      {
+        id: 'icon-smart-suggest',
+        name: 'Smart-Suggest',
+        use: 'Recommend required supporting proofs for selected scheme',
+        paths: '<path d="M9 15.5c-1.5-1-2.5-2.65-2.5-4.5a5.5 5.5 0 1 1 11 0c0 1.85-1 3.5-2.5 4.5V17a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 17v-1.5Z" />\n  <path d="M9.75 21h4.5" />\n  <path d="M12 11.5V9" />'
+      },
+      {
+        id: 'icon-ocr-scan',
+        name: 'OCR / Scan Document',
+        use: 'Scan Aadhaar or PAN card to extract fields automatically',
+        paths: '<path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8" />\n  <path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8" />\n  <path d="M20 16v2.5A1.5 1.5 0 0 1 18.5 20H16" />\n  <path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />\n  <path d="M4.5 12h15" />\n  <path d="M8.5 8.5h7" />\n  <path d="M8.5 15.5h5" />'
+      }
+    ]
+  }
+];
+
+// App State
+let currentSize = 'md';
+let currentSkin = 'warm'; // 'warm' or 'portal'
+let currentQuery = '';
+let activeTab = 'css';
+let cachedCssText = '';
+
+let auditStyle = 'warm'; // 'warm', 'portal', or 'bare'
+let auditSize = 'md';
+
+function sizeClass(sizeKey = currentSize) {
+  if (sizeKey === 'sm') return 'icon-btn--sm';
+  if (sizeKey === 'lg') return 'icon-btn--lg';
+  return '';
+}
+
+function buildStandaloneSvg(icon) {
+  return `<!-- ${icon.id}: ${icon.name} -->
+<svg
+  class="csc-icon"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  ${icon.paths}
+</svg>`;
+}
+
+function makeButtonHtml(icon, stateClass, ariaLabelSuffix, overrideSkin = null, overrideSize = null) {
+  const chosenSkin = overrideSkin !== null ? overrideSkin : currentSkin;
+  const chosenSize = overrideSize !== null ? overrideSize : currentSize;
+  const szCls = sizeClass(chosenSize) ? ` ${sizeClass(chosenSize)}` : '';
+
+  let skinClass = '';
+  if (chosenSkin === 'warm') {
+    skinClass = ' icon-btn--warm';
+  } else if (icon.variant) {
+    skinClass = ` ${icon.variant}`;
+  }
+
+  const extra = icon.extraClass ? ` ${icon.extraClass}` : '';
+  const sc = stateClass ? ` ${stateClass}` : '';
+  const pressed = stateClass === 'is-active' ? ' aria-pressed="true"' : '';
+  return `<button type="button" class="icon-btn${skinClass}${szCls}${extra}${sc}"${pressed} aria-label="${icon.name} (${ariaLabelSuffix})">
+    <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">${icon.paths}</svg>
+  </button>`;
+}
+
+// ============================================================================
+// 3. RENDER AUDIT SIDE-BY-SIDE CARDS
+// ============================================================================
+function renderAuditSection() {
+  const root = document.getElementById('auditCardsRoot');
+  if (!root) return;
+
+  root.innerHTML = AUDIT_ITEMS.map((item) => {
+    // Generate new icon button markup based on auditStyle
+    let newPreviewHtml = '';
+    if (auditStyle === 'bare') {
+      newPreviewHtml = `<div class="audit-icon-preview" style="background:rgba(201,169,110,0.12);color:#92400E;">
+        <svg class="csc-icon csc-icon--24" viewBox="0 0 24 24" aria-hidden="true">${item.newPaths}</svg>
+      </div>`;
+    } else {
+      const skinKey = auditStyle === 'warm' ? 'warm' : 'portal';
+      const fakeIcon = { name: item.name, paths: item.newPaths, variant: '' };
+      newPreviewHtml = makeButtonHtml(fakeIcon, '', 'Audited', skinKey, auditSize);
+    }
+
+    return `
+      <article class="audit-card">
+        <div class="audit-card__head">
+          <h3 class="audit-card__title">
+            <span>${item.name}</span>
+          </h3>
+          <span class="audit-card__symbol">#${item.symbolId}</span>
+        </div>
+
+        <div class="audit-card__body">
+          <!-- LEFT PANE: OLD GENERIC CLICHÉ -->
+          <div class="audit-pane audit-pane--old">
+            <div class="pane-header">
+              <span class="status-pill status-pill--old">OLD: Generic Stock / AI Cliché</span>
+            </div>
+
+            <div class="audit-render-box">
+              <div class="audit-icon-preview audit-icon-preview--old" title="Old Cliché Geometry">
+                <svg viewBox="0 0 24 24" aria-hidden="true">${item.oldSvgPaths}</svg>
+              </div>
+              <p class="audit-preview-desc">
+                Stock icon geometry borrowed from generic library templates.
+              </p>
+            </div>
+
+            <p class="audit-critique">${item.oldCritique}</p>
+          </div>
+
+          <!-- RIGHT PANE: NEW BESPOKE DESIGN -->
+          <div class="audit-pane audit-pane--new">
+            <div class="pane-header">
+              <span class="status-pill status-pill--new">NEW: Senior Bespoke Design</span>
+            </div>
+
+            <div class="audit-render-box">
+              ${newPreviewHtml}
+              <p class="audit-preview-desc">
+                Custom hand-crafted geometry inside ${auditStyle === 'warm' ? 'Warm Dark-Brown (#2A1F18)' : auditStyle === 'portal' ? 'Portal Blue (#1E40AF)' : 'Bare'} squircle.
+              </p>
+            </div>
+
+            <p class="audit-critique">${item.newRationale}</p>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+// ============================================================================
+// 4. RENDER FULL 40-ICON CATALOG
+// ============================================================================
+function renderCatalog() {
+  const root = document.getElementById('catalogRoot');
+  const q = currentQuery.trim().toLowerCase();
+  const filteredCats = ICON_CATEGORIES.map((cat) => ({
+    ...cat,
+    icons: cat.icons.filter(
+      (ic) =>
+        !q ||
+        ic.id.toLowerCase().includes(q) ||
+        ic.name.toLowerCase().includes(q) ||
+        ic.use.toLowerCase().includes(q)
+    )
+  })).filter((cat) => cat.icons.length > 0);
+
+  if (filteredCats.length === 0) {
+    root.innerHTML = `<div class="empty-state">No icons matched "<strong>${q.replace(/[<>&"]/g, '')}</strong>". Try searching "aadhaar", "newspaper", or "pending".</div>`;
+    return;
+  }
+
+  root.innerHTML = filteredCats
+    .map((cat) => {
+      const trustDemo = cat.hasTrustDemo
+        ? `<div class="trust-bar">
+            <div class="trust-bar__left">
+              <button type="button" id="replayCheckBtn" class="icon-btn icon-btn--approved is-drawing" aria-label="Replay approval checkmark animation">
+                <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8.5" />
+                  <path class="icon-draw-check" d="m8.5 12.25 2.5 2.5 4.75-5" />
+                </svg>
+              </button>
+              <div>
+                <p class="trust-bar__title">Submission Confirmation Animation</p>
+                <p class="trust-bar__sub">Self-drawing checkmark verifies form submission to operators and citizens.</p>
+              </div>
+            </div>
+            <button type="button" class="desk-btn" id="triggerDrawBtn">Replay Approved Checkmark</button>
+          </div>`
+        : '';
+
+      const cardsHtml = cat.icons
+        .map(
+          (icon) => `<article class="icon-card">
+          <div class="icon-card__top">
+            <div class="icon-card__info">
+              <h3 class="icon-card__name">${icon.name}</h3>
+              <p class="icon-card__id">${icon.id}</p>
+              <p class="icon-card__use">${icon.use}</p>
+            </div>
+          </div>
+
+          <div class="state-strip" aria-label="${icon.name} visual states">
+            <div class="state-cell">
+              ${makeButtonHtml(icon, '', 'Default')}
+              <span class="state-lbl">Default</span>
+            </div>
+            <div class="state-cell">
+              ${makeButtonHtml(icon, 'is-hover', 'Hover')}
+              <span class="state-lbl">Hover</span>
+            </div>
+            <div class="state-cell">
+              ${makeButtonHtml(icon, 'is-active', 'Active')}
+              <span class="state-lbl">Active</span>
+            </div>
+          </div>
+
+          <div class="icon-card__foot">
+            <span class="mini-check" title="16px small-screen legibility check">
+              <span class="mini-check__box">
+                <svg class="csc-icon csc-icon--16" viewBox="0 0 24 24" aria-hidden="true">${icon.paths}</svg>
+              </span>
+              16px check
+            </span>
+            <button type="button" class="copy-btn" data-copy-id="${icon.id}">Copy SVG</button>
+          </div>
+        </article>`
+        )
+        .join('');
+
+      return `<section class="cat-section" id="${cat.id}">
+        <div class="cat-head">
+          <div>
+            <h2 class="cat-title">${cat.title}</h2>
+          </div>
+          <span class="cat-meta">${cat.subtitle} · ${cat.icons.length} icons</span>
+        </div>
+        ${trustDemo}
+        <div class="icon-grid">${cardsHtml}</div>
+      </section>`;
+    })
+    .join('');
+
+  // Bind replay checkmark trigger if present
+  const replay = () => {
+    const target = document.getElementById('replayCheckBtn');
+    if (!target) return;
+    target.classList.remove('is-drawing');
+    void target.offsetWidth;
+    target.classList.add('is-drawing');
+  };
+  document.getElementById('triggerDrawBtn')?.addEventListener('click', replay);
+  document.getElementById('replayCheckBtn')?.addEventListener('click', replay);
+
+  // Interactive active toggle on default squircle previews
+  root.querySelectorAll('.state-cell .icon-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('is-hover')) return;
+      const nowActive = btn.classList.toggle('is-active');
+      btn.setAttribute('aria-pressed', String(nowActive));
+    });
+  });
+
+  // Per-icon Copy SVG handler
+  const allIcons = ICON_CATEGORIES.flatMap((c) => c.icons);
+  root.querySelectorAll('.copy-btn[data-copy-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const icon = allIcons.find((i) => i.id === btn.dataset.copyId);
+      if (!icon) return;
+      await copyText(buildStandaloneSvg(icon));
+      btn.textContent = 'Copied';
+      btn.classList.add('is-copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy SVG';
+        btn.classList.remove('is-copied');
+      }, 1400);
+    });
+  });
+}
+
+async function copyText(str) {
+  try {
+    await navigator.clipboard.writeText(str);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = str;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+}
+
+function getAllSvgsBundle() {
+  return ICON_CATEGORIES.map(
+    (cat) =>
+      `<!-- ================= ${cat.title.toUpperCase()} ================= -->\n` +
+      cat.icons.map(buildStandaloneSvg).join('\n\n')
+  ).join('\n\n');
+}
+
+function getUsageHtmlBundle() {
+  return `<!-- ==========================================================
+     Aman Computer — CSC Production Icon Button Usage Examples
+     ========================================================== -->
+
+<!-- 1. Include master stylesheet in <head> -->
+<link rel="stylesheet" href="/assets/csc-icons.css" />
+
+<!-- 2. Aman Computer Signature Warm Dark-Brown Tonal Squircle (.icon-btn--warm) -->
+<button type="button" class="icon-btn icon-btn--warm" aria-label="Latest Updates">
+  <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3.5" y="4" width="17" height="16" rx="2" />
+    <path d="M6.5 7.5h11" stroke-width="2.2" />
+    <path d="M6.5 11h4" />
+    <path d="M6.5 14h3.5" />
+    <path d="M6.5 17h4" />
+    <path d="M12.5 10.5v7" />
+    <rect x="14.5" y="11" width="3.5" height="3" rx="0.5" />
+    <path d="M14.5 16.5h3" />
+  </svg>
+</button>
+
+<!-- 3. Verified Document Button with Integrated Legal Seal -->
+<button type="button" class="icon-btn icon-btn--warm" aria-label="Verified Documents">
+  <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M11 20.5H5.5a1.5 1.5 0 0 1-1.5-1.5V4.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5V11" />
+    <path d="M7.5 7h9" stroke-width="2.2" />
+    <path d="M7.5 10.5h5.5" />
+    <path d="M7.5 14h3.5" />
+    <circle cx="16" cy="16" r="4.25" />
+    <path d="m14.25 16 1.25 1.25 2.5-2.5" stroke-width="2" />
+    <path d="M14.5 20.25V22l1.5-.75L17.5 22v-1.75" />
+  </svg>
+</button>
+
+<!-- 4. Photo Gallery Button with Precision Studio Camera (NO Mountains) -->
+<button type="button" class="icon-btn icon-btn--warm" aria-label="Photo Gallery">
+  <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3.5 8.5a2 2 0 0 1 2-2h2.2l1.6-2h5.4l1.6 2h2.2a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />
+    <circle cx="12" cy="13.5" r="3.75" />
+    <circle cx="12" cy="13.5" r="1.5" />
+    <circle cx="17.5" cy="9.5" r="0.8" fill="currentColor" stroke="none" />
+  </svg>
+</button>
+
+<!-- 5. Portal Blue Squircle Button (.icon-btn) -->
+<button type="button" class="icon-btn" aria-label="Start New Application">
+  <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 3.5h10.5L20 8v11.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5Z" />
+    <path d="M15.5 3.5V8H20" />
+    <path d="M12 11.5v5" />
+    <path d="M9.5 14h5" />
+  </svg>
+</button>
+
+<!-- 6. Status Button with Self-Drawing Approval Checkmark -->
+<button type="button" class="icon-btn icon-btn--approved is-drawing" aria-label="Application Approved">
+  <svg class="csc-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="8.5" />
+    <path class="icon-draw-check" d="m8.5 12.25 2.5 2.5 4.75-5" />
+  </svg>
+</button>`;
+}
+
+async function refreshCodeOutput() {
+  const out = document.getElementById('codeOutput');
+  if (activeTab === 'css') {
+    if (!cachedCssText) {
+      try {
+        const res = await fetch('/assets/csc-icons.css');
+        cachedCssText = await res.text();
+      } catch {
+        cachedCssText = '/* Load /assets/csc-icons.css */';
+      }
+    }
+    out.textContent = cachedCssText;
+  } else if (activeTab === 'svg') {
+    out.textContent = getAllSvgsBundle();
+  } else {
+    out.textContent = getUsageHtmlBundle();
+  }
+}
+
+// Event Listeners for Audit Bar
+document.querySelectorAll('.seg__btn[data-audit-style]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg__btn[data-audit-style]').forEach((b) => b.classList.remove('is-on'));
+    btn.classList.add('is-on');
+    auditStyle = btn.dataset.auditStyle;
+    renderAuditSection();
+  });
+});
+
+document.querySelectorAll('.seg__btn[data-audit-size]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg__btn[data-audit-size]').forEach((b) => b.classList.remove('is-on'));
+    btn.classList.add('is-on');
+    auditSize = btn.dataset.auditSize;
+    renderAuditSection();
+  });
+});
+
+// Event Listeners for Catalog
+document.getElementById('iconSearch').addEventListener('input', (e) => {
+  currentQuery = e.target.value;
+  renderCatalog();
+});
+
+document.querySelectorAll('.seg__btn[data-catalog-skin]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg__btn[data-catalog-skin]').forEach((b) => b.classList.remove('is-on'));
+    btn.classList.add('is-on');
+    currentSkin = btn.dataset.catalogSkin;
+    renderCatalog();
+  });
+});
+
+document.querySelectorAll('.seg__btn[data-size]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg__btn[data-size]').forEach((b) => b.classList.remove('is-on'));
+    btn.classList.add('is-on');
+    currentSize = btn.dataset.size;
+    renderCatalog();
+  });
+});
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeToggle').textContent = 'Toggle Dark Surface';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeToggle').textContent = 'Toggle Light Surface';
+  }
+});
+
+document.querySelectorAll('.seg__btn[data-code-tab]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.seg__btn[data-code-tab]').forEach((b) => {
+      b.classList.remove('is-on');
+      b.setAttribute('aria-selected', 'false');
+    });
+    btn.classList.add('is-on');
+    btn.setAttribute('aria-selected', 'true');
+    activeTab = btn.dataset.codeTab;
+    void refreshCodeOutput();
+  });
+});
+
+document.getElementById('copyBundleBtn').addEventListener('click', async () => {
+  const text = document.getElementById('codeOutput').textContent || '';
+  await copyText(text);
+  const btn = document.getElementById('copyBundleBtn');
+  btn.textContent = 'Copied';
+  btn.classList.add('is-copied');
+  setTimeout(() => {
+    btn.textContent = 'Copy Code';
+    btn.classList.remove('is-copied');
+  }, 1400);
+});
+
+// Initial boot
+renderAuditSection();
+renderCatalog();
+void refreshCodeOutput();
+</script>
+</body>
+</html>

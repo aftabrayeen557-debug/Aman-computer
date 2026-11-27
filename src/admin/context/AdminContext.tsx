@@ -3,6 +3,10 @@ import {
   AdminTab,
   Enquiry,
   EnquiryStatus,
+  EnquiryPriority,
+  EnquiryFollowUp,
+  EnquiryAuditEntry,
+  EnquiryAuditActionType,
   Customer,
   Receipt,
   ReceiptStatus,
@@ -65,6 +69,12 @@ import {
   dbGetEnquiries,
   dbUpsertEnquiry,
   dbDeleteEnquiry,
+  dbCheckEnquirySchemaStatus,
+  dbGetEnquiryFollowUps,
+  dbUpsertEnquiryFollowUp,
+  dbDeleteEnquiryFollowUp,
+  dbGetEnquiryAuditLogs,
+  dbAddEnquiryAuditLog,
   dbGetServices,
   dbUpsertService,
   dbDeleteService,
@@ -166,11 +176,22 @@ interface AdminContextType {
   deleteCustomer: (id: string) => void;
   exportCustomersCSV: () => void;
 
-  // 1. Operations: Enquiries
+  // 1. Operations: Enquiries & Follow-ups CRM
   enquiries: Enquiry[];
-  addEnquiry: (enquiry: Omit<Enquiry, 'id' | 'createdAt'>) => void;
+  enquiryFollowUps: EnquiryFollowUp[];
+  enquiryAuditLogs: EnquiryAuditEntry[];
+  enquirySchemaPending: boolean;
+  addEnquiry: (enquiry: Omit<Enquiry, 'id' | 'createdAt'>) => Enquiry;
   updateEnquiryStatus: (id: string, status: EnquiryStatus) => void;
+  updateEnquiryPriority: (id: string, priority: EnquiryPriority) => void;
   updateEnquiryNotes: (id: string, notes: string) => void;
+  recordEnquiryContactAction: (id: string, channel: 'call' | 'whatsapp') => void;
+  scheduleEnquiryFollowUp: (
+    enquiryId: string,
+    input: { scheduledDate: string; scheduledTime?: string; notes: string }
+  ) => EnquiryFollowUp | null;
+  completeEnquiryFollowUp: (followUpId: string, completedNotes?: string) => void;
+  cancelEnquiryFollowUp: (followUpId: string) => void;
   deleteEnquiry: (id: string) => void;
   selectedEnquiry: Enquiry | null;
   setSelectedEnquiry: (enquiry: Enquiry | null) => void;
@@ -532,6 +553,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setDbSyncStatus('syncing');
       try {
         const res = await operation();
+        if (res.schemaPending) {
+          setEnquirySchemaPending(true);
+        }
         if (!res.ok) {
           console.error('Persist write rejected:', res.error);
           setDbSyncStatus('error');
@@ -560,6 +584,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [enquiryFollowUps, setEnquiryFollowUps] = useState<EnquiryFollowUp[]>([]);
+  const [enquiryAuditLogs, setEnquiryAuditLogs] = useState<EnquiryAuditEntry[]>([]);
+  const [enquirySchemaPending, setEnquirySchemaPending] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null);
 
   const [services, setServices] = useState<ServiceItem[]>(() =>
@@ -630,6 +657,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCustomers([]);
     setReceipts([]);
     setEnquiries([]);
+    setEnquiryFollowUps([]);
+    setEnquiryAuditLogs([]);
+    setEnquirySchemaPending(false);
     setStaff([]);
     setActivityLogs([]);
     setNotifications([]);
@@ -668,6 +698,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dbLogs,
         dbSettings,
         dbSchemes,
+        dbFollowUps,
+        dbEnqAudits,
+        schemaStatus,
       ] = await Promise.all([
         dbGetCustomers(),
         dbGetEnquiries(),
@@ -687,7 +720,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         dbGetActivityLogs(),
         dbGetTerminalSettings(),
         dbGetGovernmentSchemes(),
+        dbGetEnquiryFollowUps(),
+        dbGetEnquiryAuditLogs(),
+        dbCheckEnquirySchemaStatus(),
       ]);
+
+      setEnquirySchemaPending(
+        !schemaStatus.extendedColumnsReady ||
+          !schemaStatus.followUpsTableReady ||
+          !schemaStatus.auditTableReady
+      );
 
       // Detect whether cloud database is completely unseeded before overwriting local cache
       const totalCloudRows =
@@ -720,6 +762,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Hydrate any pre-migration local private records strictly after authentication
         setCustomers(safeGetStorage<Customer[]>('aman_customers', []));
         setEnquiries(safeGetStorage<Enquiry[]>('aman_enquiries', []));
+        setEnquiryFollowUps(safeGetStorage<EnquiryFollowUp[]>('aman_enquiry_follow_ups', []));
+        setEnquiryAuditLogs(safeGetStorage<EnquiryAuditEntry[]>('aman_enquiry_audit_logs', []));
         setReceipts(safeGetStorage<Receipt[]>('aman_receipts', []));
         setStaff(safeGetStorage<StaffMember[]>('aman_staff', []));
         setNotifications(safeGetStorage<NotificationItem[]>('aman_notifications', []));
@@ -731,6 +775,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (dbCust !== null) setCustomers(dbCust);
       if (dbEnq !== null) setEnquiries(dbEnq);
+      if (dbFollowUps !== null) {
+        setEnquiryFollowUps(dbFollowUps);
+      } else {
+        setEnquiryFollowUps(safeGetStorage<EnquiryFollowUp[]>('aman_enquiry_follow_ups', []));
+      }
+      if (dbEnqAudits !== null) {
+        setEnquiryAuditLogs(dbEnqAudits);
+      } else {
+        setEnquiryAuditLogs(safeGetStorage<EnquiryAuditEntry[]>('aman_enquiry_audit_logs', []));
+      }
       if (dbSrv !== null) setServices(dbSrv);
       if (dbUpd !== null) setLatestUpdates(dbUpd);
       if (dbDoc !== null) setDocRequirements(dbDoc);
@@ -898,6 +952,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (authStatus === 'authenticated') safeSetStorage('aman_enquiries', enquiries);
   }, [enquiries, authStatus]);
+  useEffect(() => {
+    if (authStatus === 'authenticated') safeSetStorage('aman_enquiry_follow_ups', enquiryFollowUps);
+  }, [enquiryFollowUps, authStatus]);
+  useEffect(() => {
+    if (authStatus === 'authenticated') safeSetStorage('aman_enquiry_audit_logs', enquiryAuditLogs);
+  }, [enquiryAuditLogs, authStatus]);
 
   useEffect(() => {
     safeSetStorage('aman_services', services);
@@ -1210,31 +1270,94 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('CSV Exported', `Exported ${receipts.length} receipt tokens.`);
   };
 
-  // 3. Enquiries CRUD
-  const addEnquiry = (enquiry: Omit<Enquiry, 'id' | 'createdAt'>) => {
+  // 3. Enquiries CRM & Follow-up Management
+  const appendEnquiryAudit = useCallback(
+    (
+      enquiryId: string,
+      actionType: EnquiryAuditActionType,
+      oldValue: string,
+      newValue: string,
+      details: string
+    ) => {
+      const entry: EnquiryAuditEntry = {
+        id: 'aud-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+        enquiryId,
+        actionType,
+        oldValue,
+        newValue,
+        details,
+        performedBy: currentUser?.name || currentUser?.email || 'Sharique Aman',
+        createdAt: new Date().toISOString(),
+      };
+      setEnquiryAuditLogs((prev) => [entry, ...prev.slice(0, 299)]);
+      if (isSupabaseActive && authStatusRef.current === 'authenticated') {
+        void dbAddEnquiryAuditLog(entry);
+      }
+    },
+    [currentUser, isSupabaseActive]
+  );
+
+  const addEnquiry = (enquiry: Omit<Enquiry, 'id' | 'createdAt'>): Enquiry => {
+    const nowIso = new Date().toISOString();
     const newEnq: Enquiry = {
       ...enquiry,
       id: 'ENQ-' + Date.now().toString(36).toUpperCase(),
-      createdAt: new Date().toISOString(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      priority: enquiry.priority || (enquiry.urgency === 'urgent' ? 'high' : 'medium'),
+      preferredContactMethod: enquiry.preferredContactMethod || 'either',
+      assignedOperator: enquiry.assignedOperator || currentUser?.name || 'Sharique Aman',
     };
     setEnquiries((prev) => [newEnq, ...prev]);
     addActivityLog('ENQUIRY_ADD', 'Enquiries', `Logged enquiry from ${newEnq.customerName}`);
+    appendEnquiryAudit(
+      newEnq.id,
+      'created',
+      '',
+      newEnq.status,
+      `Logged ${newEnq.source || 'walk-in'} enquiry for ${newEnq.serviceName}`
+    );
     void persistWrite(
       () => dbUpsertEnquiry(newEnq),
       'Enquiry Created',
       `Added request for ${newEnq.customerName}.`
     );
+    return newEnq;
   };
 
   const updateEnquiryStatus = (id: string, status: EnquiryStatus) => {
     const existing = enquiries.find((e) => e.id === id);
     if (!existing) return;
-    const updated = { ...existing, status };
+    const nowIso = new Date().toISOString();
+    const isInitialResponse = status !== 'new' && !existing.firstResponseAt;
+    const touchesContact =
+      status === 'contacted' || status === 'in-progress' || status === 'pending' || status === 'completed';
+
+    const updated: Enquiry = {
+      ...existing,
+      status,
+      updatedAt: nowIso,
+      firstResponseAt: isInitialResponse ? nowIso : existing.firstResponseAt || null,
+      lastContactedAt: touchesContact ? nowIso : existing.lastContactedAt || null,
+      completedAt:
+        status === 'completed'
+          ? existing.completedAt || nowIso
+          : existing.status === 'completed'
+          ? null
+          : existing.completedAt || null,
+    };
     setEnquiries((prev) => prev.map((e) => (e.id === id ? updated : e)));
     if (selectedEnquiry && selectedEnquiry.id === id) {
       setSelectedEnquiry(updated);
     }
-    addActivityLog('STATUS_UPDATE', 'Enquiries', `Changed status of ${id} to ${status}`);
+    addActivityLog('STATUS_UPDATE', 'Enquiries', `Changed status of ${id} from ${existing.status} to ${status}`);
+    appendEnquiryAudit(
+      id,
+      'status_change',
+      existing.status,
+      status,
+      `Status updated from ${existing.status} to ${status}`
+    );
     void persistWrite(
       () => dbUpsertEnquiry(updated),
       'Status Updated',
@@ -1242,15 +1365,54 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const updateEnquiryPriority = (id: string, priority: EnquiryPriority) => {
+    const existing = enquiries.find((e) => e.id === id);
+    if (!existing) return;
+    const prevPriority = existing.priority || (existing.urgency === 'urgent' ? 'high' : 'medium');
+    if (prevPriority === priority) return;
+
+    const nowIso = new Date().toISOString();
+    const updated: Enquiry = {
+      ...existing,
+      priority,
+      urgency: priority === 'high' ? 'urgent' : 'normal',
+      updatedAt: nowIso,
+    };
+    setEnquiries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    if (selectedEnquiry && selectedEnquiry.id === id) {
+      setSelectedEnquiry(updated);
+    }
+    addActivityLog('PRIORITY_UPDATE', 'Enquiries', `Changed priority of ${id} to ${priority}`);
+    appendEnquiryAudit(
+      id,
+      'priority_change',
+      prevPriority,
+      priority,
+      `Priority changed from ${prevPriority} to ${priority}`
+    );
+    void persistWrite(
+      () => dbUpsertEnquiry(updated),
+      'Priority Updated',
+      `Enquiry ${id} priority set to ${priority.toUpperCase()}.`
+    );
+  };
+
   const updateEnquiryNotes = (id: string, notes: string) => {
     const existing = enquiries.find((e) => e.id === id);
     if (!existing) return;
-    const updated = { ...existing, adminNotes: notes };
+    const nowIso = new Date().toISOString();
+    const updated: Enquiry = {
+      ...existing,
+      adminNotes: notes,
+      updatedAt: nowIso,
+      firstResponseAt: existing.firstResponseAt || nowIso,
+    };
     setEnquiries((prev) => prev.map((e) => (e.id === id ? updated : e)));
     if (selectedEnquiry && selectedEnquiry.id === id) {
       setSelectedEnquiry(updated);
     }
     addActivityLog('NOTES_UPDATE', 'Enquiries', `Updated admin notes for ${id}`);
+    appendEnquiryAudit(id, 'notes_updated', '', '', 'Updated internal counter notes');
     void persistWrite(
       () => dbUpsertEnquiry(updated),
       'Notes Saved',
@@ -1258,8 +1420,204 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const recordEnquiryContactAction = (id: string, channel: 'call' | 'whatsapp') => {
+    const existing = enquiries.find((e) => e.id === id);
+    if (!existing) return;
+    const nowIso = new Date().toISOString();
+    const nextStatus: EnquiryStatus = existing.status === 'new' ? 'contacted' : existing.status;
+    const updated: Enquiry = {
+      ...existing,
+      status: nextStatus,
+      updatedAt: nowIso,
+      firstResponseAt: existing.firstResponseAt || nowIso,
+      lastContactedAt: nowIso,
+    };
+    setEnquiries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    if (selectedEnquiry && selectedEnquiry.id === id) {
+      setSelectedEnquiry(updated);
+    }
+    const label = channel === 'whatsapp' ? 'WhatsApp chat' : 'phone call';
+    addActivityLog('ENQUIRY_CONTACT', 'Enquiries', `Initiated ${label} for ${id} (${existing.customerName})`);
+    appendEnquiryAudit(
+      id,
+      'contacted',
+      existing.status,
+      nextStatus,
+      `Initiated ${label} with customer`
+    );
+    if (isSupabaseActive && authStatusRef.current === 'authenticated') {
+      void dbUpsertEnquiry(updated).then((res) => {
+        if (res.schemaPending) setEnquirySchemaPending(true);
+      });
+    }
+  };
+
+  const scheduleEnquiryFollowUp = (
+    enquiryId: string,
+    input: { scheduledDate: string; scheduledTime?: string; notes: string }
+  ): EnquiryFollowUp | null => {
+    const existing = enquiries.find((e) => e.id === enquiryId);
+    if (!existing || !input.scheduledDate.trim()) return null;
+
+    const nowIso = new Date().toISOString();
+    const followUp: EnquiryFollowUp = {
+      id: 'fu-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 5),
+      enquiryId,
+      scheduledDate: input.scheduledDate.slice(0, 10),
+      scheduledTime: (input.scheduledTime || '').trim(),
+      notes: input.notes.trim(),
+      status: 'scheduled',
+      completedAt: null,
+      completedNotes: '',
+      createdBy: currentUser?.name || 'Sharique Aman',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+
+    const nextFollowUps = [followUp, ...enquiryFollowUps];
+    setEnquiryFollowUps(nextFollowUps);
+
+    const updatedEnquiry: Enquiry = {
+      ...existing,
+      nextFollowUpDate: followUp.scheduledDate,
+      nextFollowUpTime: followUp.scheduledTime,
+      followUpNotes: followUp.notes,
+      firstResponseAt: existing.firstResponseAt || nowIso,
+      updatedAt: nowIso,
+    };
+    setEnquiries((prev) => prev.map((e) => (e.id === enquiryId ? updatedEnquiry : e)));
+    if (selectedEnquiry && selectedEnquiry.id === enquiryId) {
+      setSelectedEnquiry(updatedEnquiry);
+    }
+
+    addActivityLog(
+      'FOLLOW_UP_SCHEDULED',
+      'Enquiries',
+      `Scheduled follow-up for ${enquiryId} on ${followUp.scheduledDate}`
+    );
+    appendEnquiryAudit(
+      enquiryId,
+      'follow_up_scheduled',
+      existing.nextFollowUpDate || '',
+      `${followUp.scheduledDate}${followUp.scheduledTime ? ' ' + followUp.scheduledTime : ''}`,
+      `Scheduled follow-up for ${followUp.scheduledDate}${followUp.notes ? ': ' + followUp.notes : ''}`
+    );
+
+    void persistWrite(
+      async () => {
+        const resFu = await dbUpsertEnquiryFollowUp(followUp);
+        const resEnq = await dbUpsertEnquiry(updatedEnquiry);
+        if (resFu.schemaPending || resEnq.schemaPending) setEnquirySchemaPending(true);
+        return resEnq.ok ? resFu : resEnq;
+      },
+      'Follow-up Scheduled',
+      `Reminder logged for ${followUp.scheduledDate}.`
+    );
+
+    return followUp;
+  };
+
+  const syncNextFollowUpSummary = (enquiryId: string, updatedList: EnquiryFollowUp[], extraFields?: Partial<Enquiry>) => {
+    const remaining = updatedList
+      .filter((f) => f.enquiryId === enquiryId && f.status === 'scheduled')
+      .sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+    const nextItem = remaining[0] || null;
+    const existing = enquiries.find((e) => e.id === enquiryId);
+    if (!existing) return null;
+    const nowIso = new Date().toISOString();
+    const updatedEnq: Enquiry = {
+      ...existing,
+      ...extraFields,
+      nextFollowUpDate: nextItem ? nextItem.scheduledDate : null,
+      nextFollowUpTime: nextItem ? nextItem.scheduledTime : '',
+      followUpNotes: nextItem ? nextItem.notes : extraFields?.followUpNotes ?? existing.followUpNotes,
+      updatedAt: nowIso,
+    };
+    setEnquiries((prev) => prev.map((e) => (e.id === enquiryId ? updatedEnq : e)));
+    if (selectedEnquiry && selectedEnquiry.id === enquiryId) {
+      setSelectedEnquiry(updatedEnq);
+    }
+    return updatedEnq;
+  };
+
+  const completeEnquiryFollowUp = (followUpId: string, completedNotes: string = '') => {
+    const target = enquiryFollowUps.find((f) => f.id === followUpId);
+    if (!target) return;
+    const nowIso = new Date().toISOString();
+    const updatedFu: EnquiryFollowUp = {
+      ...target,
+      status: 'completed',
+      completedAt: nowIso,
+      completedNotes: completedNotes.trim(),
+      updatedAt: nowIso,
+    };
+    const nextList = enquiryFollowUps.map((f) => (f.id === followUpId ? updatedFu : f));
+    setEnquiryFollowUps(nextList);
+
+    const updatedEnq = syncNextFollowUpSummary(target.enquiryId, nextList, {
+      lastContactedAt: nowIso,
+      firstResponseAt:
+        enquiries.find((e) => e.id === target.enquiryId)?.firstResponseAt || nowIso,
+    });
+
+    addActivityLog(
+      'FOLLOW_UP_COMPLETED',
+      'Enquiries',
+      `Completed follow-up for ${target.enquiryId}`
+    );
+    appendEnquiryAudit(
+      target.enquiryId,
+      'follow_up_completed',
+      'scheduled',
+      'completed',
+      completedNotes.trim()
+        ? `Follow-up completed: ${completedNotes.trim()}`
+        : `Follow-up for ${target.scheduledDate} marked completed`
+    );
+
+    void persistWrite(
+      async () => {
+        const resFu = await dbUpsertEnquiryFollowUp(updatedFu);
+        if (updatedEnq) {
+          const resEnq = await dbUpsertEnquiry(updatedEnq);
+          if (resFu.schemaPending || resEnq.schemaPending) setEnquirySchemaPending(true);
+        }
+        return resFu;
+      },
+      'Follow-up Completed',
+      'Follow-up marked as done and history updated.'
+    );
+  };
+
+  const cancelEnquiryFollowUp = (followUpId: string) => {
+    const target = enquiryFollowUps.find((f) => f.id === followUpId);
+    if (!target) return;
+    const nowIso = new Date().toISOString();
+    const updatedFu: EnquiryFollowUp = {
+      ...target,
+      status: 'cancelled',
+      updatedAt: nowIso,
+    };
+    const nextList = enquiryFollowUps.map((f) => (f.id === followUpId ? updatedFu : f));
+    setEnquiryFollowUps(nextList);
+    const updatedEnq = syncNextFollowUpSummary(target.enquiryId, nextList);
+
+    addActivityLog('FOLLOW_UP_CANCELLED', 'Enquiries', `Cancelled follow-up for ${target.enquiryId}`);
+    void persistWrite(
+      async () => {
+        const resFu = await dbUpsertEnquiryFollowUp(updatedFu);
+        if (updatedEnq) await dbUpsertEnquiry(updatedEnq);
+        return resFu;
+      },
+      'Follow-up Cancelled',
+      'Follow-up removed from active schedule.',
+      'info'
+    );
+  };
+
   const deleteEnquiry = (id: string) => {
     setEnquiries((prev) => prev.filter((e) => e.id !== id));
+    setEnquiryFollowUps((prev) => prev.filter((f) => f.enquiryId !== id));
     if (selectedEnquiry?.id === id) setSelectedEnquiry(null);
     addActivityLog('DELETE', 'Enquiries', `Deleted enquiry ${id}`);
     void persistWrite(
@@ -1271,15 +1629,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const exportEnquiriesCSV = () => {
-    const headers = ['ID', 'Customer Name', 'Phone', 'Service', 'Status', 'Urgency', 'Created At', 'Admin Notes'];
+    const headers = [
+      'ID',
+      'Customer Name',
+      'Phone',
+      'Service',
+      'Preferred Contact',
+      'Source',
+      'Priority',
+      'Status',
+      'Created At',
+      'First Response At',
+      'Last Contacted At',
+      'Completed At',
+      'Next Follow-up',
+      'Admin Notes',
+    ];
     const rows = enquiries.map((e) => [
       e.id,
       `"${e.customerName.replace(/"/g, '""')}"`,
       `"${e.phoneNumber}"`,
       `"${e.serviceName.replace(/"/g, '""')}"`,
+      e.preferredContactMethod || 'either',
+      e.source || 'walk-in',
+      e.priority || (e.urgency === 'urgent' ? 'high' : 'medium'),
       e.status,
-      e.urgency,
       `"${e.createdAt}"`,
+      `"${e.firstResponseAt || ''}"`,
+      `"${e.lastContactedAt || ''}"`,
+      `"${e.completedAt || ''}"`,
+      `"${e.nextFollowUpDate || ''}${e.nextFollowUpTime ? ' ' + e.nextFollowUpTime : ''}"`,
       `"${(e.adminNotes || '').replace(/"/g, '""')}"`,
     ]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -2149,9 +2528,17 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         exportCustomersCSV,
 
         enquiries,
+        enquiryFollowUps,
+        enquiryAuditLogs,
+        enquirySchemaPending,
         addEnquiry,
         updateEnquiryStatus,
+        updateEnquiryPriority,
         updateEnquiryNotes,
+        recordEnquiryContactAction,
+        scheduleEnquiryFollowUp,
+        completeEnquiryFollowUp,
+        cancelEnquiryFollowUp,
         deleteEnquiry,
         selectedEnquiry,
         setSelectedEnquiry,

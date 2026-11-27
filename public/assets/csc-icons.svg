@@ -1,0 +1,378 @@
+<!-- ========================================================================
+     Aman Computer — CSC / Government Services Complete Pure SVG Icon Sprite
+     40 Custom Outline Icons · 24x24 ViewBox · 20x20 Safe Grid · Fixed 1.75px Stroke
+     Bespoke Geometry with Signature Bevel Notch & Precision Verification Badges
+     ======================================================================== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+
+  <!-- ==================== 1. NAVIGATION ICONS ==================== -->
+
+  <!-- icon-home-dashboard: Main counter dashboard / portal home -->
+  <symbol id="icon-home-dashboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.5 10.5 12 3.5l8.5 7" />
+    <path d="M5.5 9.2V19.5a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.2" />
+    <path d="M9.5 20.5v-6a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6" />
+  </symbol>
+
+  <!-- icon-menu: Navigation drawer / sidebar toggle -->
+  <symbol id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6.5h16" />
+    <path d="M4 12h16" />
+    <path d="M4 17.5h11" />
+  </symbol>
+
+  <!-- icon-back: Return to previous screen / step -->
+  <symbol id="icon-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.5 12H4.5" />
+    <path d="M10.5 6 4.5 12l6 6" />
+  </symbol>
+
+  <!-- icon-search: Lookup application, ACK number, or citizen record -->
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.5" />
+    <path d="m15.3 15.3 4.7 4.7" />
+  </symbol>
+
+  <!-- icon-close: Dismiss dialog or clear input -->
+  <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 6l12 12" />
+    <path d="M18 6 6 18" />
+  </symbol>
+
+  <!-- icon-profile-user: Operator account or citizen applicant profile -->
+  <symbol id="icon-profile-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="8" r="3.75" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
+  </symbol>
+
+  <!-- ==================== 2. FORM & APPLICATION ICONS ==================== -->
+
+  <!-- icon-new-application: Start a new online application form (signature bevel notch) -->
+  <symbol id="icon-new-application" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 3.5h10.5L20 8v11.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5Z" />
+    <path d="M15.5 3.5V8H20" />
+    <path d="M12 11.5v5" />
+    <path d="M9.5 14h5" />
+  </symbol>
+
+  <!-- icon-correction: Edit details or request document correction -->
+  <symbol id="icon-correction" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 4H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3.5" />
+    <path d="M8 9h3.5" />
+    <path d="M8 13h2" />
+    <path d="M18.8 4.7a1.75 1.75 0 0 1 2.48 2.48L14.2 14.25l-3.2.75.75-3.2 7.05-7.1Z" />
+  </symbol>
+
+  <!-- icon-submit: Submit completed application to portal -->
+  <symbol id="icon-submit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 4H6.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7.5" />
+    <path d="M8 9h4" />
+    <path d="M8 13h2.5" />
+    <path d="M12.5 12h8" />
+    <path d="m17.5 9 3 3-3 3" />
+  </symbol>
+
+  <!-- icon-save-draft: Save unfinished application draft locally -->
+  <symbol id="icon-save-draft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 4h9.5L19 7.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+    <path d="M8 4v4.5h6V4" />
+    <rect x="7.5" y="13.5" width="9" height="6.5" rx="1" />
+  </symbol>
+
+  <!-- icon-print: Print acknowledgment or official form -->
+  <symbol id="icon-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 8V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V8" />
+    <rect x="3.5" y="8" width="17" height="7.5" rx="2" />
+    <path d="M7 13.5h10v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6Z" />
+    <path d="M16.5 11h.01" />
+  </symbol>
+
+  <!-- icon-download-form: Download blank form, admit card, or PDF -->
+  <symbol id="icon-download-form" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4v10.5" />
+    <path d="m8 10.5 4 4 4-4" />
+    <path d="M4.5 15.5V18a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5" />
+  </symbol>
+
+  <!-- icon-document-upload: Upload scanned ID proof (bespoke carrier + upward flight) -->
+  <symbol id="icon-document-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.5 19H5.5a1.5 1.5 0 0 1-1.5-1.5V5.5a1.5 1.5 0 0 1 1.5-1.5h8.5l4 4v2" />
+    <path d="M2.5 20.5h19" />
+    <path d="M15 17V9.5" />
+    <path d="m11.5 13 3.5-3.5 3.5 3.5" />
+  </symbol>
+
+  <!-- ==================== 3. DOCUMENT TYPE ICONS ==================== -->
+
+  <!-- icon-article-newspaper: Authentic broadsheet newspaper with headline bar, editorial column rule, and news graphic frame -->
+  <symbol id="icon-article-newspaper" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="4" width="17" height="16" rx="2" />
+    <path d="M6.5 7.5h11" stroke-width="2.2" />
+    <path d="M6.5 11h4" />
+    <path d="M6.5 14h3.5" />
+    <path d="M6.5 17h4" />
+    <path d="M12.5 10.5v7" />
+    <rect x="14.5" y="11" width="3.5" height="3" rx="0.5" />
+    <path d="M14.5 16.5h3" />
+  </symbol>
+
+  <!-- icon-doc-checkmark: Official verified certificate parchment with embossed notary seal, checkmark, and ribbon tails -->
+  <symbol id="icon-doc-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 20.5H5.5a1.5 1.5 0 0 1-1.5-1.5V4.5a1.5 1.5 0 0 1 1.5-1.5h13a1.5 1.5 0 0 1 1.5 1.5V11" />
+    <path d="M7.5 7h9" stroke-width="2.2" />
+    <path d="M7.5 10.5h5.5" />
+    <path d="M7.5 14h3.5" />
+    <circle cx="16" cy="16" r="4.25" />
+    <path d="m14.25 16 1.25 1.25 2.5-2.5" stroke-width="2" />
+    <path d="M14.5 20.25V22l1.5-.75L17.5 22v-1.75" />
+  </symbol>
+
+  <!-- icon-image-photo: Precision studio rangefinder camera with dual-ring lens barrel and flash (NO mountains/sun) -->
+  <symbol id="icon-image-photo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.5 8.5a2 2 0 0 1 2-2h2.2l1.6-2h5.4l1.6 2h2.2a2 2 0 0 1 2 2v9.5a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />
+    <circle cx="12" cy="13.5" r="3.75" />
+    <circle cx="12" cy="13.5" r="1.5" />
+    <circle cx="17.5" cy="9.5" r="0.8" fill="currentColor" stroke="none" />
+  </symbol>
+
+  <!-- icon-doc-aadhaar: Aadhaar card (left portrait + 12-digit 3-group bottom bar) -->
+  <symbol id="icon-doc-aadhaar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <circle cx="8" cy="10" r="1.75" />
+    <path d="M12.5 9h5.5" />
+    <path d="M12.5 12h4" />
+    <path d="M6.5 15.5h3M10.75 15.5h2.5M14.5 15.5h3" />
+  </symbol>
+
+  <!-- icon-doc-pan: PAN card (top header band + right portrait frame + left account lines) -->
+  <symbol id="icon-doc-pan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <path d="M3 8.5h18" />
+    <path d="M6 11.75h5.5" />
+    <path d="M6 15h4" />
+    <rect x="14.25" y="11" width="3.75" height="4.75" rx="0.75" />
+  </symbol>
+
+  <!-- icon-doc-voter-id: Voter ID / EPIC (vertical portrait ID + ballot verify mark) -->
+  <symbol id="icon-doc-voter-id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5.5" y="3" width="13" height="18" rx="2.25" />
+    <circle cx="12" cy="8.5" r="2" />
+    <path d="M8.75 13.5a3.25 3.25 0 0 1 6.5 0" />
+    <path d="M8.5 17h4" />
+    <path d="m14.25 16.75 1 1 1.75-1.75" />
+  </symbol>
+
+  <!-- icon-doc-ration-card: Ration card (folded family booklet) -->
+  <symbol id="icon-doc-ration-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 5.5a2 2 0 0 1 2-2H12v17H6.5a2 2 0 0 1-2-2v-13Z" />
+    <path d="M12 3.5h5.5a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H12v-17Z" />
+    <path d="M7.25 8.5h2" />
+    <path d="M7.25 12h2" />
+    <path d="M14.75 8.5h2" />
+    <path d="M14.75 12h2" />
+    <path d="M14.75 15.5h1.5" />
+  </symbol>
+
+  <!-- icon-doc-income-caste: Income / Caste certificate (portrait sheet + hanging ribbon seal) -->
+  <symbol id="icon-doc-income-caste" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 20H6.5a2 2 0 0 1-2-2V5.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2V11" />
+    <path d="M8 8h8" />
+    <path d="M8 11.5h4.5" />
+    <path d="M8 15h3.5" />
+    <circle cx="16.5" cy="15.5" r="2.5" />
+    <path d="M15.25 17.75v3l1.25-.75 1.25.75v-3" />
+  </symbol>
+
+  <!-- icon-doc-birth-death: Birth / Death certificate (landscape civil registry frame + stamp seal) -->
+  <symbol id="icon-doc-birth-death" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4.5" width="18" height="15" rx="2.25" />
+    <path d="M7 8.5h10" />
+    <path d="M7 12h5.5" />
+    <path d="M7 15.5h4" />
+    <circle cx="15.75" cy="14.25" r="2.25" />
+  </symbol>
+
+  <!-- icon-doc-passport: Passport booklet (vertical booklet + globe emblem + e-chip strip) -->
+  <symbol id="icon-doc-passport" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5.5" y="3" width="13" height="18" rx="2" />
+    <circle cx="12" cy="10" r="3.25" />
+    <path d="M8.75 10h6.5" />
+    <path d="M12 6.75a4.5 4.5 0 0 1 0 6.5 4.5 4.5 0 0 1 0-6.5Z" />
+    <path d="M9.5 16.75h5" />
+  </symbol>
+
+  <!-- icon-doc-driving-license: Driving License (horizontal smart card + steering wheel + class lines) -->
+  <symbol id="icon-doc-driving-license" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+    <circle cx="8.5" cy="12" r="3" />
+    <path d="M5.75 12h5.5" />
+    <path d="M8.5 12v3" />
+    <path d="M14 9.5h4" />
+    <path d="M14 12.5h4" />
+    <path d="M14 15.5h2.5" />
+  </symbol>
+
+  <!-- icon-doc-generic-form: Generic Government Form (ragged line endings, signature bevel) -->
+  <symbol id="icon-doc-generic-form" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 3.5h11L19.5 7v13a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5Z" />
+    <path d="M8 8h8" />
+    <path d="M8 12h6" />
+    <path d="M8 16h4" />
+  </symbol>
+
+  <!-- ==================== 4. STATUS ICONS ==================== -->
+
+  <!-- icon-status-pending: Awaiting verification / queue (Amber tonal) -->
+  <symbol id="icon-status-pending" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </symbol>
+
+  <!-- icon-status-approved: Verified / approved submission (Green tonal, self-drawing check class) -->
+  <symbol id="icon-status-approved" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5" />
+    <path class="icon-draw-check" d="m8.5 12.25 2.5 2.5 4.75-5" />
+  </symbol>
+
+  <!-- icon-status-rejected: Application rejected / objection raised (Red tonal) -->
+  <symbol id="icon-status-rejected" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="m9.25 9.25 5.5 5.5" />
+    <path d="m14.75 9.25-5.5 5.5" />
+  </symbol>
+
+  <!-- icon-status-correction: Document returned for correction (Orange tonal) -->
+  <symbol id="icon-status-correction" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.5 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-4.5-4.5Z" />
+    <path d="M14.5 3.5V8H19" />
+    <path d="M12 10.5v3.5" />
+    <path d="M12 17v.01" />
+  </symbol>
+
+  <!-- icon-status-in-progress: Portal processing / status sync (Blue tonal) -->
+  <symbol id="icon-status-in-progress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 12a8 8 0 0 1-14.3 4.9" />
+    <path d="M4 12a8 8 0 0 1 14.3-4.9" />
+    <path d="M15.5 7.25H19V3.75" />
+    <path d="M8.5 16.75H5v3.5" />
+  </symbol>
+
+  <!-- ==================== 5. PAYMENT & FEES ICONS ==================== -->
+
+  <!-- icon-payment-receipt: Fee payment receipt with rupee mark -->
+  <symbol id="icon-payment-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 3.5h12v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5v-17Z" />
+    <path d="M9.5 8h5" />
+    <path d="M9.5 10.75h4" />
+    <path d="M10 8a2.25 2.25 0 0 1 0 4.5l3.25 3" />
+  </symbol>
+
+  <!-- icon-wallet: CSC / operator portal ledger wallet (angled flap + security rivet) -->
+  <symbol id="icon-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.5" y="6" width="17" height="13.5" rx="2.5" />
+    <path d="M3.5 10.5h17" />
+    <path d="M7 6V4.5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1V6" />
+    <path d="M14.5 11h5a1 1 0 0 1 1 1v3.5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V12a1 1 0 0 1 1-1Z" />
+    <circle cx="17.25" cy="13.75" r="0.75" fill="currentColor" stroke="none" />
+  </symbol>
+
+  <!-- icon-invoice: Customer service invoice & itemized charges -->
+  <symbol id="icon-invoice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="3.5" width="14" height="17" rx="2" />
+    <path d="M8.5 8h7" />
+    <path d="M8.5 11.5h4" />
+    <path d="M15 11.5h.5" />
+    <path d="M8.5 15h3.5" />
+    <path d="M14 15h1.5" />
+    <path d="M8.5 17.75h7" />
+  </symbol>
+
+  <!-- icon-print-receipt: Thermal slip / customer token printer -->
+  <symbol id="icon-print-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 8V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V8" />
+    <rect x="3.5" y="8" width="17" height="7" rx="2" />
+    <path d="M7.5 13h9v7.5l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1V13Z" />
+  </symbol>
+
+  <!-- ==================== 6. UTILITY ICONS ==================== -->
+
+  <!-- icon-help-support: Counter help desk & customer support -->
+  <symbol id="icon-help-support" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 14v-2a7 7 0 0 1 14 0v2" />
+    <rect x="3.5" y="13.5" width="3" height="4.5" rx="1.25" />
+    <rect x="17.5" y="13.5" width="3" height="4.5" rx="1.25" />
+    <path d="M19 18v.5a2.5 2.5 0 0 1-2.5 2.5H13" />
+  </symbol>
+
+  <!-- icon-settings: Precision calibrated console tuner dial (replaces generic 8-spoke cog) -->
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2" />
+    <path d="m12 12 2.5-2" />
+    <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+  </symbol>
+
+  <!-- icon-logout: Sign out & lock CSC workstation -->
+  <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+    <path d="M16 16l4-4-4-4" />
+    <path d="M20 12H9.5" />
+  </symbol>
+
+  <!-- icon-notification-bell: Architectural cybercafe notification chime (suspension eyelet & dynamic beacon) -->
+  <symbol id="icon-notification-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3v2" />
+    <circle cx="12" cy="4" r="0.8" fill="currentColor" stroke="none" />
+    <path d="M6 15.5c0-3.8 2.2-6.5 6-6.5s6 2.7 6 6.5" />
+    <path d="M4 16.5h16" />
+    <path d="M10 19.5a2 2 0 0 0 4 0" />
+    <circle cx="18.5" cy="5.5" r="1.25" fill="currentColor" stroke="none" />
+  </symbol>
+
+  <!-- icon-history: Past applications & submission audit log -->
+  <symbol id="icon-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.25 12a7.75 7.75 0 1 0 2.27-5.48L4.25 8.75" />
+    <path d="M4.25 4.75v4h4" />
+    <path d="M12 8v4l2.5 1.75" />
+  </symbol>
+
+  <!-- icon-customer-list: Walk-in customer & citizen records directory -->
+  <symbol id="icon-customer-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8" cy="8.5" r="2.75" />
+    <path d="M3.75 18.5a4.5 4.5 0 0 1 8.5 0" />
+    <path d="M14.5 8.5h6" />
+    <path d="M14.5 12.5h6" />
+    <path d="M14.5 16.5h4.5" />
+  </symbol>
+
+  <!-- ==================== 7. AI / AUTO-ASSIST ICONS ==================== -->
+
+  <!-- icon-auto-fill: Auto-populate verified applicant fields -->
+  <symbol id="icon-auto-fill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="13.5" width="16" height="5.5" rx="1.5" />
+    <path d="M7.5 16.25h5" />
+    <path d="M10.5 4.5 11.7 7.3 14.5 8.5l-2.8 1.2L10.5 12.5 9.3 9.7 6.5 8.5l2.8-1.2L10.5 4.5Z" />
+    <path d="M17.5 4.5v3" />
+    <path d="M16 6h3" />
+  </symbol>
+
+  <!-- icon-smart-suggest: Guided eligibility & document checklist hints -->
+  <symbol id="icon-smart-suggest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 15.5c-1.5-1-2.5-2.65-2.5-4.5a5.5 5.5 0 1 1 11 0c0 1.85-1 3.5-2.5 4.5V17a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 17v-1.5Z" />
+    <path d="M9.75 21h4.5" />
+    <path d="M12 11.5V9" />
+  </symbol>
+
+  <!-- icon-ocr-scan: Scan physical ID card & extract details via OCR -->
+  <symbol id="icon-ocr-scan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8" />
+    <path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8" />
+    <path d="M20 16v2.5A1.5 1.5 0 0 1 18.5 20H16" />
+    <path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+    <path d="M4.5 12h15" />
+    <path d="M8.5 8.5h7" />
+    <path d="M8.5 15.5h5" />
+  </symbol>
+
+</svg>

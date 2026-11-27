@@ -6,6 +6,7 @@ interface MetricCardProps {
   value: string | number;
   subtitle?: string;
   icon: LucideIcon;
+  icon3d?: string;
   badge?: {
     text: string;
     variant: 'emerald' | 'amber' | 'blue' | 'purple' | 'rose';
@@ -18,6 +19,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value,
   subtitle,
   icon: Icon,
+  icon3d,
   badge,
   onClick,
 }) => {
@@ -46,8 +48,17 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </div>
         </div>
 
-        <div className="w-10 h-10 rounded-xl bg-[rgba(107,92,92,0.12)] dark:bg-[rgba(196,176,176,0.1)] flex items-center justify-center text-[#6B5C5C] dark:text-[#C4B0B0] group-hover:scale-110 transition-transform">
-          <Icon className="w-5 h-5" />
+        <div className="w-10 h-10 rounded-xl bg-[rgba(107,92,92,0.12)] dark:bg-[rgba(196,176,176,0.1)] flex items-center justify-center text-[#6B5C5C] dark:text-[#C4B0B0] group-hover:scale-110 transition-transform p-1">
+          {icon3d ? (
+            <img
+              src={icon3d}
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)]"
+            />
+          ) : (
+            <Icon className="w-5 h-5" />
+          )}
         </div>
       </div>
 

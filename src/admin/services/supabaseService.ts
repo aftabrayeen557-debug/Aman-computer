@@ -18,12 +18,18 @@ import {
   ActivityLog,
   TerminalSettings,
   GovernmentSchemeItem,
+  EnquiryPriority,
+  EnquiryFollowUp,
+  EnquiryAuditEntry,
+  EnquiryAuditActionType,
+  EnquiryFollowUpStatus,
 } from '../types';
 import { validateHeroContent } from './heroValidationService';
 
 export interface DbWriteResult {
   ok: boolean;
   error?: string;
+  schemaPending?: boolean;
 }
 
 function getClient() {
@@ -204,15 +210,19 @@ export const dbDeleteCustomer = async (id: string): Promise<DbWriteResult> => {
   return error ? errResult(error) : okResult();
 };
 
-// =============================================================================
-// 2. ENQUIRIES
-// =============================================================================
-export const dbGetEnquiries = async (): Promise<Enquiry[] | null> => {
-  const client = getClient();
-  if (!client) return null;
-  const { data, error } = await client.from('customer_enquiries').select('*').order('created_at', { ascending: false });
-  if (error) return null;
-  return data.map((row) => ({
+export const mapEnquiryRow = (row: any): Enquiry => {
+  const pref = String(row.preferred_contact_method || 'either').toLowerCase();
+  const preferredContactMethod =
+    pref === 'whatsapp' || pref === 'phone' || pref === 'either' ? pref : 'either';
+  const rawPriority = String(row.priority || '').toLowerCase();
+  const priority: EnquiryPriority =
+    rawPriority === 'high' || rawPriority === 'medium' || rawPriority === 'low'
+      ? (rawPriority as EnquiryPriority)
+      : row.urgency === 'urgent'
+      ? 'high'
+      : 'medium';
+
+  return {
     id: row.id,
     customerName: row.customer_name,
     phoneNumber: row.phone_number,
@@ -220,19 +230,111 @@ export const dbGetEnquiries = async (): Promise<Enquiry[] | null> => {
     serviceName: row.service_name,
     customerMessage: row.customer_message || '',
     createdAt: row.created_at,
+    updatedAt: row.updated_at || undefined,
     status: row.status,
+    priority,
     adminNotes: row.admin_notes || '',
     urgency: row.urgency || 'normal',
+    preferredContactMethod,
     estimatedCost: row.estimated_cost || undefined,
     assignedOperator: row.assigned_operator || undefined,
     source: row.source || 'walk-in',
-  }));
+    firstResponseAt: row.first_response_at || null,
+    lastContactedAt: row.last_contacted_at || null,
+    completedAt: row.completed_at || null,
+    nextFollowUpDate: row.next_follow_up_date || null,
+    nextFollowUpTime: row.next_follow_up_time || null,
+    followUpNotes: row.follow_up_notes || '',
+  };
+};
+
+export const mapEnquiryFollowUpRow = (row: any): EnquiryFollowUp => {
+  const rawStatus = String(row.status || 'scheduled').toLowerCase();
+  const status: EnquiryFollowUpStatus =
+    rawStatus === 'completed' || rawStatus === 'cancelled' || rawStatus === 'scheduled'
+      ? (rawStatus as EnquiryFollowUpStatus)
+      : 'scheduled';
+
+  return {
+    id: row.id,
+    enquiryId: row.enquiry_id,
+    scheduledDate: String(row.scheduled_date || '').slice(0, 10),
+    scheduledTime: row.scheduled_time || '',
+    notes: row.notes || '',
+    status,
+    completedAt: row.completed_at || null,
+    completedNotes: row.completed_notes || '',
+    createdBy: row.created_by || 'Sharique Aman',
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || undefined,
+  };
+};
+
+export const mapEnquiryAuditRow = (row: any): EnquiryAuditEntry => ({
+  id: row.id,
+  enquiryId: row.enquiry_id,
+  actionType: (row.action_type || 'record_updated') as EnquiryAuditActionType,
+  oldValue: row.old_value || '',
+  newValue: row.new_value || '',
+  details: row.details || '',
+  performedBy: row.performed_by || 'System',
+  createdAt: row.created_at || new Date().toISOString(),
+});
+
+const isMissingSchemaError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const code = 'code' in error ? String((error as { code?: unknown }).code || '') : '';
+  const msg = 'message' in error ? String((error as { message?: unknown }).message || '') : '';
+  return (
+    code === 'PGRST204' ||
+    code === 'PGRST205' ||
+    code === '42703' ||
+    code === '42P01' ||
+    /(schema cache|does not exist|column .* of relation)/i.test(msg)
+  );
+};
+
+// =============================================================================
+// 2. ENQUIRIES, FOLLOW-UPS & ENQUIRY AUDIT LOGS
+// =============================================================================
+export const dbCheckEnquirySchemaStatus = async (): Promise<{
+  extendedColumnsReady: boolean;
+  followUpsTableReady: boolean;
+  auditTableReady: boolean;
+}> => {
+  const client = getClient();
+  if (!client) {
+    return { extendedColumnsReady: true, followUpsTableReady: true, auditTableReady: true };
+  }
+
+  const [extRes, fuRes, audRes] = await Promise.all([
+    client
+      .from('customer_enquiries')
+      .select('id, preferred_contact_method, priority, first_response_at, next_follow_up_date')
+      .limit(1),
+    client.from('enquiry_follow_ups').select('id').limit(1),
+    client.from('enquiry_audit_logs').select('id').limit(1),
+  ]);
+
+  return {
+    extendedColumnsReady: !extRes.error || !isMissingSchemaError(extRes.error),
+    followUpsTableReady: !fuRes.error || !isMissingSchemaError(fuRes.error),
+    auditTableReady: !audRes.error || !isMissingSchemaError(audRes.error),
+  };
+};
+
+export const dbGetEnquiries = async (): Promise<Enquiry[] | null> => {
+  const client = getClient();
+  if (!client) return null;
+  const { data, error } = await client.from('customer_enquiries').select('*').order('created_at', { ascending: false });
+  if (error) return null;
+  return data.map(mapEnquiryRow);
 };
 
 export const dbUpsertEnquiry = async (enquiry: Enquiry): Promise<DbWriteResult> => {
   const client = getClient();
   if (!client) return errResult({ message: 'Supabase not configured' });
-  const { error } = await client.from('customer_enquiries').upsert({
+  const basePayload = {
     id: enquiry.id,
     customer_name: enquiry.customerName,
     phone_number: enquiry.phoneNumber,
@@ -247,7 +349,28 @@ export const dbUpsertEnquiry = async (enquiry: Enquiry): Promise<DbWriteResult> 
     source: enquiry.source || 'walk-in',
     created_at: toIsoTimestamp(enquiry.createdAt),
     updated_at: new Date().toISOString(),
-  });
+  };
+
+  const extendedPayload = {
+    ...basePayload,
+    preferred_contact_method: enquiry.preferredContactMethod || 'either',
+    priority: enquiry.priority || (enquiry.urgency === 'urgent' ? 'high' : 'medium'),
+    first_response_at: enquiry.firstResponseAt ? toIsoTimestamp(enquiry.firstResponseAt) : null,
+    last_contacted_at: enquiry.lastContactedAt ? toIsoTimestamp(enquiry.lastContactedAt) : null,
+    completed_at: enquiry.completedAt ? toIsoTimestamp(enquiry.completedAt) : null,
+    next_follow_up_date: enquiry.nextFollowUpDate ? enquiry.nextFollowUpDate.slice(0, 10) : null,
+    next_follow_up_time: enquiry.nextFollowUpTime || '',
+    follow_up_notes: enquiry.followUpNotes || '',
+  };
+
+  const { error } = await client.from('customer_enquiries').upsert(extendedPayload);
+
+  if (error && isMissingSchemaError(error)) {
+    const fallbackRes = await client.from('customer_enquiries').upsert(basePayload);
+    if (fallbackRes.error) return errResult(fallbackRes.error);
+    return { ok: true, schemaPending: true };
+  }
+
   return error ? errResult(error) : okResult();
 };
 
@@ -255,6 +378,80 @@ export const dbDeleteEnquiry = async (id: string): Promise<DbWriteResult> => {
   const client = getClient();
   if (!client) return errResult({ message: 'Supabase not configured' });
   const { error } = await client.from('customer_enquiries').delete().eq('id', id);
+  return error ? errResult(error) : okResult();
+};
+
+export const dbGetEnquiryFollowUps = async (): Promise<EnquiryFollowUp[] | null> => {
+  const client = getClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from('enquiry_follow_ups')
+    .select('*')
+    .order('scheduled_date', { ascending: true });
+  if (error) return null;
+  return data.map(mapEnquiryFollowUpRow);
+};
+
+export const dbUpsertEnquiryFollowUp = async (followUp: EnquiryFollowUp): Promise<DbWriteResult> => {
+  const client = getClient();
+  if (!client) return errResult({ message: 'Supabase not configured' });
+  const { error } = await client.from('enquiry_follow_ups').upsert({
+    id: followUp.id,
+    enquiry_id: followUp.enquiryId,
+    scheduled_date: followUp.scheduledDate.slice(0, 10),
+    scheduled_time: followUp.scheduledTime || '',
+    notes: followUp.notes || '',
+    status: followUp.status,
+    completed_at: followUp.completedAt ? toIsoTimestamp(followUp.completedAt) : null,
+    completed_notes: followUp.completedNotes || '',
+    created_by: followUp.createdBy || 'Sharique Aman',
+    created_at: toIsoTimestamp(followUp.createdAt),
+    updated_at: new Date().toISOString(),
+  });
+  if (error && isMissingSchemaError(error)) {
+    return { ok: true, schemaPending: true };
+  }
+  return error ? errResult(error) : okResult();
+};
+
+export const dbDeleteEnquiryFollowUp = async (id: string): Promise<DbWriteResult> => {
+  const client = getClient();
+  if (!client) return errResult({ message: 'Supabase not configured' });
+  const { error } = await client.from('enquiry_follow_ups').delete().eq('id', id);
+  if (error && isMissingSchemaError(error)) {
+    return { ok: true, schemaPending: true };
+  }
+  return error ? errResult(error) : okResult();
+};
+
+export const dbGetEnquiryAuditLogs = async (): Promise<EnquiryAuditEntry[] | null> => {
+  const client = getClient();
+  if (!client) return null;
+  const { data, error } = await client
+    .from('enquiry_audit_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(300);
+  if (error) return null;
+  return data.map(mapEnquiryAuditRow);
+};
+
+export const dbAddEnquiryAuditLog = async (entry: EnquiryAuditEntry): Promise<DbWriteResult> => {
+  const client = getClient();
+  if (!client) return errResult({ message: 'Supabase not configured' });
+  const { error } = await client.from('enquiry_audit_logs').insert({
+    id: entry.id,
+    enquiry_id: entry.enquiryId,
+    action_type: entry.actionType,
+    old_value: entry.oldValue || '',
+    new_value: entry.newValue || '',
+    details: entry.details || '',
+    performed_by: entry.performedBy || 'Sharique Aman',
+    created_at: toIsoTimestamp(entry.createdAt),
+  });
+  if (error && isMissingSchemaError(error)) {
+    return { ok: true, schemaPending: true };
+  }
   return error ? errResult(error) : okResult();
 };
 

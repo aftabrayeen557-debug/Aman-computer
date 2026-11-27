@@ -8,18 +8,20 @@
 <style>@font-face{font-family:'Onest';font-style:normal;font-display:swap;font-weight:100 900;src:url(../fonts/onest-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}@font-face{font-family:'Onest';font-style:normal;font-display:swap;font-weight:100 900;src:url(../fonts/onest-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}</style>
 
 <meta name="description" content="Explore photographs of Aman Computer cyber workstations, high-speed printing machinery, customer facilitation desks, and digital service drives." />
-<meta name="theme-color" content="#1A1818" />
-<script>if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add('embed');try{var _m=localStorage.getItem('aman-mode')||localStorage.getItem('rishi-mode');if(_m==='dark')document.documentElement.dataset.mode='dark'}catch(e){}</script>
+<meta name="theme-color" content="#F6F8FB" />
+<link rel="stylesheet" href="/assets/public-ui.css" />
+<script>if(/[?&]embed\b/.test(location.search))document.documentElement.classList.add('embed');try{if(localStorage.getItem('aman-mode')==='dark'||localStorage.getItem('aman_admin_dark')==='true'){document.documentElement.dataset.mode='dark';document.documentElement.classList.add('dark');var _tm=document.querySelector('meta[name=theme-color]');if(_tm)_tm.setAttribute('content','#0B111E');}}catch(e){}</script>
+<script defer src="/assets/public-header.js"></script>
 <style>
-:root{--bg:#E8E4E0;--fg:#1A1818;--fg-rgb:26,24,24;--accent:#6B4F4F;--room:#FBFAF8;
+:root{--bg:#F6F8FB;--fg:#0F172A;--fg-rgb:15,23,42;--accent:#1D4ED8;--room:#F6F8FB;
   --font:'Onest',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;--serif:'Playfair Display',Georgia,'Times New Roman',serif;color-scheme:light}
-html[data-mode="dark"]{--bg:#1A1818;--fg:#E8E4E0;--fg-rgb:232,228,224;--accent:#D9C6C6;--room:#050505;color-scheme:dark}
+html[data-mode="dark"]{--bg:#0B111E;--fg:#F1F5F9;--fg-rgb:241,245,249;--accent:#60A5FA;--room:#060A13;color-scheme:dark}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 body{min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:clip}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-:focus-visible{outline:2px solid #6B5C5C;outline-offset:3px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .glow{position:fixed;inset:0;pointer-events:none;z-index:50;background:var(--room);animation:out .8s ease .15s forwards}
 @keyframes out{to{opacity:0;visibility:hidden}}
 html.embed .glow{animation:none;transition:opacity .45s ease,visibility 0s linear .45s}
@@ -108,93 +110,18 @@ html.embed.out .glow{opacity:1;visibility:visible;transition:opacity .4s ease}
 }
 @media (prefers-reduced-motion:reduce){.paper,.lb__stage img{transition:none}}
 
-.rn{position:sticky;top:0;z-index:40;transition:background .35s ease,box-shadow .35s ease}
-.rn{background:var(--bg)}
-.rn.stuck{box-shadow:0 1px 0 rgba(var(--fg-rgb),.1)}
-.rn__in{max-width:88rem;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;padding:1.1rem max(16px,env(safe-area-inset-right)) 1.1rem max(16px,env(safe-area-inset-left));transition:padding .35s ease}
-.rn.stuck .rn__in{padding-block:.8rem}
-@media (min-width:1024px){.rn__in{padding-inline:88px}}
-.rn nav ul{display:none;list-style:none;margin:0;padding:0;gap:1.4rem;white-space:nowrap}
-.rn nav button{padding:0;border:0;background:none;color:var(--fg);font:inherit;font-size:1rem;font-weight:500;opacity:.8;cursor:pointer;transition:opacity .2s}
-.rn nav button:hover,.rn nav button[aria-current]{opacity:1}
-.rn nav button[aria-current]{text-decoration:underline;text-underline-offset:.35em;text-decoration-thickness:1px}
-.rn__clock{display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:999px;border:1px solid rgba(var(--fg-rgb),.12);font-size:.875rem;font-weight:500;white-space:nowrap}
-.rn__clock span{color:rgba(var(--fg-rgb),.68)}
-.rn__menu{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:2.75rem;padding:0 1.05rem 0 .95rem;font:500 .9375rem/1 'Onest',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;border-radius:999px;border:1px solid rgba(var(--fg-rgb),.12);background:none;color:var(--fg);cursor:pointer}
-.rn__menu svg{width:1.1rem;height:1.1rem}
-/* ---------- the menu, full screen, on small screens ---------- */
-.rn__panel{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;
-  padding:max(1rem,env(safe-area-inset-top)) max(1.25rem,env(safe-area-inset-right)) max(1.5rem,env(safe-area-inset-bottom)) max(1.25rem,env(safe-area-inset-left));
-  background:var(--bg);color:var(--fg);visibility:hidden;opacity:0;
-  transition:opacity .4s cubic-bezier(.4,0,.2,1),visibility 0s linear .4s}
-.rn.open .rn__panel{visibility:visible;opacity:1;transition-delay:0s}
-/* a wash of colour sweeps up behind the items as it opens */
-.rn__panel::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(70% 55% at 12% 100%,rgba(164,85,44,.2),transparent 70%),
-             radial-gradient(60% 50% at 95% 4%,rgba(196,176,176,.18),transparent 72%);
-  opacity:0;transform:translateY(12%) scale(1.08);transition:opacity .6s ease,transform .9s cubic-bezier(.16,1,.3,1)}
-.rn.open .rn__panel::before{opacity:1;transform:none}
-.rn__phead{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;min-height:2.75rem;margin-bottom:auto}
-.rn__plbl{font:600 .75rem/1 'Onest',ui-sans-serif,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(var(--fg-rgb),.5)}
-.rn__pclose{display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;border-radius:999px;
-  border:1px solid rgba(var(--fg-rgb),.14);background:none;color:var(--fg);cursor:pointer;transition:background .25s,transform .35s cubic-bezier(.16,1,.3,1)}
-.rn__pclose:hover{background:rgba(var(--fg-rgb),.08);transform:rotate(90deg)}
-.rn__pclose svg{width:1.15rem;height:1.15rem}
-.rn__plist{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:.1rem;padding-block:2rem}
-/* each line rises into place, one after the other */
-.rn__plist button{position:relative;display:flex;align-items:baseline;gap:.85rem;width:100%;padding:.45rem 0;border:0;background:none;color:var(--fg);
-  font:600 clamp(2rem,9.5vw,2.9rem)/1.06 'Onest',ui-sans-serif,system-ui,sans-serif;letter-spacing:-.03em;text-align:left;cursor:pointer;
-  opacity:0;transform:translateY(1.1rem);transition:opacity .5s ease,transform .66s cubic-bezier(.16,1,.3,1),color .25s ease}
-.rn.open .rn__plist button{opacity:1;transform:none;transition-delay:calc(var(--i,0) * 55ms + 90ms)}
-.rn__plist button::before{content:counter(rnc,decimal-leading-zero);counter-increment:rnc;
-  font:600 .8125rem/1 ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.1em;color:rgba(var(--fg-rgb),.38);transition:color .25s}
-.rn__plist{counter-reset:rnc}
-.rn__plist button[aria-current]{color:var(--fg)}
-.rn__plist button[aria-current]::before{color:#A4552C}
-@media (hover:hover){.rn__plist button:hover{color:#A4552C}.rn__plist button:hover::before{color:#A4552C}}
-.rn__pfoot{position:relative;z-index:1;margin-top:auto;padding-top:1.25rem;border-top:1px solid rgba(var(--fg-rgb),.1);
-  font:500 .8125rem/1.4 'Onest',ui-sans-serif,system-ui,sans-serif;color:rgba(var(--fg-rgb),.55);
-  opacity:0;transform:translateY(.6rem);transition:opacity .5s ease .34s,transform .6s cubic-bezier(.16,1,.3,1) .34s}
-.rn.open .rn__pfoot{opacity:1;transform:none}
-html.rn-lock,html.rn-lock body{overflow:hidden}
-@media (prefers-reduced-motion:reduce){
-  .rn__panel,.rn__panel::before,.rn__plist button,.rn__pfoot{transition-duration:.01ms!important;transform:none!important}}
-
-/* ---------- where things sit in the bar ---------- */
-/* wide: the full nav shows, and "back" floats in the bottom-left corner instead of taking bar space */
-@media (min-width:1200px){
-  .rn nav ul{display:flex}
-  .rn__menu,.rn__panel{display:none!important}
-  .backd{position:fixed;left:max(1.5rem,env(safe-area-inset-left));bottom:max(1.5rem,calc(env(safe-area-inset-bottom) + 1rem));top:auto;z-index:60;
-    height:3rem;padding:0 1.25rem 0 1rem;border-color:transparent;
-    background:var(--bd-float,rgba(26,24,24,.9));color:var(--bd-floatfg,#E8E4E0);
-    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-    box-shadow:0 12px 30px -12px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.08)}
-  .backd span{display:inline}
-  .backd:hover{background:var(--bd-float,rgba(26,24,24,1));border-color:transparent}
-}
-html[data-mode="dark"] .backd{--bd-float:rgba(232,228,224,.92);--bd-floatfg:#1A1818}
-/* narrow: back on the left, menu on the right, no clock */
-@media (max-width:1199.98px){
-  .rn__in{justify-content:space-between}
-  .rn nav{display:none}
-  .rn__clock{display:none}
-  .rn__menu{order:99;margin-left:auto}
-  .backd{order:-2}
-}
-
 /* ---------- footer ---------- */
 /* the footer slides up over the last 32px of the section above, so its rounded corners show that
    section's real background (gradients and glows included) instead of a flat patch of colour */
 .sfw{position:relative;z-index:2;background:transparent;margin-top:-32px}
-.sfw--dark .sf{box-shadow:inset 0 1px 0 rgba(232,228,224,.12)}
-.sf{--sf-bg:#1A1818;--sf-fg:#E8E4E0;--sf-rgb:232,228,224;--sf-acc:#C4B0B0;position:relative;z-index:2;background:var(--sf-bg);color:var(--sf-fg);
+.sfw--dark .sf{box-shadow:inset 0 1px 0 rgba(148,163,184,.18)}
+.sf{--sf-bg:#0B1220;--sf-fg:#F1F5F9;--sf-rgb:241,245,249;--sf-acc:#60A5FA;position:relative;z-index:2;background:var(--sf-bg);color:var(--sf-fg);
   border-radius:2rem 2rem 0 0;overflow:hidden;font-family:'Onest',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
-html[data-mode="dark"] .sf{--sf-bg:#0F0E0E;box-shadow:inset 0 1px 0 rgba(232,228,224,.1)}
+html[data-mode="dark"] .sf{--sf-bg:#070C16;box-shadow:inset 0 1px 0 rgba(148,163,184,.14)}
 .sf__in{max-width:88rem;margin:0 auto;padding:3.75rem 1.25rem 2.25rem}
 @media (min-width:1024px){.sf__in{padding:6.5rem 5.5rem 2.25rem}}
 html,body{overscroll-behavior-y:none}
-html{background:#1A1818}html[data-mode="dark"]{background:#0F0E0E}
+html{background:#0B1220}html[data-mode="dark"]{background:#070C16}
 body{margin:0}
 .sf{margin-bottom:0}
 .sf__eye{display:inline-flex;align-items:flex-start;gap:.6rem;font-size:clamp(11.5px,2.8vw,12.5px);font-weight:600;line-height:1.45;letter-spacing:.08em;text-transform:uppercase;color:rgba(var(--sf-rgb),.68);max-width:100%}
@@ -204,14 +131,26 @@ body{margin:0}
 .sf__h span{display:block;color:rgba(var(--sf-rgb),.68)}
 .sf__p{max-width:620px;font-size:clamp(16px,1.18vw,18px);font-weight:400;line-height:1.62;color:rgba(var(--sf-rgb),.82);overflow-wrap:break-word;word-break:normal}
 .sf__cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2rem}
-.sf__btn{display:inline-flex;align-items:center;gap:.8rem;height:3.25rem;padding:0 .5rem 0 1.5rem;border:0;border-radius:999px;background:var(--sf-fg);color:var(--sf-bg);
-  font:inherit;font-size:15.5px;font-weight:600;cursor:pointer;transition:transform .35s cubic-bezier(.16,1,.3,1)}
-.sf__btn b{display:grid;place-items:center;width:2.35rem;height:2.35rem;border-radius:50%;background:var(--sf-bg);color:var(--sf-fg)}
-.sf__btn svg{width:1.05rem;height:1.05rem;transition:transform .35s cubic-bezier(.16,1,.3,1)}
-.sf__btn:hover{transform:translateY(-2px)}.sf__btn:hover svg{transform:translateX(3px)}
-.sf__ghost{display:inline-flex;align-items:center;height:3.25rem;padding:0 1.5rem;border-radius:999px;border:1px solid rgba(var(--sf-rgb),.2);background:none;color:var(--sf-fg);
-  font:inherit;font-size:15.5px;font-weight:500;cursor:pointer;transition:background .25s}
-.sf__ghost:hover{background:rgba(var(--sf-rgb),.07)}
+.sf__btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;gap:10px;height:3.25rem;padding:0 .5rem 0 1.45rem;
+  border:1px solid rgba(255,255,255,.45);border-radius:999px;
+  background:linear-gradient(180deg,#F8FAFC 0%,#DCE4EE 100%);color:var(--sf-bg);
+  font:inherit;font-size:15.5px;font-weight:600;letter-spacing:.015em;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 8px 20px -4px rgba(0,0,0,.36);
+  transition:transform .2s cubic-bezier(.22,1,.36,1),box-shadow .2s ease-out;
+}
+.sf__btn::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.6) 50%,transparent 75%);transform:translateX(-125%);transition:transform .55s cubic-bezier(.22,1,.36,1)}
+.sf__btn b{position:relative;z-index:1;display:grid;place-items:center;width:2.35rem;height:2.35rem;border-radius:50%;background:linear-gradient(180deg,#1E293B 0%,#0B1220 100%);border:1px solid rgba(255,255,255,.16);color:var(--sf-fg);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 2px 5px rgba(0,0,0,.24)}
+.sf__btn svg{width:1.05rem;height:1.05rem;transition:transform .25s cubic-bezier(.22,1,.36,1)}
+.sf__btn:hover{transform:translateY(-1px) scale(1.02);box-shadow:inset 0 1px 0 #fff,0 12px 26px -4px rgba(0,0,0,.44)}.sf__btn:hover::after{transform:translateX(125%)}.sf__btn:hover svg{transform:translateX(3px)}
+.sf__btn:active{transform:scale(.975);box-shadow:inset 0 2px 5px rgba(15,23,42,.3)}
+.sf__btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(96,165,250,.5),inset 0 1px 0 #fff}
+.sf__btn:disabled,.sf__btn[aria-disabled="true"]{filter:saturate(.35);opacity:.5;box-shadow:none;pointer-events:none}
+.sf__ghost{display:inline-flex;align-items:center;height:3.25rem;padding:0 1.5rem;border-radius:999px;border:1px solid rgba(var(--sf-rgb),.24);background:linear-gradient(180deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,.02) 100%);color:var(--sf-fg);
+  font:inherit;font-size:15.5px;font-weight:500;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 4px 12px -4px rgba(0,0,0,.3);transition:background .2s,transform .2s cubic-bezier(.22,1,.36,1),border-color .2s}
+.sf__ghost:hover{background:rgba(var(--sf-rgb),.1);border-color:rgba(var(--sf-rgb),.4);transform:translateY(-1px) scale(1.02)}
+.sf__ghost:active{transform:scale(.975);box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
 .sf__cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2rem 1.5rem;margin-top:3.25rem;padding-top:2rem;border-top:1px solid rgba(var(--sf-rgb),.12)}
 @media (max-width:359.98px){.sf__cols{grid-template-columns:1fr}}
 @media (min-width:768px){.sf__cols{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr);gap:2.5rem 2rem;margin-top:4.5rem;padding-top:2.5rem}}
@@ -236,63 +175,50 @@ body{margin:0}
 @media (pointer:coarse),(max-width:767.98px){.sf__legal a{min-height:44px;display:inline-flex;align-items:center}}
 @media (prefers-reduced-motion:reduce){.sf__eye i{animation:none}}
 /* ---------- floating back-to-top ---------- */
-.totop{--tt-bg:#1A1818;--tt-fg:#E8E4E0;--tt-ring:232,228,224;position:fixed;right:max(1.25rem,env(safe-area-inset-right));bottom:max(1.25rem,env(safe-area-inset-bottom));z-index:60;
-  display:grid;place-items:center;width:3.25rem;height:3.25rem;padding:0;border:0;border-radius:50%;background:var(--tt-bg);color:var(--tt-fg);cursor:pointer;
-  box-shadow:0 10px 30px -10px rgba(0,0,0,.45),0 0 0 1px rgba(var(--tt-ring),.14);
+.totop{--tt-bg-start:#1E293B;--tt-bg-end:#0F172A;--tt-fg:#F8FAFC;--tt-ring:241,245,249;--tt-hi:rgba(255,255,255,.22);position:fixed;right:max(1.25rem,env(safe-area-inset-right));bottom:max(1.25rem,env(safe-area-inset-bottom));z-index:60;
+  display:grid;place-items:center;width:3.25rem;height:3.25rem;padding:0;border:1px solid rgba(var(--tt-ring),.18);border-radius:50%;
+  background:linear-gradient(180deg,var(--tt-bg-start) 0%,var(--tt-bg-end) 100%);color:var(--tt-fg);cursor:pointer;
+  box-shadow:inset 0 1px 0 var(--tt-hi),0 10px 26px -6px rgba(0,0,0,.42),0 2px 6px rgba(0,0,0,.2);
   opacity:0;visibility:hidden;transform:translateY(.75rem) scale(.9);
-  transition:opacity .35s ease,visibility 0s linear .35s,transform .45s cubic-bezier(.16,1,.3,1),background .3s ease,color .3s ease,box-shadow .3s ease}
+  transition:opacity .35s ease,visibility 0s linear .35s,transform .22s cubic-bezier(.22,1,.36,1),background .25s ease,color .25s ease,box-shadow .22s ease}
 .totop.show{opacity:1;visibility:visible;transform:none;transition-delay:0s}
-.totop[data-on="dark"]{--tt-bg:#E8E4E0;--tt-fg:#1A1818;--tt-ring:26,24,24}
-.totop svg.ar{width:1.15rem;height:1.15rem;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.totop[data-on="dark"]{--tt-bg-start:#FFFFFF;--tt-bg-end:#E2E8F0;--tt-fg:#0F172A;--tt-ring:15,23,42;--tt-hi:rgba(255,255,255,.9)}
+.totop svg.ar{width:1.15rem;height:1.15rem;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15));transition:transform .25s cubic-bezier(.22,1,.36,1)}
 .totop svg.ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none}
 .totop .ring circle{fill:none;stroke:currentColor;stroke-width:2;opacity:.85;stroke-dasharray:var(--len);stroke-dashoffset:calc(var(--len) * (1 - var(--p,0)));transition:stroke-dashoffset .12s linear}
-.totop .lbl{position:absolute;right:calc(100% + .6rem);top:50%;padding:.4rem .75rem;border-radius:999px;background:var(--tt-bg);color:var(--tt-fg);font:500 .8125rem/1 'Onest',ui-sans-serif,system-ui,sans-serif;
-  white-space:nowrap;pointer-events:none;opacity:0;transform:translate(.4rem,-50%);transition:opacity .25s ease,transform .35s cubic-bezier(.16,1,.3,1);box-shadow:0 0 0 1px rgba(var(--tt-ring),.14)}
-@media (hover:hover){.totop:hover{transform:translateY(-3px)}.totop:hover svg.ar{transform:translateY(-3px)}.totop:hover .lbl{opacity:1;transform:translate(0,-50%)}}
-.totop:focus-visible{outline:2px solid #C4B0B0;outline-offset:3px}
+.totop .lbl{position:absolute;right:calc(100% + .6rem);top:50%;padding:.4rem .75rem;border-radius:10px;background:#0F172A;color:#F8FAFC;font:500 .8125rem/1 'Onest',ui-sans-serif,system-ui,sans-serif;
+  white-space:nowrap;pointer-events:none;opacity:0;transform:translate(.4rem,-50%);transition:opacity .22s ease,transform .25s cubic-bezier(.22,1,.36,1);box-shadow:0 6px 16px rgba(0,0,0,.25),0 0 0 1px rgba(241,245,249,.16)}
+@media (hover:hover){.totop:hover{transform:translateY(-2px) scale(1.03);box-shadow:inset 0 1px 0 var(--tt-hi),0 14px 30px -6px rgba(0,0,0,.48)}.totop:hover svg.ar{transform:translateY(-2px)}.totop:hover .lbl{opacity:1;transform:translate(0,-50%)}}
+.totop:active{transform:scale(.95);box-shadow:inset 0 2px 5px rgba(0,0,0,.35)}
+.totop:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(96,165,250,.5),inset 0 1px 0 var(--tt-hi),0 10px 26px -6px rgba(0,0,0,.42)}
 @media (max-width:767.98px){.totop{width:3rem;height:3rem}}
 @media (prefers-reduced-motion:reduce){.totop,.totop svg.ar{transition:opacity .2s ease,visibility 0s linear .2s}}
 
 .skel{position:relative}
 .skel::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit;opacity:1;
-  background:linear-gradient(100deg,#E2DDD8 30%,#F1EDE9 50%,#E2DDD8 70%);background-size:220% 100%;animation:skel 1.25s linear infinite}
-html[data-mode="dark"] .skel::after{background-image:linear-gradient(100deg,#231F1F 30%,#2F2A2A 50%,#231F1F 70%)}
+  background:linear-gradient(100deg,#E2E8F0 30%,#F1F5F9 50%,#E2E8F0 70%);background-size:220% 100%;animation:skel 1.25s linear infinite}
+html[data-mode="dark"] .skel::after{background-image:linear-gradient(100deg,#131D2E 30%,#1B283D 50%,#131D2E 70%)}
 @keyframes skel{from{background-position:120% 0}to{background-position:-100% 0}}
 /* a recording that is still buffering: a light sweep over its poster until it plays */
 .skel-buf{position:relative}
 .skel-buf::before{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit;
   background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);background-size:220% 100%;animation:skel 1.25s linear infinite}
 @media (prefers-reduced-motion:reduce){.skel::after{animation:none}}
-
-/* "Back to the doors" sits in the room's sticky header: it stays on screen the whole
-   time you are inside a room, but it is part of the bar rather than floating over the page,
-   so it never covers anything you are reading. */
-.backd{order:-2;flex:none;display:inline-flex;align-items:center;gap:.5rem;height:2.75rem;padding:0 1.1rem 0 .85rem;
-  border:1px solid rgba(var(--fg-rgb),.14);border-radius:999px;background:rgba(var(--fg-rgb),.05);color:var(--fg);
-  font:500 .9375rem/1 'Onest',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;
-  opacity:0;transform:translateX(-.5rem);transition:opacity .35s ease,transform .45s cubic-bezier(.16,1,.3,1),background .25s ease,border-color .25s ease}
-.backd.show{opacity:1;transform:none}
-.backd svg{width:1.05rem;height:1.05rem;transition:transform .35s cubic-bezier(.16,1,.3,1)}
-@media (hover:hover){.backd:hover{background:rgba(var(--fg-rgb),.1);border-color:rgba(var(--fg-rgb),.26)}.backd:hover svg{transform:translateX(-3px)}}
-.backd:focus-visible{outline:2px solid #C4B0B0;outline-offset:3px}
-/* phones keep the words on both pills; on the very narrowest screens they just get a little smaller */
-@media (max-width:359.98px){.backd,.rn__menu{font-size:.8125rem}.backd{padding:0 .85rem 0 .7rem}.rn__menu{padding:0 .85rem}}
 /* the leftover top row above each room's title, and the gap under the intro */
 .top{display:none!important}
 .intro{padding-bottom:clamp(28px,4vw,44px)!important}
-.rn__in{min-width:0}
-.rn nav{min-width:0}
-.rn__brand{display:inline-flex;align-items:center;gap:.55rem;flex:none;font-size:clamp(14.5px,1.1vw,17px);font-weight:650;letter-spacing:-.015em;white-space:nowrap;color:var(--fg);text-decoration:none;transition:opacity .2s}
-.rn__brand:hover{opacity:.86}
-.rn__brand img{width:30px;height:30px;border-radius:9999px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.18))}
-html[data-mode="dark"] .rn__brand img{filter:drop-shadow(0 2px 8px rgba(56,189,248,.22))}
-@media (min-width:640px){.rn__brand img{width:34px;height:34px}}
-@media (max-width:1199.98px){.rn__brand{order:-1}}
-@media (max-width:559.98px){.rn__brand span{display:none}}
 .sf__brand{display:inline-flex;align-items:center;gap:.85rem;margin-bottom:1.1rem}
 .sf__brand img{width:46px;height:46px;border-radius:9999px;object-fit:contain;flex:none;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))}
 .sf__brand strong{display:block;font-size:1.05rem;font-weight:700;color:var(--sf-fg);letter-spacing:-.01em}
 .sf__brand span{display:block;font-size:.78rem;color:rgba(var(--sf-rgb),.65)}
+
+/* ---------- public 3D icons ---------- */
+.p3d-ic{display:inline-block;width:18px;height:18px;flex:none;aspect-ratio:1/1;object-fit:contain;vertical-align:middle;pointer-events:none;filter:drop-shadow(0 1px 2px rgba(15,23,42,.2));transition:transform .22s cubic-bezier(.22,1,.36,1)}
+html[data-mode="dark"] .p3d-ic{filter:drop-shadow(0 1px 3px rgba(0,0,0,.45))}
+.p3d-ic--wa-lg{width:22px;height:22px}
+.p3d-ic--btn{width:20px;height:20px}
+.pub-pill,.pub-drawer__pill,.pub-cta,.sf__cols a,.sf__btn{display:inline-flex;align-items:center;gap:8px}
+.pub-pill:hover .p3d-ic,.pub-drawer__pill:hover .p3d-ic,.sf__cols a:hover .p3d-ic{transform:scale(1.08)}
 </style>
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
 <meta name="author" content="Aman Computer" />
@@ -320,24 +246,89 @@ html[data-mode="dark"] .rn__brand img{filter:drop-shadow(0 2px 8px rgba(56,189,2
 <meta name="twitter:image" content="https://ais-pre-vqm5iytctz2anyqw5ngl25-374408797024.asia-southeast1.run.app/og.jpg?v=20261123" />
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Gallery — Aman Computer","description":"Explore photographs of Aman Computer cyber workstations, high-speed printing machinery, customer facilitation desks, and digital service drives."}</script>
 </head>
-<body>
+<body data-home-base="../">
 <div class="glow" aria-hidden="true"></div>
-<header class="rn" id="rn">
-  <div class="rn__in">
-    <a class="rn__brand" href="../" data-nav="home" aria-label="Aman Computer Home"><img src="/assets/aistudio/logo.svg" alt="Aman Computer" width="34" height="34" /><span>Aman Computer</span></a>
-    <nav aria-label="Primary"><ul><li><button data-nav="home">Home</button></li><li><button data-nav="door:0">Latest Updates</button></li><li><button data-nav="door:1">Documents Need</button></li><li><button data-nav="door:2">Our Services</button></li><li><button data-nav="door:3" aria-current=page>Gallery</button></li><li><button data-nav="about">About Aman</button></li><li><button data-nav="contact">WhatsApp Us</button></li></ul></nav>
-    <div class="rn__clock" aria-label="Local time"><span>Local time</span><b data-ftime>—</b><span class="d">•</span><span class="d" data-fdate></span></div>
-    <button class="rn__menu" id="rnMenu" aria-expanded="false" aria-controls="rnPanel"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
-  </div>
-  <div class="rn__panel" id="rnPanel" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="rn__phead">
-      <span class="rn__plbl" style="display:inline-flex;align-items:center;gap:.55rem"><img src="/assets/aistudio/logo.svg" alt="" width="24" height="24" style="width:24px;height:24px;border-radius:9999px;object-fit:contain" /><span>Aman Computer</span></span>
-      <button class="rn__pclose" id="rnClose" aria-label="Close menu"><svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+<header class="pub-hdr rn" id="rn" aria-label="Primary Header">
+  <div class="pub-hdr__in">
+    <a href="../" data-nav="home" class="pub-brand" aria-label="Aman Computer Home">
+      <span class="pub-brand__badge">
+        <img src="/assets/aistudio/logo.svg" alt="Aman Computer Logo" class="pub-brand__logo" id="hdrBrandLogo" width="35" height="35" />
+      </span>
+      <span class="pub-brand__text">
+        <span class="pub-brand__name" id="hdrBrandName">AMAN COMPUTER</span>
+        <span class="pub-brand__tag" id="hdrBrandTag">Cyber Cafe &amp; Digital Center</span>
+      </span>
+    </a>
+
+    <nav class="pub-nav" aria-label="Primary Navigation">
+      <ul class="pub-nav__track">
+        <li><button type="button" class="pub-pill" data-nav="home"><img src="/assets/public-3d-icons/01-home.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Home</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="door:2"><img src="/assets/public-3d-icons/02-services-shortcut.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Services</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="door:1"><img src="/assets/public-3d-icons/08-documents-needed.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Documents Needed</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="door:0"><img src="/assets/public-3d-icons/07-latest-updates.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Latest Updates</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="schemes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M2 10l10-6 10 6"/></svg><span>Government Schemes</span></button></li>
+        <li><button type="button" class="pub-pill is-active" data-nav="door:3" aria-current="page"><img src="/assets/public-3d-icons/10-gallery.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Gallery</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="about"><img src="/assets/public-3d-icons/13-our-journey.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Our Journey</span></button></li>
+        <li><button type="button" class="pub-pill" data-nav="contact-footer"><img src="/assets/public-3d-icons/03-contact-shortcut.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Contact</span></button></li>
+      </ul>
+    </nav>
+
+    <div class="pub-hdr__right">
+      <div class="pub-clock clock" aria-label="Local time">
+        <span class="pub-clock__dot" aria-hidden="true"></span>
+        <span class="pub-clock__time tnum" data-time>—</span>
+        <span class="pub-clock__sep" aria-hidden="true">•</span>
+        <span class="pub-clock__date" data-date></span>
+        <span class="pub-clock__ds" data-dshort></span>
+      </div>
+      <a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" class="pub-cta" data-contact data-wa-btn aria-label="WhatsApp Us">
+        <img src="/assets/public-3d-icons/04-whatsapp.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" />
+        <span class="pub-cta__label">WhatsApp Us</span>
+      </a>
+      <button type="button" class="pub-menu-btn" id="pubMenuBtn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="pubDrawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h12"/></svg>
+        <span>Menu</span>
+      </button>
     </div>
-    <div class="rn__plist"><button data-nav="home">Home</button><button data-nav="door:0">Latest Updates</button><button data-nav="door:1">Documents Need</button><button data-nav="door:2">Our Services</button><button data-nav="door:3" aria-current=page>Gallery</button><button data-nav="about">About Aman</button><button data-nav="contact">WhatsApp Us</button></div>
-    <p class="rn__pfoot">Aman Computer — Cyber Cafe &amp; Digital Center<br>Counter Open 8:00 AM – 9:00 PM</p>
   </div>
 </header>
+<div class="pub-hdr-spacer" aria-hidden="true"></div>
+<div id="pubDrawerBackdrop" aria-hidden="true"></div>
+<aside class="pub-drawer" id="pubDrawer" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Navigation menu">
+  <div class="pub-drawer__head">
+    <div class="pub-drawer__brand">
+      <img src="/assets/aistudio/logo.svg" alt="Aman Computer Logo" id="drawerBrandLogo" width="34" height="34" />
+      <div>
+        <div class="pub-drawer__brand-title" id="drawerBrandName">AMAN COMPUTER</div>
+        <div class="pub-drawer__brand-sub">Cyber Cafe &amp; Digital Center</div>
+      </div>
+    </div>
+    <button type="button" class="pub-drawer__close" id="pubDrawerClose" aria-label="Close navigation menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+  </div>
+  <div class="pub-drawer__sec">Navigate</div>
+  <nav class="pub-drawer__list" aria-label="Mobile Navigation">
+    <button type="button" class="pub-drawer__pill" data-nav="home"><img src="/assets/public-3d-icons/01-home.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Home</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="door:2"><img src="/assets/public-3d-icons/02-services-shortcut.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Services</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="door:1"><img src="/assets/public-3d-icons/08-documents-needed.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Documents Needed</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="door:0"><img src="/assets/public-3d-icons/07-latest-updates.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Latest Updates</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="schemes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M2 10l10-6 10 6"/></svg><span>Government Schemes</span></button>
+    <button type="button" class="pub-drawer__pill is-active" data-nav="door:3" aria-current="page"><img src="/assets/public-3d-icons/10-gallery.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Gallery</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="about"><img src="/assets/public-3d-icons/13-our-journey.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Our Journey</span></button>
+    <button type="button" class="pub-drawer__pill" data-nav="contact-footer"><img src="/assets/public-3d-icons/03-contact-shortcut.png" alt="" class="p3d-ic" width="18" height="18" aria-hidden="true" /><span>Contact</span></button>
+  </nav>
+  <div class="pub-drawer__foot">
+    <a class="pub-drawer__wa" href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer" data-contact data-wa-btn>
+      <img src="/assets/public-3d-icons/15-whatsapp-us.png" alt="" class="p3d-ic p3d-ic--wa-lg pub-drawer__wa-ic" width="22" height="22" aria-hidden="true" />
+      <span class="pub-drawer__wa-txt"><b>WHATSAPP US</b><small id="drawerPhoneText">+91 85955 15718</small></span>
+    </a>
+    <div class="pub-drawer__clock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span data-navtime>Local time · --:--</span>
+    </div>
+  </div>
+</aside>
 
 <main>
   <div class="wrap">
@@ -358,11 +349,11 @@ html[data-mode="dark"] .rn__brand img{filter:drop-shadow(0 2px 8px rgba(56,189,2
     <h2 class="sf__h" id="sfTitle">Need assistance with any digital service?<span>Visit our counter or WhatsApp Us.</span></h2>
     <p class="sf__p">From online exam forms and government schemes to PAN cards, Aadhaar, bill payments and travel tickets — visit our center or message us directly on WhatsApp.</p>
     <div class="sf__cta">
-      <a class="sf__btn" href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer">WhatsApp Us <b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></a>
+      <a class="sf__btn" href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer"><img src="/assets/public-3d-icons/15-whatsapp-us.png" alt="" class="p3d-ic p3d-ic--btn" width="20" height="20" decoding="async" aria-hidden="true" /><span>WhatsApp Us</span> <b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></b></a>
     </div>
     <div class="sf__cols">
-      <div><h3>Services</h3><ul class="work"><li><a href="../web-developer/" data-nav="door:0">Latest Updates</a></li><li><a href="../app-developer/" data-nav="door:1">Documents Need</a></li><li><a href="../ui-ux-designer/" data-nav="door:2">Our Services</a></li><li><a href="../graphic-designer/" data-nav="door:3">Gallery</a></li></ul></div>
-      <div><h3>Navigate</h3><ul><li><a href="../" data-nav="home">Home</a></li><li><a href="../#about" data-nav="about">About Aman Computer</a></li><li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer">WhatsApp Support</a></li></ul></div>
+      <div><h3>Services</h3><ul class="work"><li><a href="../web-developer/" data-nav="door:0"><img src="/assets/public-3d-icons/07-latest-updates.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>Latest Updates</span></a></li><li><a href="../app-developer/" data-nav="door:1"><img src="/assets/public-3d-icons/08-documents-needed.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>Documents Need</span></a></li><li><a href="../ui-ux-designer/" data-nav="door:2"><img src="/assets/public-3d-icons/09-our-services.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>Our Services</span></a></li><li><a href="../graphic-designer/" data-nav="door:3"><img src="/assets/public-3d-icons/10-gallery.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>Gallery</span></a></li></ul></div>
+      <div><h3>Navigate</h3><ul><li><a href="../" data-nav="home"><img src="/assets/public-3d-icons/11-home-quick-link.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>Home</span></a></li><li><a href="../#about" data-nav="about"><img src="/assets/public-3d-icons/12-about-quick-link.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>About Aman Computer</span></a></li><li><a href="https://wa.me/918595515718" target="_blank" rel="noopener noreferrer"><img src="/assets/public-3d-icons/15-whatsapp-us.png" alt="" class="p3d-ic" width="18" height="18" decoding="async" aria-hidden="true" /><span>WhatsApp Support</span></a></li></ul></div>
       <div><h3>Status</h3><ul><li class="st">Counter Open 8 AM – 9 PM</li><li class="st">Walk-in Anytime</li><li class="st">Local time <span data-ftime>—</span></li></ul></div>
     </div>
     <div class="sf__bot"><span>© <span data-fyear>2026</span> Aman Computer — Cyber Cafe &amp; Digital Center. All rights reserved.</span><span class="sf__legal"><a href="../legal/" target="_top">Privacy &amp; Terms</a></span><button data-nav="top">Back to top ↑</button></div>
@@ -414,12 +405,12 @@ categoryMap.forEach((items, name) => {
 });
 
 const COLOR_THEMES = [
-  { bg: '#1A1818', fg: '#E8E4E0', acc: '#C4B0B0' },
-  { bg: '#E8E4E0', fg: '#1A1818', acc: '#6B4F4F' },
-  { bg: '#201D1D', fg: '#E8E4E0', acc: '#C4B0B0' },
-  { bg: '#D9D3CE', fg: '#1A1818', acc: '#5C4033' },
-  { bg: '#161414', fg: '#F3EEEC', acc: '#E8D6D6' },
-  { bg: '#C4B0B0', fg: '#1A1818', acc: '#4A3C3C' },
+  { bg: '#0F172A', fg: '#F1F5F9', acc: '#60A5FA' },
+  { bg: '#F6F8FB', fg: '#0F172A', acc: '#1D4ED8' },
+  { bg: '#131D2E', fg: '#F8FAFC', acc: '#93C5FD' },
+  { bg: '#E2E8F0', fg: '#0F172A', acc: '#1E40AF' },
+  { bg: '#0B1220', fg: '#F1F5F9', acc: '#60A5FA' },
+  { bg: '#DBEAFE', fg: '#0F172A', acc: '#1D4ED8' },
 ];
 
 const host = document.getElementById('worlds');
@@ -666,11 +657,6 @@ lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - 
 
 <script>
 (() => {
-  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const tick = () => { const d = new Date(), h = d.getHours();
-    document.querySelectorAll('[data-ftime]').forEach(e => e.textContent = `${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')}${h < 12 ? 'am' : 'pm'}`);
-    document.querySelectorAll('[data-fyear]').forEach(e => e.textContent = d.getFullYear()); };
-  tick(); setInterval(tick, 20000);
   // size the footer name so it spans the full width with only a sliver of margin
   const fit = () => document.querySelectorAll('.sf').forEach(f => {
     const w = f.querySelector('.sf__word'); if (!w) return;
@@ -689,7 +675,6 @@ lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - 
     while (e){ if (e.getBoundingClientRect().width >= innerWidth * .9){ const c = solid(e); if (c) col = c; } e = e.lastElementChild; }
     const bg = col || solid(document.body) || getComputedStyle(document.documentElement).backgroundColor;
     sfw.style.setProperty('--above', bg);
-    // a dark section above: a hairline keeps the footer reading as its own section
     const m = (bg.match(/[\d.]+/g) || [255, 255, 255]).map(Number);
     sfw.classList.toggle('sfw--dark', (.2126 * m[0] + .7152 * m[1] + .0722 * m[2]) / 255 < .25);
   };
@@ -698,7 +683,7 @@ lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - 
   // floating back-to-top: appears after the first screen, shows scroll progress, flips colour over dark backgrounds
   const tt = document.querySelector('.totop');
   if (tt) {
-    const c = tt.querySelector('.ring circle'); tt.style.setProperty('--len', (2 * Math.PI * 24).toFixed(2));
+    tt.style.setProperty('--len', (2 * Math.PI * 24).toFixed(2));
     const lum = el => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
         const m = getComputedStyle(e).backgroundColor.match(/[\d.]+/g); if (!m) continue;
         if (m.length > 3 && +m[3] < .5) continue; return (.2126 * m[0] + .7152 * m[1] + .0722 * m[2]) / 255; }
@@ -707,7 +692,7 @@ lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - 
     let raf = 0;
     const upd = () => { raf = 0;
       const max = document.documentElement.scrollHeight - innerHeight, y = scrollY;
-      const bot = document.querySelector('.sf__bot');  // the footer has its own 'Back to top', so step aside once it's on screen
+      const bot = document.querySelector('.sf__bot');
       tt.classList.toggle('show', y > innerHeight * .9 && !(bot && bot.getBoundingClientRect().top < innerHeight - 8));
       tt.style.setProperty('--p', max > 0 ? Math.min(1, y / max).toFixed(4) : 0);
       const r = tt.getBoundingClientRect();
@@ -724,105 +709,16 @@ lb.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - 
 </script>
 
 <script>
-// "Back to the doors" stays on screen in the corner the whole time you're inside a room
+// "Back to the doors" floats cleanly in the bottom-left corner without crowding the top header
 (() => {
   const top = document.querySelector('.top .chip'); if (!top) return;
-  const bar = document.querySelector('.rn__in'); if (!bar) return;
   const b = document.createElement('a');
   b.className = 'backd'; b.href = top.getAttribute('href'); b.setAttribute('aria-label', 'Back to the doors');
   b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Back to the doors</span>';
-  b.addEventListener('click', e => { e.preventDefault(); top.click(); });     // same exit as the link at the top
-  bar.insertBefore(b, bar.firstChild);                                        // first thing in the sticky bar, on the left
-  top.style.visibility = 'hidden'; top.tabIndex = -1;                      // the pill in the bar takes its place, so there is one way back, always on screen
+  b.addEventListener('click', e => { e.preventDefault(); top.click(); });
+  document.body.appendChild(b);
+  top.style.visibility = 'hidden'; top.tabIndex = -1;
   requestAnimationFrame(() => b.classList.add('show'));
-})();
-</script>
-
-<script>
-(() => {
-  const root = document.documentElement, EMBED = root.classList.contains('embed');
-  const HOME = '../#works'.replace(/#works$/, '');
-  const SLUGS = ["web-developer", "app-developer", "ui-ux-designer", "graphic-designer"];
-  const go = to => {
-    if (to === 'top'){ scrollTo({ top: 0, behavior: 'smooth' }); return; }
-    if (EMBED){ parent.postMessage({ wall: 'go', to }, location.origin === 'null' ? '*' : location.origin); return; }
-    if (to === 'home') location.href = HOME;
-    else if (to === 'about') location.href = HOME + '#about';
-    else if (to === 'contact') location.href = 'https://wa.me/918595515718';
-    else if (to.startsWith('door:')) location.href = HOME + '#' + SLUGS[+to.slice(5)];
-  };
-  document.addEventListener('click', e => {
-    const b = e.target.closest('[data-nav]'); if (!b) return;
-    if (b.tagName === 'A' && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button)) return;   // new tab: let the link do it
-    e.preventDefault(); rn.classList.remove('open'); menu.setAttribute('aria-expanded', 'false');
-    const to = b.dataset.nav;
-    if (b.hasAttribute('aria-current')){ scrollTo({ top: 0, behavior: 'smooth' }); return; }
-    go(to);
-  });
-  const rn = document.getElementById('rn'), menu = document.getElementById('rnMenu');
-  const panel = document.getElementById('rnPanel'), pclose = document.getElementById('rnClose');
-  // each line in the menu knows its place, so they rise in one after another
-  panel.querySelectorAll('.rn__plist button').forEach((b, i) => b.style.setProperty('--i', i));
-  const setMenu = o => {
-    rn.classList.toggle('open', o);
-    menu.setAttribute('aria-expanded', o);
-    root.classList.toggle('rn-lock', o);                 // the page behind stops scrolling
-    if (o) setTimeout(() => pclose.focus(), 60); else menu.focus();
-  };
-  menu.addEventListener('click', () => setMenu(!rn.classList.contains('open')));
-  pclose.addEventListener('click', () => setMenu(false));
-  addEventListener('keydown', e => {
-    if (!rn.classList.contains('open')) return;
-    if (e.key === 'Escape'){ setMenu(false); return; }
-    if (e.key !== 'Tab') return;                          // the keyboard stays inside the open menu
-    const f = [...panel.querySelectorAll('button')].filter(n => n.offsetWidth || n.offsetHeight);
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (!panel.contains(document.activeElement)){ e.preventDefault(); first.focus(); }
-    else if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-  });
-  panel.addEventListener('click', e => { if (e.target.closest('button[data-nav]')) setMenu(false); });
-  matchMedia('(min-width:1200px)').addEventListener('change', e => { if (e.matches) setMenu(false); });
-  const upd = () => rn.classList.toggle('stuck', scrollY > 10); addEventListener('scroll', upd, { passive: true }); upd();
-  // content that sticks (the project cards) parks below the navbar, never behind it
-  const navH = () => { root.style.setProperty('--nav-h', rn.offsetHeight + 'px'); root.style.setProperty('--rn-h', rn.offsetHeight + 'px'); };
-  navH(); addEventListener('resize', navH); new ResizeObserver(navH).observe(rn);
-  const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const d = new Date(), short = matchMedia('(max-width: 767.98px)').matches; document.querySelectorAll('[data-fdate]').forEach(e => e.textContent = short ? `${d.getDate()} ${M[d.getMonth()].slice(0, 3)}` : `${d.getDate()} ${M[d.getMonth()]}, ${d.getFullYear()}`);
-})();
-</script>
-
-<script>
-(() => {
-  function syncDoorMeta() {
-    try {
-      const profRaw = localStorage.getItem('aman_business_profile');
-      if (profRaw) {
-        const p = JSON.parse(profRaw);
-        const rawWa = String(p.whatsappNumber || p.primaryPhone || '918595515718').replace(/\D/g, '');
-        const waDigits = rawWa.length === 10 ? '91' + rawWa : (rawWa || '918595515718');
-        const href = 'https://wa.me/' + waDigits;
-        document.querySelectorAll('a[href*="wa.me/"]').forEach(a => { a.href = href; });
-      }
-      const webRaw = localStorage.getItem('aman_website_content');
-      if (webRaw) {
-        const w = JSON.parse(webRaw);
-        const waOff = w?.websiteSettings?.whatsappButtonEnabled === false;
-        document.querySelectorAll('.sf__cta a[href*="wa.me/"]').forEach(el => { el.hidden = waOff; });
-        const rawLogo = String(w?.brandSettings?.logoUrl || '').trim();
-        const isLegacy = !rawLogo || /1794752550523_aman_computer_logo|1794752567070_aman_computer_logo|aman_computer_logo|aman-logo|22258_70e2ad05|icon-192|icon-512|favicon|apple-touch-icon/i.test(rawLogo);
-        const resolvedLogo = isLegacy ? '/assets/aistudio/logo.svg' : rawLogo;
-        document.querySelectorAll('.rn__brand img, .rn__plbl img, .sf__brand img').forEach(img => {
-          if (img.getAttribute('src') !== resolvedLogo) img.setAttribute('src', resolvedLogo);
-        });
-      }
-    } catch (e) {}
-  }
-  syncDoorMeta();
-  window.addEventListener('aman_business_profile_changed', syncDoorMeta);
-  window.addEventListener('aman_website_content_changed', syncDoorMeta);
-  window.addEventListener('storage', syncDoorMeta);
 })();
 </script>
 <script type="module" src="/src/lib/publicSync.ts"></script>

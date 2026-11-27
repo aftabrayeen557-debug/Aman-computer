@@ -2,28 +2,50 @@ import React, { useRef, useState } from 'react';
 import { Image as ImageIcon, Loader2, Trash2, Upload, X } from 'lucide-react';
 import { StorageBucketName, uploadFileToStorage, UploadOptions } from '../services/storageService';
 import { ContextualDropZone } from './ContextualDropZone';
+import { useAdmin } from '../context/AdminContext';
+import { get3dIconForTab } from '../config/navigation';
 
 export const CmsPageHeader: React.FC<{
   eyebrow: string;
   title: string;
   description: string;
   actions?: React.ReactNode;
-}> = ({ eyebrow, title, description, actions }) => (
-  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 border-b border-[var(--st-line)]">
-    <div className="space-y-1.5 min-w-0">
-      <div className="text-[10.5px] font-mono uppercase tracking-[0.2em] text-[#C9A96E]">
-        {eyebrow}
+  icon3d?: string;
+}> = ({ eyebrow, title, description, actions, icon3d }) => {
+  const { currentTab } = useAdmin();
+  const resolvedIcon3d = icon3d || get3dIconForTab(currentTab);
+
+  return (
+    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-5 border-b border-[var(--st-line)]">
+      <div className="flex items-start gap-3.5 sm:gap-4 min-w-0">
+        {resolvedIcon3d && (
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/45 dark:bg-white/[0.06] border border-[var(--st-line)] p-1.5 shrink-0 shadow-xs flex items-center justify-center">
+            <img
+              src={resolvedIcon3d}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+            />
+          </div>
+        )}
+        <div className="space-y-1.5 min-w-0">
+          <div className="text-[10.5px] font-mono uppercase tracking-[0.2em] text-[#C9A96E]">
+            {eyebrow}
+          </div>
+          <h1 className="font-editorial text-2xl sm:text-3xl text-[var(--st-tx)] tracking-tight">
+            {title}
+          </h1>
+          <p className="text-xs sm:text-sm text-[var(--st-mut)] max-w-2xl leading-relaxed">
+            {description}
+          </p>
+        </div>
       </div>
-      <h1 className="font-editorial text-2xl sm:text-3xl text-[var(--st-tx)] tracking-tight">
-        {title}
-      </h1>
-      <p className="text-xs sm:text-sm text-[var(--st-mut)] max-w-2xl leading-relaxed">
-        {description}
-      </p>
+      {actions && <div className="flex flex-wrap items-center gap-2.5 shrink-0">{actions}</div>}
     </div>
-    {actions && <div className="flex flex-wrap items-center gap-2.5 shrink-0">{actions}</div>}
-  </div>
-);
+  );
+};
 
 export const CmsSurfaceCard: React.FC<{
   title?: string;

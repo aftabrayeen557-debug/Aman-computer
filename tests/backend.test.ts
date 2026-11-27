@@ -54,9 +54,28 @@ import {
   mapGalleryRow,
   mapJourneyRow,
   mapGovernmentSchemeRow,
+  mapEnquiryRow,
+  mapEnquiryFollowUpRow,
+  mapEnquiryAuditRow,
   validateWebsiteContentBeforeSave,
   dbSaveWebsiteContent,
 } from '../src/admin/services/supabaseService.ts';
+import {
+  normalizeIndianPhoneKey,
+  formatTelHref,
+  buildWhatsAppHref,
+  getEffectivePriority,
+  isEnquiryActive,
+  isEnquiryUrgent,
+  parseFlexibleTimestamp,
+  formatDurationHuman,
+  classifyFollowUpDateBucket,
+  computeResponseMetrics,
+  filterEnquiriesByDateRange,
+  buildEnquiryTrendSeries,
+  buildEnquiryAnalytics,
+  buildVerifiedCustomerHistories,
+} from '../src/admin/services/enquiryAnalyticsService.ts';
 import {
   HERO_CONTENT_LIMITS,
   HERO_MOBILE_LINE_LIMITS,
@@ -2184,6 +2203,9 @@ test('Luxury Editorial dashboard shell uses warm gold (#C9A96E) and matte obsidi
     'src/admin/components/CmsPrimitives.tsx',
     'src/admin/components/ServiceModal.tsx',
     'src/admin/components/EnquiryDetailDrawer.tsx',
+    'src/admin/components/EnquiryAnalyticsPanel.tsx',
+    'src/admin/components/EnquiryFollowUpsPanel.tsx',
+    'src/admin/components/EnquiryCustomerHistoryPanel.tsx',
     'src/admin/components/three/StudioCanvasWrapper.tsx',
     'src/admin/components/three/StudioAmbientCanvas.tsx',
     'src/admin/views/OverviewView.tsx',
@@ -2244,6 +2266,9 @@ test('Phase 2.5 clean copy guard ensures all owner-facing dashboard UI excludes 
     'src/admin/components/CmsPrimitives.tsx',
     'src/admin/components/ServiceModal.tsx',
     'src/admin/components/EnquiryDetailDrawer.tsx',
+    'src/admin/components/EnquiryAnalyticsPanel.tsx',
+    'src/admin/components/EnquiryFollowUpsPanel.tsx',
+    'src/admin/components/EnquiryCustomerHistoryPanel.tsx',
     'src/admin/views/OverviewView.tsx',
     'src/admin/views/OwnerProfileView.tsx',
     'src/admin/views/HeroManagerView.tsx',
@@ -2830,5 +2855,395 @@ test('Contextual drag-and-drop deep security validation rejects spoofed MIME typ
   assert.ok(mediaSrc.includes('<ContextualDropZone'));
   assert.ok(mediaSrc.includes("category: 'media-library-dynamic'"));
 });
+
+test('Premium Customer Enquiry validates Indian mobile numbers, honeypot, preferred contact method, maps rows safely, and wires home + door pages', () => {
+  // Valid Indian mobile formats normalize to "+91 XXXXX XXXXX"
+  for (const phone of ['9876543210', '+91 98765-43210', '09876543210', '+919876543210']) {
+    const res = validatePublicEnquiryPayload({
+      customerName: 'Aarav Verma',
+      phoneNumber: phone,
+      serviceId: 'srv-2',
+      serviceName: 'PAN Card Services',
+      preferredContactMethod: 'whatsapp',
+      customerMessage: 'Need name correction assistance.',
+    });
+    assert.equal(res.valid, true, `${phone} should pass validation`);
+    assert.equal(res.normalizedPhone, '+91 98765 43210');
+    assert.equal(res.normalizedMethod, 'whatsapp');
+  }
+
+  // Invalid prefixes / lengths rejected
+  for (const badPhone of ['5123456789', '1234567890', '98765', '9999999999999']) {
+    const res = validatePublicEnquiryPayload({
+      customerName: 'Aarav Verma',
+      phoneNumber: badPhone,
+      serviceId: 'srv-2',
+      serviceName: 'PAN Card Services',
+    });
+    assert.equal(res.valid, false, `${badPhone} must be rejected`);
+  }
+
+  // Honeypot rejection
+  const hpRes = validatePublicEnquiryPayload({
+    customerName: 'Aarav Verma',
+    phoneNumber: '9876543210',
+    serviceId: 'srv-2',
+    serviceName: 'PAN Card Services',
+    honeypot: 'https://spam.example',
+  });
+  assert.equal(hpRes.valid, false);
+
+  // Preferred contact method validation
+  const badMethod = validatePublicEnquiryPayload({
+    customerName: 'Aarav Verma',
+    phoneNumber: '9876543210',
+    serviceId: 'srv-2',
+    serviceName: 'PAN Card Services',
+    preferredContactMethod: 'telegram' as any,
+  });
+  assert.equal(badMethod.valid, false);
+
+  // Row mapper maps preferred_contact_method & defaults cleanly
+  const mappedWp = mapEnquiryRow({
+    id: 'ENQ-TEST1',
+    customer_name: 'Neha Singh',
+    phone_number: '+91 98765 43210',
+    service_id: 'srv-3',
+    service_name: 'Aadhaar Services',
+    customer_message: 'Address update',
+    urgency: 'normal',
+    preferred_contact_method: 'phone',
+    status: 'new',
+    admin_notes: '',
+    source: 'website',
+    created_at: '2026-11-26T10:00:00.000Z',
+    updated_at: '2026-11-26T10:00:00.000Z',
+  });
+  assert.equal(mappedWp.preferredContactMethod, 'phone');
+  assert.equal(mappedWp.source, 'website');
+
+  const mappedDefault = mapEnquiryRow({
+    id: 'ENQ-TEST2',
+    customer_name: 'Suman Devi',
+    phone_number: '+91 98765 43210',
+    service_id: 'srv-1',
+    service_name: 'Online Job Forms',
+    customer_message: '',
+    urgency: 'normal',
+    status: 'new',
+    admin_notes: '',
+    source: 'website',
+  });
+  assert.equal(mappedDefault.preferredContactMethod, 'either');
+
+  // Migration exists & defines preferred_contact_method safely
+  const migSql = fs.readFileSync(
+    path.join(ROOT_DIR, 'supabase/migrations/20261126000000_enquiry_preferred_contact.sql'),
+    'utf8'
+  );
+  assert.ok(migSql.includes('preferred_contact_method'));
+  assert.ok(migSql.includes("'whatsapp', 'phone', 'either'"));
+
+  // Home & public/home parity + door service-preservation links
+  const rootHtml = fs.readFileSync(path.join(ROOT_DIR, 'index.html'), 'utf8');
+  const homeHtml = fs.readFileSync(path.join(ROOT_DIR, 'public/home/index.html'), 'utf8');
+  assert.equal(rootHtml, homeHtml, 'index.html and public/home/index.html must be identical');
+  assert.ok(rootHtml.includes('id="enquiry"'));
+  assert.ok(rootHtml.includes('HOW CAN WE HELP YOU TODAY?'));
+  assert.ok(rootHtml.includes("wall === 'enquire'"));
+
+  for (const doorRel of [
+    'public/ui-ux-designer/index.html',
+    'public/app-developer/index.html',
+    'public/web-developer/index.html',
+  ]) {
+    const doorHtml = fs.readFileSync(path.join(ROOT_DIR, doorRel), 'utf8');
+    assert.ok(doorHtml.includes('data-enquire-card='), `${doorRel} must include Enquire Online card links`);
+    assert.ok(doorHtml.includes("wall: 'enquire'"), `${doorRel} must postMessage wall: enquire in embed mode`);
+  }
+});
+
+test('Customer Enquiry Management & Growth System: analytics, conversion formula, response timing, follow-ups, phone-verified history & CRM migration', async (t) => {
+  const anchorNow = new Date(2026, 10, 27, 15, 0, 0); // 2026-11-27 15:00 local
+
+  const sampleEnquiries = [
+    {
+      id: 'ENQ-A1',
+      customerName: 'Rahul Sharma',
+      phoneNumber: '+91 98765 43210',
+      serviceId: 'srv-2',
+      serviceName: 'PAN Card Services',
+      customerMessage: 'New PAN urgent',
+      createdAt: '2026-11-27T09:00:00',
+      firstResponseAt: '2026-11-27T09:30:00', // 30m response
+      completedAt: '2026-11-27T11:00:00', // 120m resolution
+      status: 'completed' as const,
+      priority: 'high' as const,
+      urgency: 'urgent' as const,
+      preferredContactMethod: 'whatsapp' as const,
+      adminNotes: '',
+      source: 'website' as const,
+    },
+    {
+      id: 'ENQ-A2',
+      customerName: 'Rahul Sharma',
+      phoneNumber: '+91 91234 56789', // Different mobile, same name -> MUST NOT merge
+      serviceId: 'srv-3',
+      serviceName: 'Aadhaar Services',
+      customerMessage: 'Address update',
+      createdAt: '2026-11-26T10:00:00',
+      firstResponseAt: '2026-11-26T11:00:00', // 60m response
+      status: 'contacted' as const,
+      priority: 'medium' as const,
+      urgency: 'normal' as const,
+      preferredContactMethod: 'phone' as const,
+      adminNotes: '',
+      source: 'website' as const,
+    },
+    {
+      id: 'ENQ-A3',
+      customerName: 'Rahul Sharma',
+      phoneNumber: '09876543210', // Same canonical phone as ENQ-A1 -> MUST group with ENQ-A1
+      serviceId: 'srv-1',
+      serviceName: 'Online Job Forms',
+      customerMessage: 'SSC form',
+      createdAt: '2026-11-25T10:00:00',
+      status: 'new' as const,
+      priority: 'low' as const,
+      urgency: 'normal' as const,
+      preferredContactMethod: 'either' as const,
+      adminNotes: '',
+      source: 'walk-in' as const,
+    },
+    {
+      id: 'ENQ-A4',
+      customerName: 'Priya Singh',
+      phoneNumber: '9988776655',
+      serviceId: 'srv-2',
+      serviceName: 'PAN Card Services',
+      customerMessage: 'Cancelled duplicate',
+      createdAt: '2026-11-20T12:00:00',
+      status: 'cancelled' as const,
+      priority: 'low' as const,
+      urgency: 'normal' as const,
+      preferredContactMethod: 'whatsapp' as const,
+      adminNotes: '',
+      source: 'website' as const,
+    },
+    {
+      id: 'ENQ-A5',
+      customerName: 'Vikas Yadav',
+      phoneNumber: '9911223344',
+      serviceId: 'srv-4',
+      serviceName: 'Voter ID',
+      customerMessage: 'Not moving forward',
+      createdAt: '2026-10-05T12:00:00',
+      status: 'not-interested' as const,
+      priority: 'low' as const,
+      urgency: 'normal' as const,
+      preferredContactMethod: 'phone' as const,
+      adminNotes: '',
+      source: 'phone' as const,
+    },
+  ];
+
+  const sampleFollowUps = [
+    {
+      id: 'fu-1',
+      enquiryId: 'ENQ-A3',
+      scheduledDate: '2026-11-26', // Overdue relative to 2026-11-27
+      scheduledTime: '11:00',
+      notes: 'Collect marksheet',
+      status: 'scheduled' as const,
+      createdBy: 'Sharique Aman',
+      createdAt: '2026-11-25T11:00:00',
+    },
+    {
+      id: 'fu-2',
+      enquiryId: 'ENQ-A2',
+      scheduledDate: '2026-11-27', // Today
+      scheduledTime: '17:00',
+      notes: 'Confirm OTP visit',
+      status: 'scheduled' as const,
+      createdBy: 'Sharique Aman',
+      createdAt: '2026-11-26T12:00:00',
+    },
+    {
+      id: 'fu-3',
+      enquiryId: 'ENQ-A1',
+      scheduledDate: '2026-11-28',
+      scheduledTime: '10:00',
+      notes: 'Handover',
+      status: 'completed' as const,
+      completedAt: '2026-11-27T11:00:00',
+      completedNotes: 'Collected at counter',
+      createdBy: 'Sharique Aman',
+      createdAt: '2026-11-27T09:40:00',
+    },
+  ];
+
+  // 1. Phone normalization & link builders
+  assert.equal(normalizeIndianPhoneKey('+91 98765 43210'), '9876543210');
+  assert.equal(normalizeIndianPhoneKey('09876543210'), '9876543210');
+  assert.equal(normalizeIndianPhoneKey('123'), '');
+  assert.equal(formatTelHref('9876543210'), 'tel:+919876543210');
+  assert.match(buildWhatsAppHref('9876543210', 'Namaste'), /^https:\/\/wa\.me\/919876543210\?text=Namaste$/);
+
+  // 2. Date presets filter strictly on real timestamps (7d on Nov 27 covers Nov 21..Nov 27)
+  assert.equal(filterEnquiriesByDateRange(sampleEnquiries, 'today', undefined, anchorNow).length, 1);
+  assert.equal(filterEnquiriesByDateRange(sampleEnquiries, '7d', undefined, anchorNow).length, 3);
+  assert.equal(filterEnquiriesByDateRange(sampleEnquiries, 'this-month', undefined, anchorNow).length, 4);
+  assert.equal(
+    filterEnquiriesByDateRange(
+      sampleEnquiries,
+      'custom',
+      { startDate: '2026-10-01', endDate: '2026-10-31' },
+      anchorNow
+    ).length,
+    1
+  );
+
+  // 3. Conversion rate & real timing metrics (no fabricated numbers)
+  const analyticsAll = buildEnquiryAnalytics(sampleEnquiries, sampleFollowUps, anchorNow);
+  // 5 total - 1 cancelled - 1 not-interested = 3 eligible; 1 completed -> 33.3%
+  assert.equal(analyticsAll.validForConversionCount, 3);
+  assert.equal(analyticsAll.conversionRate, 33.3);
+  assert.equal(analyticsAll.responseMetrics.averageFirstResponseMinutes, 45); // (30 + 60) / 2
+  assert.equal(analyticsAll.responseMetrics.averageResolutionMinutes, 120);
+  assert.equal(analyticsAll.responseMetrics.overdueFollowUpsCount, 1);
+  assert.equal(analyticsAll.responseMetrics.dueTodayFollowUpsCount, 1);
+  assert.equal(analyticsAll.responseMetrics.unansweredCount, 1); // ENQ-A3 (new, no firstResponseAt)
+
+  // Zero-record edge case -> never fabricates percentages or response times
+  const emptyAnalytics = buildEnquiryAnalytics([], [], anchorNow);
+  assert.equal(emptyAnalytics.total, 0);
+  assert.equal(emptyAnalytics.conversionRate, 0);
+  assert.equal(emptyAnalytics.responseMetrics.averageFirstResponseMinutes, null);
+  assert.equal(emptyAnalytics.responseMetrics.averageResolutionMinutes, null);
+  assert.equal(formatDurationHuman(null), '—');
+  assert.equal(formatDurationHuman(95), '1h 35m');
+
+  // 4. Verified Customer History: strictly groups by normalized phone, NEVER merges same name with different phones
+  const histories = buildVerifiedCustomerHistories(sampleEnquiries, sampleFollowUps, [], []);
+  assert.equal(histories.length, 4);
+  const rahul1 = histories.find((h) => h.normalizedPhone === '9876543210');
+  const rahul2 = histories.find((h) => h.normalizedPhone === '9123456789');
+  assert.ok(rahul1 && rahul2);
+  assert.equal(rahul1.totalEnquiries, 2);
+  assert.equal(rahul2.totalEnquiries, 1);
+  assert.equal(rahul1.followUps.length, 2);
+
+  // 5. Follow-up bucketing, priority helpers & trend series
+  assert.equal(classifyFollowUpDateBucket('2026-11-26', 'scheduled', anchorNow), 'overdue');
+  assert.equal(classifyFollowUpDateBucket('2026-11-27', 'scheduled', anchorNow), 'today');
+  assert.equal(classifyFollowUpDateBucket('2026-11-29', 'scheduled', anchorNow), 'upcoming');
+  assert.equal(classifyFollowUpDateBucket('2026-11-26', 'completed', anchorNow), 'completed');
+  assert.equal(getEffectivePriority({ priority: undefined, urgency: 'urgent' }), 'high');
+  assert.equal(isEnquiryActive('not-interested'), false);
+  assert.equal(isEnquiryUrgent({ priority: 'high', urgency: 'urgent', status: 'cancelled' }), false);
+  assert.equal(isEnquiryUrgent({ priority: 'high', urgency: 'normal', status: 'in-progress' }), true);
+  assert.ok(parseFlexibleTimestamp('2026-11-27T09:00:00') !== null);
+
+  const dailySeries = buildEnquiryTrendSeries(sampleEnquiries, 'daily', anchorNow);
+  assert.equal(dailySeries.length, 14);
+  assert.equal(buildEnquiryTrendSeries(sampleEnquiries, 'weekly', anchorNow).length, 8);
+  assert.equal(buildEnquiryTrendSeries(sampleEnquiries, 'monthly', anchorNow).length, 6);
+
+  // 6. Extended row mappers & logout storage purge coverage
+  const mappedCrm = mapEnquiryRow({
+    id: 'ENQ-CRM1',
+    customer_name: 'Suresh',
+    phone_number: '+91 98765 00001',
+    service_id: 'srv-1',
+    service_name: 'Job Form',
+    customer_message: 'Need help',
+    status: 'not-interested',
+    priority: 'high',
+    urgency: 'urgent',
+    preferred_contact_method: 'whatsapp',
+    first_response_at: '2026-11-27T10:00:00Z',
+    last_contacted_at: '2026-11-27T11:00:00Z',
+    completed_at: null,
+    next_follow_up_date: '2026-11-29',
+    next_follow_up_time: '14:30',
+    follow_up_notes: 'Callback requested',
+  });
+  assert.equal(mappedCrm.status, 'not-interested');
+  assert.equal(mappedCrm.priority, 'high');
+  assert.equal(mappedCrm.nextFollowUpDate, '2026-11-29');
+
+  const mappedFu = mapEnquiryFollowUpRow({
+    id: 'fu-row-1',
+    enquiry_id: 'ENQ-CRM1',
+    scheduled_date: '2026-11-29',
+    scheduled_time: '14:30',
+    notes: 'Callback',
+    status: 'scheduled',
+    created_by: 'Sharique Aman',
+    created_at: '2026-11-27T10:00:00Z',
+  });
+  assert.equal(mappedFu.enquiryId, 'ENQ-CRM1');
+  assert.equal(mappedFu.status, 'scheduled');
+
+  const mappedAudit = mapEnquiryAuditRow({
+    id: 'aud-row-1',
+    enquiry_id: 'ENQ-CRM1',
+    action_type: 'priority_change',
+    old_value: 'medium',
+    new_value: 'high',
+    details: 'Escalated',
+    performed_by: 'Sharique Aman',
+    created_at: '2026-11-27T10:05:00Z',
+  });
+  assert.equal(mappedAudit.actionType, 'priority_change');
+  assert.equal(mappedAudit.performedBy, 'Sharique Aman');
+
+  assert.ok(PRIVATE_ADMIN_STORAGE_KEYS.includes('aman_enquiry_follow_ups'));
+  assert.ok(PRIVATE_ADMIN_STORAGE_KEYS.includes('aman_enquiry_audit_logs'));
+
+  // 7. SQL Migration file integrity & security checks
+  const crmMigrationSql = fs.readFileSync(
+    path.join(ROOT_DIR, 'supabase/migrations/20261127000000_enquiry_management_growth_system.sql'),
+    'utf8'
+  );
+  assert.ok(crmMigrationSql.includes('BEGIN;'));
+  assert.ok(crmMigrationSql.includes('COMMIT;'));
+  assert.ok(crmMigrationSql.includes("SET search_path = ''"));
+  assert.ok(crmMigrationSql.includes('CREATE TABLE IF NOT EXISTS public.enquiry_follow_ups'));
+  assert.ok(crmMigrationSql.includes('CREATE TABLE IF NOT EXISTS public.enquiry_audit_logs'));
+  assert.ok(crmMigrationSql.includes('REVOKE ALL ON public.enquiry_follow_ups FROM anon;'));
+  assert.ok(crmMigrationSql.includes('REVOKE ALL ON public.enquiry_audit_logs FROM anon;'));
+  assert.ok(crmMigrationSql.includes('public.is_admin()'));
+  assert.ok(crmMigrationSql.includes("'not-interested'"));
+  assert.ok(crmMigrationSql.includes('first_response_at IS NULL'));
+
+  // 8. Live Supabase RLS denial verification (anon client must never read/modify enquiries)
+  if (!isSupabaseConfigured()) {
+    t.skip('Supabase not configured');
+    return;
+  }
+
+  const sbUrl = process.env.VITE_SUPABASE_URL || '';
+  const sbKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
+  if (sbUrl && sbKey) {
+    const anonHeaders = {
+      apikey: sbKey,
+      Authorization: `Bearer ${sbKey}`,
+      'Content-Type': 'application/json',
+    };
+    const readRes = await fetch(`${sbUrl}/rest/v1/customer_enquiries?select=id&limit=1`, {
+      headers: anonHeaders,
+    });
+    const readBody = await readRes.json().catch(() => null);
+    // Either 401/403 permission error OR RLS filters rows to empty array []
+    const anonCannotRead =
+      readRes.status === 401 ||
+      readRes.status === 403 ||
+      (Array.isArray(readBody) && readBody.length === 0);
+    assert.equal(anonCannotRead, true, 'Anonymous client must never read customer_enquiries rows');
+  }
+});
+
+
 
 

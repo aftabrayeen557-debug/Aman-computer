@@ -1,0 +1,172 @@
+{
+  "project_source": "rishi-thakor-—-portfolio (3).zip",
+  "navigation_source": "src/admin/config/navigation.ts",
+  "navigation_assets": [
+    {
+      "file": "01-dashboard.png",
+      "module": "Dashboard",
+      "visual_concept": "analytics monitor"
+    },
+    {
+      "file": "02-owner-profile.png",
+      "module": "Owner Profile",
+      "visual_concept": "owner profile bust"
+    },
+    {
+      "file": "03-hero-section-manager.png",
+      "module": "Hero Section Manager",
+      "visual_concept": "hero visual browser"
+    },
+    {
+      "file": "04-hero-headline.png",
+      "module": "Hero Headline",
+      "visual_concept": "featured headline / editorial rating panel"
+    },
+    {
+      "file": "05-featured-service-showcase.png",
+      "module": "Featured Service Showcase",
+      "visual_concept": "featured calendar showcase"
+    },
+    {
+      "file": "06-owner-portrait.png",
+      "module": "Owner Portrait",
+      "visual_concept": "portrait / people figure"
+    },
+    {
+      "file": "07-brand-settings.png",
+      "module": "Brand Settings",
+      "visual_concept": "brand tools and settings"
+    },
+    {
+      "file": "08-government-schemes.png",
+      "module": "Government Schemes",
+      "visual_concept": "government institution"
+    },
+    {
+      "file": "09-doors-management.png",
+      "module": "Doors Management",
+      "visual_concept": "website portal / interactive entry"
+    },
+    {
+      "file": "10-latest-updates.png",
+      "module": "Latest Updates",
+      "visual_concept": "newspaper"
+    },
+    {
+      "file": "11-documents-needed.png",
+      "module": "Documents Needed",
+      "visual_concept": "approved checklist"
+    },
+    {
+      "file": "12-our-services.png",
+      "module": "Our Services",
+      "visual_concept": "featured services / achievement trophy"
+    },
+    {
+      "file": "13-gallery.png",
+      "module": "Gallery",
+      "visual_concept": "photo gallery"
+    },
+    {
+      "file": "14-the-journey.png",
+      "module": "The Journey",
+      "visual_concept": "milestone map"
+    },
+    {
+      "file": "15-website-content.png",
+      "module": "Website Content",
+      "visual_concept": "content library books"
+    },
+    {
+      "file": "16-about-us.png",
+      "module": "About Us",
+      "visual_concept": "credentials / about education"
+    },
+    {
+      "file": "17-contact-information.png",
+      "module": "Contact Information",
+      "visual_concept": "contact envelope and phone"
+    },
+    {
+      "file": "18-faqs.png",
+      "module": "FAQs",
+      "visual_concept": "FAQ speech bubble"
+    },
+    {
+      "file": "19-footer-content.png",
+      "module": "Footer Content",
+      "visual_concept": "website infrastructure / server"
+    },
+    {
+      "file": "20-business-profile.png",
+      "module": "Business Profile",
+      "visual_concept": "business briefcase"
+    },
+    {
+      "file": "21-customer-enquiries.png",
+      "module": "Customer Enquiries",
+      "visual_concept": "customer feedback conversation"
+    },
+    {
+      "file": "22-customers.png",
+      "module": "Customers",
+      "visual_concept": "verified customer profile"
+    },
+    {
+      "file": "23-media-library.png",
+      "module": "Media Library",
+      "visual_concept": "media clapperboard"
+    },
+    {
+      "file": "24-website-settings.png",
+      "module": "Website Settings",
+      "visual_concept": "website system settings"
+    },
+    {
+      "file": "25-seo-manager.png",
+      "module": "SEO Manager",
+      "visual_concept": "search optimization"
+    },
+    {
+      "file": "26-security-activity.png",
+      "module": "Security & Activity",
+      "visual_concept": "security shield and lock"
+    }
+  ],
+  "kpi_source": "src/admin/views/OverviewView.tsx",
+  "kpi_assets": [
+    {
+      "file": "27-kpi-total-enquiries.png",
+      "label": "Total Enquiries",
+      "mapped_from": "21-customer-enquiries.png"
+    },
+    {
+      "file": "28-kpi-pending-active.png",
+      "label": "Pending / Active",
+      "mapped_from": "11-documents-needed.png"
+    },
+    {
+      "file": "29-kpi-registered-customers.png",
+      "label": "Registered Customers",
+      "mapped_from": "22-customers.png"
+    },
+    {
+      "file": "30-kpi-published-content.png",
+      "label": "Published Content",
+      "mapped_from": "12-our-services.png"
+    }
+  ],
+  "technical": {
+    "format": "PNG",
+    "canvas": "1024x1024",
+    "color_mode": "RGBA",
+    "background": "transparent",
+    "visual_style": "realistic 3D ivory, champagne gold and bronze with consistent soft studio lighting"
+  },
+  "integration_notes": [
+    "Use these 3D PNGs for prominent navigation, dashboard shortcuts and KPI cards.",
+    "Keep small functional controls (edit, delete, close, save, dropdown, pagination, upload) as Lucide SVG.",
+    "Assets are generated as separate PNG files, not a sprite sheet.",
+    "Review each module mapping before production deployment."
+  ]
+}

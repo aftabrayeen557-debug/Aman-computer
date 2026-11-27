@@ -349,29 +349,39 @@ export const OwnerProfileView: React.FC = () => {
 
       {/* Top Action Header */}
       <div className="rounded-2xl bg-[#141419] border border-[#C9A96E]/25 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="space-y-1.5 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#C9A96E]">
-            <span>Owner &amp; Brand</span>
-            <span className="text-[#85838A]">/</span>
-            <span className="text-[#E8E5DF]">Proprietor Profile</span>
-            {isDirty ? (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492] text-[10px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E] animate-pulse" />
-                {stagedChanges.length} Unsaved {stagedChanges.length === 1 ? 'Change' : 'Changes'}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px]">
-                <CheckCircle2 className="w-3 h-3" />
-                Saved
-              </span>
-            )}
+        <div className="flex items-start gap-3.5 sm:gap-4 min-w-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#211B16] border border-[#C9A96E]/30 p-1.5 shrink-0 shadow-xs flex items-center justify-center">
+            <img
+              src="/assets/3d-icons/02-owner-profile.png"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.18)]"
+            />
           </div>
-          <h1 className="font-editorial text-2xl sm:text-3xl font-normal tracking-tight text-[#E8E5DF]">
-            Owner Profile &amp; Public Identity
-          </h1>
-          <p className="text-xs sm:text-sm text-[#85838A] leading-relaxed">
-            Manage your proprietor details, profile photo, public contact information, and online presence with a live preview before saving.
-          </p>
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#C9A96E]">
+              <span>Owner &amp; Brand</span>
+              <span className="text-[#85838A]">/</span>
+              <span className="text-[#E8E5DF]">Proprietor Profile</span>
+              {isDirty ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#211B16] border border-[#C9A96E]/40 text-[#DFC492] text-[10px]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C9A96E] animate-pulse" />
+                  {stagedChanges.length} Unsaved {stagedChanges.length === 1 ? 'Change' : 'Changes'}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Saved
+                </span>
+              )}
+            </div>
+            <h1 className="font-editorial text-2xl sm:text-3xl font-normal tracking-tight text-[#E8E5DF]">
+              Owner Profile &amp; Public Identity
+            </h1>
+            <p className="text-xs sm:text-sm text-[#85838A] leading-relaxed">
+              Manage your proprietor details, profile photo, public contact information, and online presence with a live preview before saving.
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">

@@ -34,8 +34,18 @@ export type AdminTab =
   | 'notifications'
   | 'staff';
 
-export type EnquiryStatus = 'new' | 'pending' | 'in-progress' | 'completed';
-export type EnquirySource = 'walk-in' | 'whatsapp' | 'phone' | 'online';
+export type EnquiryStatus =
+  | 'new'
+  | 'contacted'
+  | 'pending'
+  | 'in-progress'
+  | 'completed'
+  | 'cancelled'
+  | 'not-interested';
+
+export type EnquiryPriority = 'high' | 'medium' | 'low';
+export type EnquirySource = 'walk-in' | 'whatsapp' | 'phone' | 'online' | 'website';
+export type EnquiryPreferredContact = 'whatsapp' | 'phone' | 'either';
 
 export interface Enquiry {
   id: string;
@@ -45,12 +55,58 @@ export interface Enquiry {
   serviceName: string;
   customerMessage: string;
   createdAt: string;
+  updatedAt?: string;
   status: EnquiryStatus;
+  priority?: EnquiryPriority;
   adminNotes: string;
   urgency: 'normal' | 'urgent';
+  preferredContactMethod?: EnquiryPreferredContact;
   estimatedCost?: string;
   assignedOperator?: string;
   source?: EnquirySource;
+  firstResponseAt?: string | null;
+  lastContactedAt?: string | null;
+  completedAt?: string | null;
+  nextFollowUpDate?: string | null;
+  nextFollowUpTime?: string | null;
+  followUpNotes?: string;
+}
+
+export type EnquiryFollowUpStatus = 'scheduled' | 'completed' | 'cancelled';
+
+export interface EnquiryFollowUp {
+  id: string;
+  enquiryId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  notes: string;
+  status: EnquiryFollowUpStatus;
+  completedAt?: string | null;
+  completedNotes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type EnquiryAuditActionType =
+  | 'created'
+  | 'status_change'
+  | 'priority_change'
+  | 'follow_up_scheduled'
+  | 'follow_up_completed'
+  | 'notes_updated'
+  | 'contacted'
+  | 'record_updated';
+
+export interface EnquiryAuditEntry {
+  id: string;
+  enquiryId: string;
+  actionType: EnquiryAuditActionType;
+  oldValue: string;
+  newValue: string;
+  details: string;
+  performedBy: string;
+  createdAt: string;
 }
 
 export type CustomerCategory =

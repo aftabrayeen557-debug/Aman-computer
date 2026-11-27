@@ -42,6 +42,7 @@ interface RailShortcut {
   id: string;
   label: string;
   icon: React.ElementType;
+  icon3d?: string;
   tab?: AdminTab;
   matchTabs?: AdminTab[];
   action?: 'search';
@@ -157,6 +158,7 @@ export const Sidebar: React.FC = () => {
         id: 'rail-overview',
         label: 'Dashboard',
         icon: LayoutDashboard,
+        icon3d: '/assets/3d-icons/01-dashboard.png',
         tab: 'overview',
       },
       {
@@ -169,6 +171,7 @@ export const Sidebar: React.FC = () => {
         id: 'rail-enquiries',
         label: 'Customer Enquiries',
         icon: MessageSquareText,
+        icon3d: '/assets/3d-icons/21-customer-enquiries.png',
         tab: 'enquiries',
         matchTabs: ['enquiries', 'customers'],
         badgeCount: pendingEnquiryCount,
@@ -177,18 +180,21 @@ export const Sidebar: React.FC = () => {
         id: 'rail-schemes',
         label: 'Government Schemes',
         icon: Landmark,
+        icon3d: '/assets/3d-icons/08-government-schemes.png',
         tab: 'government-schemes',
       },
       {
         id: 'rail-services',
         label: 'Our Services',
         icon: Layers,
+        icon3d: '/assets/3d-icons/12-our-services.png',
         tab: 'services',
       },
       {
         id: 'rail-hero',
         label: 'Hero Section',
         icon: Sparkles,
+        icon3d: '/assets/3d-icons/03-hero-section-manager.png',
         tab: 'hero-headline',
         matchTabs: ['hero-headline', 'hero-showcase', 'hero-portrait', 'brand-settings'],
       },
@@ -196,18 +202,21 @@ export const Sidebar: React.FC = () => {
         id: 'rail-updates',
         label: 'Latest Updates',
         icon: Newspaper,
+        icon3d: '/assets/3d-icons/10-latest-updates.png',
         tab: 'latest-updates',
       },
       {
         id: 'rail-docs',
         label: 'Documents Needed',
         icon: FileCheck2,
+        icon3d: '/assets/3d-icons/11-documents-needed.png',
         tab: 'doc-requirements',
       },
       {
         id: 'rail-gallery',
         label: 'Gallery & Journey',
         icon: ImageIcon,
+        icon3d: '/assets/3d-icons/13-gallery.png',
         tab: 'gallery',
         matchTabs: ['gallery', 'journey'],
       },
@@ -215,12 +224,14 @@ export const Sidebar: React.FC = () => {
         id: 'rail-media',
         label: 'Media Library',
         icon: FolderGit2,
+        icon3d: '/assets/3d-icons/23-media-library.png',
         tab: 'media',
       },
       {
         id: 'rail-profile',
         label: 'Owner Profile',
         icon: UserCheck,
+        icon3d: '/assets/3d-icons/02-owner-profile.png',
         tab: 'owner-profile',
         matchTabs: ['owner-profile', 'business-profile'],
       },
@@ -234,6 +245,7 @@ export const Sidebar: React.FC = () => {
         id: 'rail-settings',
         label: 'Website Settings',
         icon: Globe,
+        icon3d: '/assets/3d-icons/24-website-settings.png',
         tab: 'website-settings',
         matchTabs: ['website-settings', 'seo-manager', 'content-about', 'content-contact', 'faqs', 'content-footer'],
       },
@@ -241,6 +253,7 @@ export const Sidebar: React.FC = () => {
         id: 'rail-security',
         label: 'Security & Activity',
         icon: ShieldCheck,
+        icon3d: '/assets/3d-icons/26-security-activity.png',
         tab: 'activity-logs',
         badgeCount: unreadNotificationCount,
       },
@@ -277,8 +290,8 @@ export const Sidebar: React.FC = () => {
         type="button"
         onClick={() => item.tab && handleSelectTab(item.tab)}
         aria-current={isActive ? 'page' : undefined}
-        className={`relative w-full flex items-center gap-2.5 rounded-xl text-[12.5px] transition-all cursor-pointer active:scale-[0.98] ${
-          nested ? 'pl-8 pr-2.5 py-2' : 'px-2.5 py-2'
+        className={`group relative w-full flex items-center gap-2.5 rounded-xl text-[12.5px] transition-all cursor-pointer active:scale-[0.98] ${
+          nested ? 'pl-8 pr-2.5 py-1.5' : 'px-2.5 py-2'
         } ${
           isActive
             ? 'bg-[#20150b] text-[#f6ecdc] dark:bg-[#211B16] dark:text-[#f1e7d6] border border-[#C9A96E]/45 font-medium shadow-xs'
@@ -293,11 +306,24 @@ export const Sidebar: React.FC = () => {
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
           />
         )}
-        <Icon
-          className={`w-4 h-4 shrink-0 transition-colors ${
-            isActive ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
-          }`}
-        />
+        {item.icon3d ? (
+          <img
+            src={item.icon3d}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className={`w-[18px] h-[18px] shrink-0 object-contain transition-transform group-hover:scale-105 drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)] ${
+              isActive ? 'brightness-110 scale-105' : 'opacity-85'
+            }`}
+          />
+        ) : (
+          <Icon
+            className={`w-4 h-4 shrink-0 transition-colors ${
+              isActive ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
+            }`}
+          />
+        )}
         <span className="flex-1 truncate text-left">{item.label}</span>
         {renderBadge(item.tab)}
       </button>
@@ -333,11 +359,24 @@ export const Sidebar: React.FC = () => {
             : 'text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.06] dark:hover:bg-white/[0.1]'
         }`}
       >
-        <Icon className="w-[15px] h-[15px]" />
+        {shortcut.icon3d ? (
+          <img
+            src={shortcut.icon3d}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className={`w-[22px] h-[22px] object-contain transition-all duration-200 group-hover:scale-110 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] ${
+              isActive ? 'scale-105 brightness-110' : 'opacity-90 group-hover:opacity-100'
+            }`}
+          />
+        ) : (
+          <Icon className="w-[15px] h-[15px]" />
+        )}
         {shortcut.badgeCount && shortcut.badgeCount > 0 ? (
           <span
             aria-hidden="true"
-            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#C9A96E] ring-2 ring-[#f8efe0] dark:ring-[#101014]"
+            className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C9A96E] ring-2 ring-[#f8efe0] dark:ring-[#101014]"
           />
         ) : null}
         <span
@@ -540,11 +579,22 @@ export const Sidebar: React.FC = () => {
                                 : 'text-[var(--st-mut)] hover:text-[var(--st-tx)] hover:bg-black/[0.03] dark:hover:bg-white/[0.04]'
                             }`}
                           >
-                            <Icon
-                              className={`w-4 h-4 shrink-0 transition-colors ${
-                                hasActiveChild ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
-                              }`}
-                            />
+                            {item.icon3d ? (
+                              <img
+                                src={item.icon3d}
+                                alt=""
+                                aria-hidden="true"
+                                loading="lazy"
+                                decoding="async"
+                                className="w-[18px] h-[18px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.14)] opacity-90"
+                              />
+                            ) : (
+                              <Icon
+                                className={`w-4 h-4 shrink-0 transition-colors ${
+                                  hasActiveChild ? 'text-[#C9A96E]' : 'text-[var(--st-mut)]'
+                                }`}
+                              />
+                            )}
                             <span className="flex-1 truncate text-left">{item.label}</span>
                             <motion.span
                               animate={{ rotate: isExpanded ? 180 : 0 }}

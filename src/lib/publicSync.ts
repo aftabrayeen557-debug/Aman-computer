@@ -22,6 +22,8 @@ export interface PublicEnquiryPayload {
   serviceName: string;
   customerMessage?: string;
   urgency?: 'normal' | 'urgent';
+  preferredContactMethod?: 'whatsapp' | 'phone' | 'either';
+  honeypot?: string;
 }
 
 export interface StorageAdapter {
@@ -344,26 +346,58 @@ export const syncPublicWebsiteFromSupabase = async (): Promise<void> => {
  */
 export const validatePublicEnquiryPayload = (
   payload: PublicEnquiryPayload
-): { valid: boolean; error?: string; normalizedPhone?: string } => {
-  const name = (payload.customerName || '').trim();
-  const phone = (payload.phoneNumber || '').trim();
-  const digitsOnly = phone.replace(/\D/g, '');
+): { valid: boolean; error?: string; normalizedPhone?: string; normalizedMethod?: 'whatsapp' | 'phone' | 'either' } => {
+  if (payload.honeypot && String(payload.honeypot).trim().length > 0) {
+    return {
+      valid: false,
+      error: 'Unable to submit enquiry automatically. Please message us on WhatsApp or call us directly.',
+    };
+  }
+
+  const name = (payload.customerName || '').trim().replace(/\s+/g, ' ');
+  const rawPhone = (payload.phoneNumber || '').trim();
+  const digitsOnly = rawPhone.replace(/\D/g, '');
   const message = (payload.customerMessage || '').trim();
-  const serviceName = (payload.serviceName || 'General Service').trim();
+  const serviceName = (payload.serviceName || '').trim();
+  const rawMethod = String(payload.preferredContactMethod || 'either').trim().toLowerCase();
 
   if (name.length < 2 || name.length > 100) {
-    return { valid: false, error: 'Please enter a valid customer name (2 to 100 characters).' };
+    return { valid: false, error: 'Please enter your full name (2 to 100 characters).' };
   }
-  if (digitsOnly.length < 10 || digitsOnly.length > 15 || phone.length > 20) {
-    return { valid: false, error: 'Please enter a valid 10 to 15 digit phone number.' };
+
+  let tenDigits = '';
+  if (digitsOnly.length === 10) {
+    tenDigits = digitsOnly;
+  } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+    tenDigits = digitsOnly.slice(2);
+  } else if (digitsOnly.length === 11 && digitsOnly.startsWith('0')) {
+    tenDigits = digitsOnly.slice(1);
   }
+
+  if (!/^[6-9]\d{9}$/.test(tenDigits) || rawPhone.length > 20) {
+    return {
+      valid: false,
+      error: 'Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.',
+    };
+  }
+
   if (serviceName.length < 2 || serviceName.length > 120) {
-    return { valid: false, error: 'Please select a valid service name.' };
+    return { valid: false, error: 'Please select the service you need assistance with.' };
   }
+
   if (message.length > 1000) {
-    return { valid: false, error: 'Enquiry message must be 1000 characters or fewer.' };
+    return { valid: false, error: 'Message / Requirement must be 1000 characters or fewer.' };
   }
-  return { valid: true, normalizedPhone: digitsOnly };
+
+  if (rawMethod !== 'whatsapp' && rawMethod !== 'phone' && rawMethod !== 'either') {
+    return { valid: false, error: 'Please select a valid preferred contact method.' };
+  }
+
+  return {
+    valid: true,
+    normalizedPhone: `+91 ${tenDigits.slice(0, 5)} ${tenDigits.slice(5)}`,
+    normalizedMethod: rawMethod,
+  };
 };
 
 /**
@@ -371,7 +405,7 @@ export const validatePublicEnquiryPayload = (
  */
 export const submitPublicEnquiry = async (
   payload: PublicEnquiryPayload
-): Promise<{ ok: boolean; error?: string }> => {
+): Promise<{ ok: boolean; error?: string; referenceId?: string }> => {
   const validation = validatePublicEnquiryPayload(payload);
   if (!validation.valid) {
     return { ok: false, error: validation.error };
@@ -379,22 +413,32 @@ export const submitPublicEnquiry = async (
 
   const now = Date.now();
   if (lastPublicEnquirySubmittedAt > 0 && now - lastPublicEnquirySubmittedAt < ENQUIRY_COOLDOWN_MS) {
+    const remainingSec = Math.max(1, Math.ceil((ENQUIRY_COOLDOWN_MS - (now - lastPublicEnquirySubmittedAt)) / 1000));
     return {
       ok: false,
-      error: 'Please wait at least 30 seconds before submitting another enquiry.',
+      error: `Please wait ${remainingSec} seconds before submitting another enquiry.`,
     };
   }
 
   if (!isSupabaseConfigured() || !supabase) {
-    return { ok: false, error: 'Backend is not configured to accept online enquiries.' };
+    return {
+      ok: false,
+      error: 'Online enquiry submission is currently unavailable. Please message us on WhatsApp or call our counter directly.',
+    };
   }
 
-  const { error } = await supabase.from('customer_enquiries').insert({
-    id: 'ENQ-' + Date.now().toString(36).toUpperCase(),
-    customer_name: payload.customerName.trim(),
-    phone_number: payload.phoneNumber.trim(),
+  const referenceId =
+    'ENQ-' +
+    Date.now().toString(36).toUpperCase() +
+    Math.random().toString(36).slice(2, 5).toUpperCase();
+  const timestamp = new Date().toISOString();
+
+  const baseRow = {
+    id: referenceId,
+    customer_name: payload.customerName.trim().replace(/\s+/g, ' '),
+    phone_number: validation.normalizedPhone || payload.phoneNumber.trim(),
     service_id: (payload.serviceId || 'general').trim().slice(0, 64),
-    service_name: (payload.serviceName || 'General Service').trim(),
+    service_name: payload.serviceName.trim(),
     customer_message: (payload.customerMessage || '').trim(),
     urgency: payload.urgency === 'urgent' ? 'urgent' : 'normal',
     status: 'new',
@@ -402,19 +446,41 @@ export const submitPublicEnquiry = async (
     estimated_cost: null,
     assigned_operator: null,
     source: 'website',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+
+  let { error } = await supabase.from('customer_enquiries').insert({
+    ...baseRow,
+    preferred_contact_method: validation.normalizedMethod || 'either',
   });
+
+  if (
+    error &&
+    (error.code === 'PGRST204' ||
+      error.code === '42703' ||
+      String(error.message || '').includes('preferred_contact_method'))
+  ) {
+    const retryRes = await supabase.from('customer_enquiries').insert(baseRow);
+    error = retryRes.error;
+  }
 
   if (error) {
     return { ok: false, error: error.message };
   }
 
   lastPublicEnquirySubmittedAt = Date.now();
-  return { ok: true };
+  return { ok: true, referenceId };
 };
 
 if (typeof window !== 'undefined') {
+  const win = window as unknown as Record<string, unknown>;
+  win.__submitAmanEnquiry = submitPublicEnquiry;
+  win.__validateAmanEnquiry = validatePublicEnquiryPayload;
+  win.__getAmanEnquiryCooldownMs = () =>
+    lastPublicEnquirySubmittedAt > 0
+      ? Math.max(0, ENQUIRY_COOLDOWN_MS - (Date.now() - lastPublicEnquirySubmittedAt))
+      : 0;
   void clearStaleBrandCaches();
   void syncPublicWebsiteFromSupabase();
 }

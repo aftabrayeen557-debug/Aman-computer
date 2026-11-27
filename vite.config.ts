@@ -10,6 +10,7 @@ const SUBDIRS = [
   'app-developer',
   'ui-ux-designer',
   'graphic-designer',
+  'icon-system',
   'legal',
   'privacy-policy',
   'terms-and-conditions',

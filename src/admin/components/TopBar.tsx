@@ -37,6 +37,7 @@ interface TopPillItem {
   label: string;
   icon: React.ElementType;
   badge?: number;
+  icon3d?: string;
 }
 
 export const TopBar: React.FC = () => {
@@ -187,17 +188,43 @@ export const TopBar: React.FC = () => {
 
   const primaryPills: TopPillItem[] = useMemo(() => {
     const base: TopPillItem[] = [
-      { tab: 'overview', label: 'Overview', icon: LayoutDashboard },
+      {
+        tab: 'overview',
+        label: 'Overview',
+        icon: LayoutDashboard,
+        icon3d: '/assets/3d-icons/01-dashboard.png',
+      },
       {
         tab: 'enquiries',
         label: 'Enquiries',
         icon: MessageSquareText,
+        icon3d: '/assets/3d-icons/21-customer-enquiries.png',
         badge: pendingEnquiryCount > 0 ? pendingEnquiryCount : undefined,
       },
-      { tab: 'government-schemes', label: 'Schemes', icon: Landmark },
-      { tab: 'services', label: 'Services', icon: Layers },
-      { tab: 'latest-updates', label: 'Updates', icon: Newspaper },
-      { tab: 'owner-profile', label: 'Owner', icon: UserCheck },
+      {
+        tab: 'government-schemes',
+        label: 'Schemes',
+        icon: Landmark,
+        icon3d: '/assets/3d-icons/08-government-schemes.png',
+      },
+      {
+        tab: 'services',
+        label: 'Services',
+        icon: Layers,
+        icon3d: '/assets/3d-icons/12-our-services.png',
+      },
+      {
+        tab: 'latest-updates',
+        label: 'Updates',
+        icon: Newspaper,
+        icon3d: '/assets/3d-icons/10-latest-updates.png',
+      },
+      {
+        tab: 'owner-profile',
+        label: 'Owner',
+        icon: UserCheck,
+        icon3d: '/assets/3d-icons/02-owner-profile.png',
+      },
     ];
     const inBase = base.some((item) => item.tab === resolvedTab);
     if (!inBase) {
@@ -205,6 +232,7 @@ export const TopBar: React.FC = () => {
         tab: resolvedTab,
         label: activeNav.shortLabel || activeNav.label,
         icon: activeNav.icon,
+        icon3d: activeNav.icon3d,
       });
     }
     return base;
@@ -283,7 +311,18 @@ export const TopBar: React.FC = () => {
                   className="absolute inset-0 rounded-full bg-[#20150b] dark:bg-[#f1e8da] shadow-[0_4px_14px_rgba(0,0,0,0.28)] -z-10"
                 />
               )}
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+              {item.icon3d ? (
+                <img
+                  src={item.icon3d}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-3.5 h-3.5 shrink-0 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)]"
+                />
+              ) : (
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+              )}
               <span>{item.label}</span>
               {typeof item.badge === 'number' && item.badge > 0 && (
                 <span className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#C9A96E] text-[#1c1208] text-[9.5px] font-bold grid place-items-center tabular-nums">
@@ -583,9 +622,14 @@ export const TopBar: React.FC = () => {
                     setCurrentTab('owner-profile');
                     setProfileOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
                 >
-                  <UserCheck className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  <img
+                    src="/assets/3d-icons/02-owner-profile.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-4 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] group-hover:scale-110 transition-transform"
+                  />
                   <span>Owner Profile</span>
                 </button>
                 <button
@@ -594,9 +638,14 @@ export const TopBar: React.FC = () => {
                     setCurrentTab('website-settings');
                     setProfileOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
                 >
-                  <Globe className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  <img
+                    src="/assets/3d-icons/24-website-settings.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-4 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] group-hover:scale-110 transition-transform"
+                  />
                   <span>Website Settings</span>
                 </button>
                 <button
@@ -605,9 +654,14 @@ export const TopBar: React.FC = () => {
                     setCurrentTab('seo-manager');
                     setProfileOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
                 >
-                  <SearchCheck className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  <img
+                    src="/assets/3d-icons/25-seo-manager.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-4 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] group-hover:scale-110 transition-transform"
+                  />
                   <span>SEO Manager</span>
                 </button>
                 <button
@@ -616,9 +670,14 @@ export const TopBar: React.FC = () => {
                     setCurrentTab('activity-logs');
                     setProfileOpen(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs text-[var(--st-tx)] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-colors cursor-pointer group"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#C9A96E]" />
+                  <img
+                    src="/assets/3d-icons/26-security-activity.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-4 h-4 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] group-hover:scale-110 transition-transform"
+                  />
                   <span>Security &amp; Activity</span>
                 </button>
               </div>

@@ -1,0 +1,391 @@
+/* ==========================================================================
+   Aman Computer — CSC / Government Services Icon System & Squircle Wrappers
+   Pure SVG Outline System · Fixed 1.75px Stroke · 24x24 Grid (20x20 Safe)
+   ========================================================================== */
+
+:root {
+  --icon-primary: #1E40AF;
+  --icon-primary-deep: #1E3A8A;
+  --icon-color: #1E40AF;
+  --icon-bg: rgba(30, 64, 175, 0.11);
+  --icon-bg-hover: rgba(30, 64, 175, 0.18);
+  --icon-bg-active: #1E40AF;
+  --icon-fg-active: #FFFFFF;
+  --icon-border: rgba(30, 64, 175, 0.18);
+  --icon-border-hover: rgba(30, 64, 175, 0.34);
+  --icon-focus-ring: rgba(30, 64, 175, 0.32);
+
+  /* Status Tonal Tokens (Color + Shape Dual Encoding) */
+  --icon-pending: #B45309;
+  --icon-pending-bg: rgba(217, 119, 6, 0.13);
+  --icon-pending-bg-hover: rgba(217, 119, 6, 0.21);
+  --icon-pending-border: rgba(217, 119, 6, 0.28);
+
+  --icon-approved: #15803D;
+  --icon-approved-bg: rgba(22, 163, 74, 0.13);
+  --icon-approved-bg-hover: rgba(22, 163, 74, 0.21);
+  --icon-approved-border: rgba(22, 163, 74, 0.28);
+
+  --icon-rejected: #B91C1C;
+  --icon-rejected-bg: rgba(220, 38, 38, 0.13);
+  --icon-rejected-bg-hover: rgba(220, 38, 38, 0.21);
+  --icon-rejected-border: rgba(220, 38, 38, 0.28);
+
+  --icon-correction: #C2410C;
+  --icon-correction-bg: rgba(234, 88, 12, 0.13);
+  --icon-correction-bg-hover: rgba(234, 88, 12, 0.21);
+  --icon-correction-border: rgba(234, 88, 12, 0.28);
+
+  --icon-progress: #1D4ED8;
+  --icon-progress-bg: rgba(37, 99, 235, 0.13);
+  --icon-progress-bg-hover: rgba(37, 99, 235, 0.21);
+  --icon-progress-border: rgba(37, 99, 235, 0.28);
+
+  /* Aman Computer Signature Warm Dark-Brown Tonal Squircle (#2A1F18) */
+  --icon-warm-bg-start: #2A1F18;
+  --icon-warm-bg-end: #1B130E;
+  --icon-warm-fg: #DFC492;
+  --icon-warm-border: rgba(201, 169, 110, 0.32);
+  --icon-warm-border-hover: rgba(201, 169, 110, 0.6);
+  --icon-warm-shadow: 0 4px 14px -2px rgba(24, 16, 10, 0.45);
+  --icon-warm-highlight: rgba(255, 255, 255, 0.16);
+
+  --icon-btn-size: 44px;
+  --icon-btn-radius: 13px;
+  --icon-stroke: 1.75;
+}
+
+:where([data-theme="dark"], [data-mode="dark"], .dark) {
+  --icon-primary: #60A5FA;
+  --icon-primary-deep: #3B82F6;
+  --icon-color: #93C5FD;
+  --icon-bg: rgba(96, 165, 250, 0.14);
+  --icon-bg-hover: rgba(96, 165, 250, 0.24);
+  --icon-bg-active: #2563EB;
+  --icon-fg-active: #FFFFFF;
+  --icon-border: rgba(147, 197, 253, 0.22);
+  --icon-border-hover: rgba(147, 197, 253, 0.42);
+  --icon-focus-ring: rgba(96, 165, 250, 0.42);
+
+  --icon-pending: #FBBF24;
+  --icon-pending-bg: rgba(245, 158, 11, 0.15);
+  --icon-pending-bg-hover: rgba(245, 158, 11, 0.24);
+  --icon-pending-border: rgba(251, 191, 36, 0.28);
+
+  --icon-approved: #4ADE80;
+  --icon-approved-bg: rgba(34, 197, 94, 0.15);
+  --icon-approved-bg-hover: rgba(34, 197, 94, 0.24);
+  --icon-approved-border: rgba(74, 222, 128, 0.28);
+
+  --icon-rejected: #F87171;
+  --icon-rejected-bg: rgba(239, 68, 68, 0.15);
+  --icon-rejected-bg-hover: rgba(239, 68, 68, 0.24);
+  --icon-rejected-border: rgba(248, 113, 113, 0.28);
+
+  --icon-correction: #FB923C;
+  --icon-correction-bg: rgba(249, 115, 22, 0.15);
+  --icon-correction-bg-hover: rgba(249, 115, 22, 0.24);
+  --icon-correction-border: rgba(251, 146, 60, 0.28);
+
+  --icon-progress: #60A5FA;
+  --icon-progress-bg: rgba(59, 130, 246, 0.15);
+  --icon-progress-bg-hover: rgba(59, 130, 246, 0.24);
+  --icon-progress-border: rgba(96, 165, 250, 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   Base Pure SVG Icon Primitive
+   -------------------------------------------------------------------------- */
+.csc-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke, 1.75);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: inherit;
+  transition: transform 170ms cubic-bezier(0.22, 1, 0.36, 1), color 170ms ease;
+}
+
+.csc-icon--16 { width: 16px; height: 16px; }
+.csc-icon--20 { width: 20px; height: 20px; }
+.csc-icon--24 { width: 24px; height: 24px; }
+
+/* --------------------------------------------------------------------------
+   Rounded-Square Tonal Squircle Wrapper (.icon-btn)
+   Consistent 40–48px touch/click targets (44px default)
+   -------------------------------------------------------------------------- */
+.icon-btn {
+  --_fg: var(--icon-color);
+  --_bg: var(--icon-bg);
+  --_bg-hover: var(--icon-bg-hover);
+  --_bg-active: var(--icon-bg-active);
+  --_fg-active: var(--icon-fg-active);
+  --_bd: var(--icon-border);
+  --_bd-hover: var(--icon-border-hover);
+
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
+  padding: 0;
+  border: 1px solid var(--_bd);
+  border-radius: var(--icon-btn-radius);
+  background: var(--_bg);
+  color: var(--_fg);
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition:
+    background-color 170ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 170ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 170ms ease,
+    transform 170ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 170ms ease;
+}
+
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.28);
+}
+
+/* Size Variants (40px / 44px / 48px) */
+.icon-btn--sm {
+  --icon-btn-size: 40px;
+  --icon-btn-radius: 12px;
+}
+
+.icon-btn--sm .csc-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.icon-btn--lg {
+  --icon-btn-size: 48px;
+  --icon-btn-radius: 14px;
+}
+
+.icon-btn--lg .csc-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Labeled Squircle Action Button (for toolbar / desk actions) */
+.icon-btn--labeled {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: auto;
+  min-width: var(--icon-btn-size);
+  height: var(--icon-btn-size);
+  padding: 0 16px 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+/* Hover State (+ forced .is-hover for style guide inspection) */
+.icon-btn:hover,
+.icon-btn.is-hover {
+  background: var(--_bg-hover);
+  border-color: var(--_bd-hover);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 10px -2px rgba(30, 64, 175, 0.16);
+}
+
+.icon-btn:hover .csc-icon,
+.icon-btn.is-hover .csc-icon {
+  transform: scale(1.08);
+}
+
+/* Pressed Tactile State */
+.icon-btn:active {
+  transform: scale(0.95);
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.16);
+}
+
+/* Active / Selected State (e.g. open tab, active workflow step) */
+.icon-btn.is-active,
+.icon-btn[aria-pressed="true"],
+.icon-btn[aria-current="page"] {
+  background: var(--_bg-active);
+  border-color: var(--_bg-active);
+  color: var(--_fg-active);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 6px 14px -4px rgba(30, 64, 175, 0.42);
+}
+
+.icon-btn.is-active:hover .csc-icon,
+.icon-btn[aria-pressed="true"]:hover .csc-icon,
+.icon-btn[aria-current="page"]:hover .csc-icon {
+  transform: scale(1.06);
+}
+
+/* Focus-Visible Accessibility Ring */
+.icon-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--icon-focus-ring),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* Disabled State */
+.icon-btn:disabled,
+.icon-btn[aria-disabled="true"],
+.icon-btn.is-disabled {
+  opacity: 0.42;
+  filter: grayscale(0.45);
+  box-shadow: none;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   Status Color Variants (Amber / Green / Red / Orange / Blue)
+   -------------------------------------------------------------------------- */
+.icon-btn--pending {
+  --_fg: var(--icon-pending);
+  --_bg: var(--icon-pending-bg);
+  --_bg-hover: var(--icon-pending-bg-hover);
+  --_bg-active: var(--icon-pending);
+  --_bd: var(--icon-pending-border);
+  --_bd-hover: var(--icon-pending);
+}
+
+.icon-btn--approved {
+  --_fg: var(--icon-approved);
+  --_bg: var(--icon-approved-bg);
+  --_bg-hover: var(--icon-approved-bg-hover);
+  --_bg-active: var(--icon-approved);
+  --_bd: var(--icon-approved-border);
+  --_bd-hover: var(--icon-approved);
+}
+
+.icon-btn--rejected {
+  --_fg: var(--icon-rejected);
+  --_bg: var(--icon-rejected-bg);
+  --_bg-hover: var(--icon-rejected-bg-hover);
+  --_bg-active: var(--icon-rejected);
+  --_bd: var(--icon-rejected-border);
+  --_bd-hover: var(--icon-rejected);
+}
+
+.icon-btn--correction {
+  --_fg: var(--icon-correction);
+  --_bg: var(--icon-correction-bg);
+  --_bg-hover: var(--icon-correction-bg-hover);
+  --_bg-active: var(--icon-correction);
+  --_bd: var(--icon-correction-border);
+  --_bd-hover: var(--icon-correction);
+}
+
+.icon-btn--progress {
+  --_fg: var(--icon-progress);
+  --_bg: var(--icon-progress-bg);
+  --_bg-hover: var(--icon-progress-bg-hover);
+  --_bg-active: var(--icon-progress);
+  --_bd: var(--icon-progress-border);
+  --_bd-hover: var(--icon-progress);
+}
+
+/* --------------------------------------------------------------------------
+   Aman Computer Signature Warm Dark-Brown Tonal Squircle (.icon-btn--warm)
+   #2A1F18 Gradient + #C9A96E Gold Accents + 1px Specular Highlight
+   -------------------------------------------------------------------------- */
+.icon-btn--warm {
+  --_fg: var(--icon-warm-fg);
+  --_bg: linear-gradient(180deg, var(--icon-warm-bg-start) 0%, var(--icon-warm-bg-end) 100%);
+  --_bg-hover: linear-gradient(180deg, #372920 0%, #221812 100%);
+  --_bg-active: #C9A96E;
+  --_fg-active: #1A120D;
+  --_bd: var(--icon-warm-border);
+  --_bd-hover: var(--icon-warm-border-hover);
+  background-image: var(--_bg);
+  box-shadow: inset 0 1px 0 var(--icon-warm-highlight), var(--icon-warm-shadow);
+}
+
+.icon-btn--warm:hover,
+.icon-btn--warm.is-hover {
+  background-image: var(--_bg-hover);
+  border-color: var(--_bd-hover);
+  color: #F7EAD0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 8px 18px -4px rgba(20, 14, 9, 0.6);
+  transform: translateY(-1px) scale(1.06);
+}
+
+.icon-btn--warm:active {
+  background-image: linear-gradient(180deg, #18110D 0%, #241A14 100%);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65);
+  transform: scale(0.95);
+}
+
+.icon-btn--warm.is-active,
+.icon-btn--warm[aria-pressed="true"],
+.icon-btn--warm[aria-current="page"] {
+  background: #C9A96E;
+  background-image: linear-gradient(180deg, #DFC492 0%, #C29D5A 100%);
+  border-color: #E6D0A8;
+  color: #1A120D;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 6px 16px -4px rgba(201, 169, 110, 0.5);
+}
+
+.icon-btn--warm:focus-visible {
+  box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.45), inset 0 1px 0 var(--icon-warm-highlight);
+}
+
+/* Dark mode status active contrast compensation */
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn--pending.is-active,
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn--approved.is-active,
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn--rejected.is-active,
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn--correction.is-active,
+:where([data-theme="dark"], [data-mode="dark"], .dark) .icon-btn--progress.is-active {
+  --_fg-active: #0B1120;
+}
+
+/* --------------------------------------------------------------------------
+   Optional Micro-Animations (Trust & Feedback)
+   -------------------------------------------------------------------------- */
+@keyframes cscDrawCheck {
+  0% {
+    stroke-dashoffset: 16;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.is-drawing .icon-draw-check {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  animation: cscDrawCheck 420ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes cscSpinSlow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-spinning .csc-icon {
+  animation: cscSpinSlow 1.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .csc-icon,
+  .icon-btn {
+    transition: none;
+  }
+  .is-drawing .icon-draw-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .is-spinning .csc-icon {
+    animation: none;
+  }
+}

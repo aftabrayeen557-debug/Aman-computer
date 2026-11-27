@@ -1,0 +1,101 @@
+{
+  "pack": "Aman Computer Public Website 3D Icon Pack",
+  "source_reference": "User-provided public website screenshots",
+  "format": "PNG RGBA",
+  "canvas": "1024x1024",
+  "background": "transparent",
+  "assets": [
+    {
+      "file": "01-home.png",
+      "use": "Mobile drawer Home navigation"
+    },
+    {
+      "file": "02-services-shortcut.png",
+      "use": "Header Services shortcut"
+    },
+    {
+      "file": "03-contact-shortcut.png",
+      "use": "Header Contact shortcut"
+    },
+    {
+      "file": "04-whatsapp.png",
+      "use": "Header WhatsApp action"
+    },
+    {
+      "file": "05-menu.png",
+      "use": "Decorative menu illustration; keep interactive control accessible"
+    },
+    {
+      "file": "06-close.png",
+      "use": "Decorative close illustration; keep interactive control accessible"
+    },
+    {
+      "file": "07-latest-updates.png",
+      "use": "Drawer/footer Latest Updates"
+    },
+    {
+      "file": "08-documents-needed.png",
+      "use": "Drawer/footer Documents Need"
+    },
+    {
+      "file": "09-our-services.png",
+      "use": "Drawer/footer Our Services"
+    },
+    {
+      "file": "10-gallery.png",
+      "use": "Drawer Gallery"
+    },
+    {
+      "file": "11-home-quick-link.png",
+      "use": "Footer Quick Links Home"
+    },
+    {
+      "file": "12-about-quick-link.png",
+      "use": "Footer Quick Links About Aman Computer"
+    },
+    {
+      "file": "13-our-journey.png",
+      "use": "Drawer/footer Our Journey"
+    },
+    {
+      "file": "14-contact-location.png",
+      "use": "Drawer/footer Contact & Location"
+    },
+    {
+      "file": "15-whatsapp-us.png",
+      "use": "Drawer/footer WhatsApp Us"
+    },
+    {
+      "file": "16-admin-login.png",
+      "use": "Footer Admin Login"
+    },
+    {
+      "file": "17-aadhaar-services.png",
+      "use": "Aadhaar service card"
+    },
+    {
+      "file": "18-pan-services.png",
+      "use": "PAN service card"
+    },
+    {
+      "file": "19-online-forms.png",
+      "use": "Online Forms service card"
+    },
+    {
+      "file": "20-printing.png",
+      "use": "Printing service card"
+    },
+    {
+      "file": "21-photo-studio.png",
+      "use": "Photo Studio service card"
+    },
+    {
+      "file": "22-aman-computer-brand.png",
+      "use": "Optional section visual; never replace official logo"
+    },
+    {
+      "file": "23-instagram.png",
+      "use": "Footer Instagram social link"
+    }
+  ]
+}
